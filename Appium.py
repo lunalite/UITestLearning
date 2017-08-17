@@ -1,8 +1,11 @@
-import unittest
+"""
+Currently, appium automated test is made just for clickable buttons.
+"""
 
+import unittest
 from appium import webdriver
 from appium.webdriver.common.touch_action import TouchAction
-import time
+from Utility import Utility
 
 
 class ContactAppTestAppium(unittest.TestCase):
@@ -19,58 +22,29 @@ class ContactAppTestAppium(unittest.TestCase):
         self.driver = webdriver.Remote('http://127.0.0.1:4723/wd/hub', desired_caps)
 
     def test_findClickableButtons(self):
-        els = self.driver.find_elements_by_android_uiautomator('new UiSelector().clickable(true)')
-        self.assertIsInstance(els, list)
-        print '\n'.join(str(v) for v in els)
+        previous_state = []
+        els = []
+        first_state = True
         action = TouchAction(self.driver)
 
-        for btn in els:
-            resourceID = btn.get_attribute('resourceId')
-            action.tap(btn).perform()
-            Utility.getState(self)
-            Utility.back_check(self)
+        first_state, previous_state, same_state = Utility.get_state(self, previous_state, first_state)
+
+        while True:
+            if not same_state:
+                els = Utility.get_all_actions(self, els)
+            print els
+            if els:
+                action.tap(els.pop(0)).perform()
+                # resourceID = btn.get_attribute('resourceId')
+                first_state, previous_state, same_state = Utility.get_state(self, previous_state, first_state)
+                Utility.back_check(self)
+            else:
+                print 'break'
+                break
+        print 'not done yet'
 
     def tearDown(self):
         self.driver.quit()
-
-
-class Utility:
-    previous_state = []
-    first = True
-
-    @staticmethod
-    def back_check(_test):
-        """ If no clickable, move back """
-        els = _test.driver.find_elements_by_android_uiautomator('new UiSelector().clickable(true)')
-        if not els:
-            # _test.driver.back()
-            # _test.driver.press_keycode(4)
-            # time.sleep(5)
-            _test.driver.press_keycode(187)
-
-    @staticmethod
-    def getState(_test):
-        print 'Getting the current state...'
-        els = _test.driver.find_elements_by_xpath('//*')
-        els_attr = []
-        for i in els:
-            els_attr.append(i.get_attribute('resourceId'))
-
-        if Utility.first:
-            print 'First state'
-            Utility.first = False
-            Utility.previous_state = els_attr
-        else:
-            print 'Comparing with the previous state...'
-            # print 'previous: ' + str(Utility.previous_state)
-            # print 'current: ' + str(els_attr)
-            result = set(Utility.previous_state) - set(els_attr)
-            print result
-            if not result:
-                print 'same state'
-            else:
-                print 'different'
-            Utility.previous_state = els
 
 
 if __name__ == '__main__':

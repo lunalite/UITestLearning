@@ -9,6 +9,11 @@ These instructions will get you a copy of the project up and running on your loc
 
 ## Updates
 
+### 17 August 2015 - 
+* Changing to python wrapper for UI automator for the dump method
+* Using dump method of the current UI in order to `get_state()` of the current representation of the UI
+* Will be doing analysis on words crawled from many APKs so as to do learning on the button descriptions
+
 ### 15 August 2015
 * The UI Testing automation is done using [Appium framework](https://http://appium.io/)
 * Currently able to obtain all relevant elements within the Android application using just the APK file to run.
