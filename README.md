@@ -11,9 +11,11 @@ These instructions will get you a copy of the project up and running on your loc
 
 ### 21 August 2017
 * `get_state()` of UI is done with index of xml dump.
+* Added some random clicks and clicks with filling of text.
+* The analysis of data(descriptions) is to be done, and will most likely be done using a database/RL style
 
 
-### 17 August 2017 
+### 17 August 2017
 * Changing to python wrapper for UI automator for the dump method
 * Using dump method of the current UI in order to `get_state()` of the current representation of the UI
 * Will be doing analysis on words crawled from many APKs so as to do learning on the button descriptions
