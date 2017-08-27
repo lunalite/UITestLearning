@@ -1,7 +1,10 @@
 from __future__ import print_function
+
+import operator
 from uiautomator import Device
 import xml.etree.ElementTree as ET
 import random
+import string
 
 device_name = 'emulator-5554'
 d = Device(device_name)
@@ -54,8 +57,33 @@ def get_state():
     #     else:
 
 
-def click_random_button_from(buttons):
-    random.choice(buttons).click.wait()
+state_dict = {}
+
+
+def click_button_intelligently_from(buttons):
+    old_state = get_state()
+    btn_to_click = make_button_decision(buttons)
+    print(btn_to_click.info['text'])
+    btn_to_click.click.wait()
+    if get_state() == old_state:
+        print('nothing changed')
+        state_dict[btn_to_click.info['text'].lower()] -= 1
+    elif get_state() != old_state:
+        print('changed state')
+        # add mutation
+
+
+def make_button_decision(buttons):
+    max_val = -9999
+    max_btns = []
+    for btn in buttons:
+        if state_dict[btn.info['text'].lower()] > max_val:
+            max_btns = []
+            max_btns.append(btn)
+            max_val = state_dict[btn.info['text'].lower()]
+        elif state_dict[btn.info['text'].lower()] == max_val:
+            max_btns.append(btn)
+    return random.choice(max_btns)
 
 
 def click_random_button():
@@ -70,7 +98,8 @@ def click_random_button():
 
 
 def get_text():
-    return 'random'
+    chars = "".join([random.choice(string.letters) for i in xrange(15)])
+    return chars
 
 
 def main():
@@ -95,17 +124,9 @@ def main():
         edit.set_text(get_text())
     print(get_state())
     for btn in buttons:
-        print(btn.info)
-        print(btn.info['contentDescription'])
-        print(btn.info['text'])
-        print(btn.info['resourceName'])
-    click_random_button_from(buttons)
-    click_random_button()
-    click_random_button()
+        state_dict[btn.info['text'].lower()] = 0
+    while True:
+        click_button_intelligently_from(buttons)
 
-    click_random_button()
-    click_random_button()
-    click_random_button()
-    click_random_button()
 
 main()
