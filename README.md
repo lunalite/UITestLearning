@@ -9,6 +9,11 @@ These instructions will get you a copy of the project up and running on your loc
 
 ## Updates
 
+### 30 August 2017
+* Implemented supervised learning and labeling for the clicks done so as to glean for further information to classify them.
+* Word to score ratio is being kept in a dictionary and stored in json format within a file.
+
+
 ### 21 August 2017
 * `get_state()` of UI is done with index of xml dump.
 * Added some random clicks and clicks with filling of text.
