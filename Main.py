@@ -6,40 +6,15 @@ from uiautomator import Device
 import xml.etree.ElementTree as ET
 import random
 import string
-import json
 
+import Utility
+from Config import Config
 from Data import Data
 
-package_name = ['me.danielbarnett.addresstogps',
-                'me.dbarnett.acastus']
-application_name = ['AddressToGPS', 'Acastus']
+d = Device(Config.device_name)
 
-"""#########################################
-Change variables below to suit your settings
-#########################################"""
-
-# Sets the device name of emulator
-device_name = 'emulator-5554'
-
-# Selecting the package and application name for the application to be used
-selection_num = 0
-
-# Selecting the data where data is being stored at.
-data_store_location = './data/'
-
-"""#########################################
-End of variable setting
-#########################################"""
-
-d = Device(device_name)
-
-edit_text_widget_text = 'android.widget.EditText'
-button_widget_text = 'android.widget.Button'
-image_button_widget_text = 'android.widget.ImageButton'
-image_view_button_widget_text = 'android.widget.ImageView'
-
-pack_name = package_name[selection_num]
-app_name = application_name[selection_num]
+pack_name = Config.app_name
+app_name = Config.pack_name
 
 
 def get_state():
@@ -99,9 +74,9 @@ def make_button_decision(buttons, state_dict):
     return random.choice(max_btns)
 
 
-def click_random_button():
-    click_els = d(clickable='true', packageName=pack_name)
-    random.choice(click_els).click()
+# def click_random_button():
+#     click_els = d(clickable='true', packageName=pack_name)
+#     random.choice(click_els).click()
 
 
 def get_text():
@@ -113,26 +88,6 @@ def get_text():
     return chars
 
 
-def store_data(data_dictionary, name):
-    """
-    Storing data into dictionary
-    :param data_dictionary:
-    :param name: contains the filename of the file to be saved to.
-    """
-    with open(data_store_location + name + '.txt', 'w+') as f:
-        json.dump(data_dictionary, f)
-
-
-def load_data(name):
-    """
-    Loading data from file to dictionary
-    :param name: filename of the file to be read from.
-    :return: a dictionary file
-    """
-    with open(data_store_location + name + '.txt') as f:
-        return json.load(f)
-
-
 def main():
     d.screen.on()
     d.press('home')
@@ -140,16 +95,15 @@ def main():
     d(text=app_name).click.wait()
 
     learning_data = Data(app_name)
-    if os.path.isfile(data_store_location + app_name + '.txt'):
-        learning_data.dictionary = load_data(app_name)
+    learning_data.dictionary = Utility.load_data(app_name)
 
     click_els = d(clickable='true', packageName=pack_name)
     edit_box = []
     buttons = []
     for el in click_els:
-        if el.info['className'] == edit_text_widget_text:
+        if el.info['className'] == Config.edit_widget:
             edit_box.append(el)
-        elif el.info['className'] in (button_widget_text, image_button_widget_text, image_view_button_widget_text):
+        elif el.info['className'] in (Config.button_widget, Config.image_button_widget, Config.image_view_button_widget):
             buttons.append(el)
 
     for edit in edit_box:
@@ -164,9 +118,8 @@ def main():
         try:
             click_button_intelligently_from(buttons, learning_data.dictionary)
         except KeyboardInterrupt:
-            print
-            'boohoohoo'
-            store_data(learning_data.dictionary, app_name)
+            print('boohoohoo')
+            Utility.store_data(learning_data.dictionary, app_name)
             sys.exit(0)
 
 
@@ -202,6 +155,4 @@ def get_parent(_child, _parent_map):
             print(parent.attrib['bounds'])
 
 
-#
-#
 get_parent(click_els[0], parent_map)
