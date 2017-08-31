@@ -164,9 +164,44 @@ def main():
         try:
             click_button_intelligently_from(buttons, learning_data.dictionary)
         except KeyboardInterrupt:
-            print('boohoohoo')
+            print
+            'boohoohoo'
             store_data(learning_data.dictionary, app_name)
             sys.exit(0)
 
 
-main()
+# main()
+
+x = d.dump()
+tree = ET.fromstring(x)
+parent_map = dict((c, p) for p in tree.iter() for c in p)
+# print(parent_map)
+click_els = d(clickable='true', packageName=pack_name)
+
+# print(click_els[0].info['className'])
+print(click_els[0].info['bounds'])
+
+
+def convert_bounds(node):
+    if hasattr(node, 'info'):
+        print(node.info)
+    else:
+        print('no info in node')
+
+
+convert_bounds(click_els[0])
+
+
+def get_parent(_child, _parent_map):
+    for child, parent in _parent_map.iteritems():
+        # print(child.attrib['package'])
+        # print(_child.info['packageName'])
+        if child.attrib['class'] == _child.info['className'] and child.attrib['package'] == _child.info['packageName'] \
+                and child.attrib['text'] == _child.info['text']:
+            print('hi')
+            print(parent.attrib['bounds'])
+
+
+#
+#
+get_parent(click_els[0], parent_map)
