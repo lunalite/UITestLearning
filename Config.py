@@ -8,7 +8,8 @@ Config file that holds the variables being used.
 class Config:
     apk_selection = [
         ['me.danielbarnett.addresstogps', 'AddressToGPS'],
-        ['me.dbarnett.acastus', 'Acastus']
+        ['me.dbarnett.acastus', 'Acastus'],
+        ['com.android.calculator2', 'Calculator']
     ]
 
     """========================================

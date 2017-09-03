@@ -9,6 +9,13 @@ These instructions will get you a copy of the project up and running on your loc
 
 ## Updates
 
+### 3 September 2017
+* Changed to python3 for latest implementations.
+* Changed key structure for node to score dictionary
+* Addressed the structure of storage
+* Added storing and loading of data structure in json format 
+
+
 ### 30 August 2017
 * Implemented supervised learning and labeling for the clicks done so as to glean for further information to classify them.
 * Word to score ratio is being kept in a dictionary and stored in json format within a file.
