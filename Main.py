@@ -1,107 +1,66 @@
 from __future__ import print_function
 
-import os
-import sys
-from uiautomator import Device
-import xml.etree.ElementTree as ET
 import random
 import string
-import json
+import sys
 
+from uiautomator import Device
+
+import Utility
+from Config import Config
 from Data import Data
 
-package_name = ['me.danielbarnett.addresstogps',
-                'me.dbarnett.acastus']
-application_name = ['AddressToGPS', 'Acastus']
+d = Device(Config.device_name)
 
-"""#########################################
-Change variables below to suit your settings
-#########################################"""
-
-# Sets the device name of emulator
-device_name = 'emulator-5554'
-
-# Selecting the package and application name for the application to be used
-selection_num = 0
-
-# Selecting the data where data is being stored at.
-data_store_location = './data/'
-
-"""#########################################
-End of variable setting
-#########################################"""
-
-d = Device(device_name)
-
-edit_text_widget_text = 'android.widget.EditText'
-button_widget_text = 'android.widget.Button'
-image_button_widget_text = 'android.widget.ImageButton'
-image_view_button_widget_text = 'android.widget.ImageView'
-
-pack_name = package_name[selection_num]
-app_name = application_name[selection_num]
+pack_name = Config.pack_name
+app_name = Config.app_name
 
 
-def get_state():
-    """
-    Get state of the current UI via getting a dump of the XML structure before forming a string with the indices of node.
-    :return: the bit representation of current state
-    """
-
-    def get_bit_rep():
-        xml = d.dump()
-        root = ET.fromstring(xml.encode('utf-8'))
-        bit_rep = ''
-        for element in root.iter('node'):
-            bit_rep += element.get('index')
-        return bit_rep
-
-    if len(get_bit_rep()) >= 75:
-        d.press.back()
-
-    return get_bit_rep()
-
-
-def click_button_intelligently_from(buttons, state_dict):
+def click_button_intelligently_from(buttons, data_activity, curr_state):
     """
     Choosing the right button to click by determining if state changes, and changing the respective scores.
     :param buttons: all possible button choices.
-    :param state_dict: the dictionary of word to score pairs.
-    :return: void
+    :param data_activity: activity data structure
+    :param curr_state: current state
+    :return:
     """
-    old_state = get_state()
-    btn_to_click = make_button_decision(buttons, state_dict)
-    print(btn_to_click.info['text'])
+    btn_to_click = make_button_decision(buttons, data_activity)
+    if btn_to_click is None:
+        print('No buttons to click')
+        return None
     btn_to_click.click.wait()
-    if get_state() == old_state:
+    if Utility.get_state(d) == curr_state:
         print('nothing changed')
-        state_dict[btn_to_click.info['text'].lower()] -= 1
-    elif get_state() != old_state:
+        data_activity.get_clickable_by_name(Utility.btn_to_key(btn_to_click)).score -= 1
+        return 'Nothing changed'
+    elif Utility.get_state(d) != curr_state:
         print('changed state')
-        # add mutation
+        return 'Changed'
+    # add mutation
 
 
-def make_button_decision(buttons, state_dict):
+def make_button_decision(buttons, data_activity):
     """
     Supervised learning, to make the decision of choosing the right buttons to click.
     :param buttons: all possible button choices.
-    :param state_dict: the dictionary of word to score pairs.
+    :param data_activity: current activity data storage
     :return: returns the button to be clicked.
     """
     max_val = -9999
     max_btns = []
-    for btn in buttons:
-        if state_dict[btn.info['text'].lower()] > max_val:
-            max_btns = [btn]
-            max_val = state_dict[btn.info['text'].lower()]
-        elif state_dict[btn.info['text'].lower()] == max_val:
-            max_btns.append(btn)
-    return random.choice(max_btns)
-
-
-def click_random_button():
-    click_els = d(clickable='true', packageName=pack_name)
-    random.choice(click_els).click()
+    if len(buttons) == 0:
+        return None
+    elif len(buttons) == 1:
+        return buttons[0]
+    else:
+        for btn in buttons:
+            score = data_activity.get_clickable_by_name(Utility.btn_to_key(btn)).score
+            if score > max_val:
+                max_btns = [btn]
+                max_val = score
+            elif score == max_val:
+                max_btns.append(btn)
+        return random.choice(max_btns)
 
 
 def get_text():
@@ -109,28 +68,7 @@ def get_text():
     Getting random 15 characters and join them.
     :return: random string
     """
-    chars = "".join([random.choice(string.letters) for i in xrange(15)])
-    return chars
-
-
-def store_data(data_dictionary, name):
-    """
-    Storing data into dictionary
-    :param data_dictionary:
-    :param name: contains the filename of the file to be saved to.
-    """
-    with open(data_store_location + name + '.txt', 'w+') as f:
-        json.dump(data_dictionary, f)
-
-
-def load_data(name):
-    """
-    Loading data from file to dictionary
-    :param name: filename of the file to be read from.
-    :return: a dictionary file
-    """
-    with open(data_store_location + name + '.txt') as f:
-        return json.load(f)
+    return ''.join(random.choices(string.ascii_lowercase + string.ascii_uppercase + string.digits, k=15))
 
 
 def main():
@@ -139,34 +77,72 @@ def main():
     d(resourceId='com.google.android.apps.nexuslauncher:id/all_apps_handle').click()
     d(text=app_name).click.wait()
 
-    learning_data = Data(app_name)
-    if os.path.isfile(data_store_location + app_name + '.txt'):
-        learning_data.dictionary = load_data(app_name)
+    learning_data = Utility.load_data(app_name)
+    if learning_data is None:
+        print('Initializing...')
+        learning_data = Data(appname=app_name, packname=pack_name)
+        learning_data.add_new_activity(d)
 
     click_els = d(clickable='true', packageName=pack_name)
     edit_box = []
     buttons = []
     for el in click_els:
-        if el.info['className'] == edit_text_widget_text:
+        if el.info['className'] == Config.edit_widget:
             edit_box.append(el)
-        elif el.info['className'] in (button_widget_text, image_button_widget_text, image_view_button_widget_text):
+        elif el.info['className'] in (
+                Config.button_widget, Config.image_button_widget, Config.image_view_button_widget):
             buttons.append(el)
 
     for edit in edit_box:
         edit.set_text(get_text())
-    print(get_state())
-
-    # Set this only if resetting the data
-    # for btn in buttons:
-    #     state_dict[btn.info['text'].lower()] = 0
 
     while True:
         try:
-            click_button_intelligently_from(buttons, learning_data.dictionary)
+            curr_state = Utility.get_state(d)
+            btn_clicked = click_button_intelligently_from(buttons, learning_data.get_activity_by_state(curr_state),
+                                                          curr_state)
+            if btn_clicked is None:
+                break
         except KeyboardInterrupt:
             print('boohoohoo')
-            store_data(learning_data.dictionary, app_name)
+            Utility.store_data(learning_data, app_name)
             sys.exit(0)
 
 
 main()
+
+
+# """ XML Testing """
+# x = d.dump()
+# tree = ET.fromstring(x)
+# parent_map = dict((c, p) for p in tree.iter() for c in p)
+# # print(parent_map)
+# click_els = d(clickable='true', packageName=pack_name)
+#
+# # print(click_els[0].info['className'])
+# # print(click_els[0].info['bounds'])
+# # parent = get_parent(click_els[0], parent_map)
+# # children = parent.findall('node')
+# # for child in children:
+# #     print(child.attrib['bounds'])
+# """ End of XML Testing """
+
+
+
+
+
+"""
+buttons to P1 or P2
+Determine which activity page is more useful.
+determine what kind of bonus scores to give regarding the next page 
+
+Store more details in the first runs
+to collect parent and child nodes as well
+discriminiation between what is filled in and what is generated by system
+contextual meanings (siblings/parents/children) e.g. 1-away
+relationship distance = 1
+list of data for what will be collectedz
+
+literature review of model for sentimental analysis-like analysis 
+twitter-like NN model
+"""
