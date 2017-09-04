@@ -1,9 +1,13 @@
+import logging
 import Utility
 import json
 
 from Clickables import Clickables
 from Config import Config
 from DataActivity import DataActivity
+
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 
 class Data(object):
@@ -26,11 +30,11 @@ class Data(object):
         # self.vocabulary = []
 
     def __str__(self):
-        return 'Data appname: ' + self.appname + '; packname: ' + self.packname + '; with data activities: ' + str(
-            self.data_activity)
+        return json.dumps(self, default=lambda o: o.__dict__)
 
-    def add_new_activity(self, device):
-        current_state = Utility.get_state(device)
+    def add_new_activity(self, device, current_state=None):
+        if current_state is None:
+            current_state = Utility.get_state(device)
         # Check if state in data_activity if not, add
         da = DataActivity(current_state)
         click_els = device(clickable='true', packageName=Config.pack_name)
@@ -38,13 +42,15 @@ class Data(object):
             key = Utility.btn_to_key(btn)
             da.clickables.append(Clickables(key))
         self.data_activity.append(da)
+        logger.info('Added new activity to data.')
 
     def to_json(self):
         return json.dumps(self, default=lambda o: o.__dict__)
 
     def get_activity_by_state(self, state):
+        logger.info('Getting activity by state: ' + state)
         for activity in self.data_activity:
-            if activity.state == state:
+            if activity.activity_state == state:
                 return activity
         return None
 

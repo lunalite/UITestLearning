@@ -5,6 +5,7 @@ Utility file that holds every single miscellaneous tasks
 ======================================================"""
 
 import json
+import logging
 import os
 import xml.etree.ElementTree as ET
 
@@ -15,13 +16,16 @@ from DataActivity import DataActivity
 
 data_store_location = Config.data_store_location
 
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
 
 def store_data(data, name):
     """
     Storing data into dictionary
-    :param json: json dictionary structure
     :param name: contains the filename of the file to be saved to.
     """
+    logger.info('Storing data into file at ' + data_store_location + name + '.txt')
     with open(data_store_location + name + '.txt', 'w+') as f:
         json.dump(data, default=lambda o: o.__dict__, fp=f)
 
@@ -34,13 +38,14 @@ def load_data(name):
     """
     carr = []
     darr = []
+    logger.info('Loading data from file ' + data_store_location + name + '.txt')
 
     def t(j):
         if 'name' in j:
             c = Clickables(j['name'], j['score'], j['next_transition_state'])
             carr.append(c)
-        elif 'state' in j:
-            da = DataActivity(j['state'], carr)
+        elif 'activity_state' in j:
+            da = DataActivity(j['activity_state'], carr)
             darr.append(da)
         else:
             data = Data(j['appname'], j['packname'], data_activity=darr)
@@ -57,7 +62,7 @@ def convert_bounds(node):
     """
     Convert to bound from dictionary to string
     :param node:
-    :return: String of [left,top][right,down] representing the bounds of where widget is placed at.
+    :return: String of [sx, sy][ex, ey] representing the bounds of where widget is placed at.
     """
     sbound = ''
     if hasattr(node, 'info'):
@@ -65,7 +70,7 @@ def convert_bounds(node):
         sbound += '[' + str(bounds['left']) + ',' + str(bounds['top']) + '][' + str(bounds['right']) + ',' + str(
             bounds['bottom']) + ']'
     else:
-        print('no info in node')
+        logger.warning('No "info" in node')
     return sbound
 
 
@@ -96,7 +101,7 @@ def get_state(device):
     """
     Get state of the current UI via getting a dump of the XML structure before forming a string with the indices of node.
     :param device:
-    :return: the bit representation of current state
+    :return: the bit representation of current state in string
     """
 
     def get_bit_rep():
