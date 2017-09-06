@@ -1,3 +1,11 @@
+import logging
+
+from Clickables import Clickables
+
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
+
 class DataActivity(object):
     def __init__(self, state, clickables=[]):
         # state is the key
@@ -11,4 +19,10 @@ class DataActivity(object):
         for c in self.clickables:
             if c.name == name:
                 return c
-        return None
+
+        # TODO: Issue about change in text but not instate, causing error sine no clickable could be found
+        logger.info('No clickable found. Creating clickable...')
+        c = Clickables(name)
+        self.clickables.append(c)
+        return c
+

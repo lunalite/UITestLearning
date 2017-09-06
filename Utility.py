@@ -120,6 +120,6 @@ def get_state(device):
 
 def btn_to_key(btn):
     info = btn.info
-    key = '{' + info['className'].split('.')[-1] + '}-{' + info['text'] + '}-{' + info[
-        'contentDescription'] + '}-{' + convert_bounds(btn) + '}'
+    key = '{' + info['className'].split('.')[-1] + '}-{' + str(info['text']) + '}-{' + str(info[
+        'contentDescription']) + '}-{' + convert_bounds(btn) + '}'
     return key

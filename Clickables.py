@@ -1,5 +1,5 @@
 class Clickables(object):
-    def __init__(self, name, score=0, next_transition_state=None):
+    def __init__(self, name, score=1, next_transition_state=None):
         self.name = name
         self.score = score
         self.next_transition_state = next_transition_state

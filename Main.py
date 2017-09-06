@@ -29,7 +29,8 @@ def click_button_intelligently_from(buttons, data_activity, curr_state):
     :param curr_state: current state
     :return:
     """
-    btn_to_click, old_clickable = make_button_decision(buttons, data_activity)
+    btn_to_click = make_button_decision(buttons, data_activity)
+    old_clickable = data_activity.get_clickable_by_name(Utility.btn_to_key(btn_to_click))
     if btn_to_click is None:
         logger.info('No observable buttons to click from after making decision')
         return None
@@ -38,14 +39,16 @@ def click_button_intelligently_from(buttons, data_activity, curr_state):
     new_state = Utility.get_state(d)
     if new_state == curr_state:
         logger.info('Nothing changed in state')
-        old_clickable.score -= 1
+        # old_clickable.score -= 1
         return -1
     else:
         logger.info('A new state. Appending next_transition_state to ' + str(old_clickable))
         old_clickable.next_transition_state = new_state
+
+        # TODO: Change scale of inrease based on number of clickables for next page
         old_clickable.score += 1
+
         return new_state
-        # add mutation
 
 
 def make_button_decision(buttons, data_activity):
@@ -57,7 +60,6 @@ def make_button_decision(buttons, data_activity):
     """
     max_val = -9999
     max_btns = []
-    logger.info('Making button decision from buttons.')
     print(len(buttons))
     if len(buttons) == 0:
         logger.info('No clickable buttons available. Returning None.')
@@ -66,16 +68,26 @@ def make_button_decision(buttons, data_activity):
         logger.info('One clickable button available. Returning button.')
         return buttons[0]
     else:
+        total_score = 0
+        score_arrangement = {}
         for btn in buttons:
-            old_clickable = data_activity.get_clickable_by_name(Utility.btn_to_key(btn))
+            clickable = data_activity.get_clickable_by_name(Utility.btn_to_key(btn))
+            total_score += clickable.score
+            score_arrangement[total_score] = btn
+        value = random.uniform(0, total_score)
+        for i in score_arrangement:
+            if i >= value:
+                return score_arrangement[i]
+
+            '''
             score = old_clickable.score
             if score > max_val:
-                max_btns = [(btn, old_clickable)]
+                max_btns = [btn]
                 max_val = score
             elif score == max_val:
-                max_btns.append((btn, old_clickable))
-        logger.info('Multiple buttons available. Returning selection of button.')
+                max_btns.append(btn)
         return random.choice(max_btns)
+            '''
 
 
 def get_text():
@@ -162,6 +174,3 @@ main()
 # # for child in children:
 # #     print(child.attrib['bounds'])
 # """ End of XML Testing """
-
-
-

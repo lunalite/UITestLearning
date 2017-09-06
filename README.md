@@ -25,7 +25,10 @@ literature review of model for sentimental analysis-like analysis
 twitter-like NN model
 Add mutation and probability for button clicks
 !-->
-
+### 6 September 2017
+* Added mutation for decision of choosing buttons
+* Initialization of scores changed to 1 instead for mutation
+* Removed subtraction of -1 to score if no change states 
 
 ### 4 September 2017
 * Added logging into project
