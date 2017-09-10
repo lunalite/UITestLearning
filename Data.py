@@ -1,4 +1,7 @@
 import logging
+
+import time
+
 import Utility
 import json
 
@@ -19,12 +22,12 @@ class Data(object):
     @vocabulary: The list of all possible words that are being used in the APK file for RL/NLP later on.
     """
 
-    def __init__(self, appname, packname, data_activity=[]):
+    def __init__(self, appname, packname, _data_activity=None):
         self.appname = appname
         self.packname = packname
         self.app_description = None
         self.category = None
-        self.data_activity = data_activity
+        self.data_activity = [] if _data_activity is None else _data_activity
 
         # self.store_content = {}
         # self.vocabulary = []
@@ -32,15 +35,17 @@ class Data(object):
     def __str__(self):
         return json.dumps(self, default=lambda o: o.__dict__)
 
-    def add_new_activity(self, device, current_state=None):
+    def add_new_activity(self, device, current_state=None, _click_els=None):
         if current_state is None:
             current_state = Utility.get_state(device)
         # Check if state in data_activity if not, add
         da = DataActivity(current_state)
-        click_els = device(clickable='true', packageName=Config.pack_name)
+        click_els = device(clickable='true', packageName=Config.pack_name) if _click_els is None else _click_els
         for btn in click_els:
             key = Utility.btn_to_key(btn)
             da.clickables.append(Clickables(key))
+            da.clickables_score.append(1)
+        da.clickables_length = len(da.clickables)
         self.data_activity.append(da)
         logger.info('Added new activity to data.')
 

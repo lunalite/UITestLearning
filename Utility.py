@@ -8,6 +8,10 @@ import json
 import logging
 import os
 import xml.etree.ElementTree as ET
+import random
+import string
+
+import re
 
 from Clickables import Clickables
 from Config import Config
@@ -37,6 +41,7 @@ def load_data(name):
     :return: a dictionary file
     """
     carr = []
+    carr_score = []
     darr = []
     logger.info('Loading data from file ' + data_store_location + name + '.txt')
 
@@ -44,11 +49,13 @@ def load_data(name):
         if 'name' in j:
             c = Clickables(j['name'], j['score'], j['next_transition_state'])
             carr.append(c)
+            carr_score.append(c.score)
         elif 'activity_state' in j:
-            da = DataActivity(j['activity_state'], carr)
+            da = DataActivity(state=j['activity_state'], _clickables=carr, _clickables_score=carr_score,
+                              _clickables_length=len(carr))
             darr.append(da)
         else:
-            data = Data(j['appname'], j['packname'], data_activity=darr)
+            data = Data(appname=j['appname'], packname=j['packname'], _data_activity=darr)
             return data
 
     if os.path.isfile(data_store_location + name + '.txt'):
@@ -120,6 +127,26 @@ def get_state(device):
 
 def btn_to_key(btn):
     info = btn.info
-    key = '{' + info['className'].split('.')[-1] + '}-{' + str(info['text']) + '}-{' + str(info[
-        'contentDescription']) + '}-{' + convert_bounds(btn) + '}'
+    key = '{' + info['className'].split('.')[-1] + '}-{' + str(info['text']) + '}-{' + str(
+        info['contentDescription']) + '}-{' + convert_bounds(btn) + '}'
     return key
+
+
+def key_to_btn(key):
+    attributes = {}
+    print(key)
+    m = re.findall('{(.*?)}', key)
+    # Typically android.widget class name
+    attributes['className'] = 'android.widget.' + m[0]
+    attributes['text'] = m[1]
+    attributes['contentDescription'] = m[2]
+    attributes['bounds'] = m[3]
+    return attributes
+
+
+def get_text():
+    """
+    Getting random 15 characters and join them.
+    :return: random string
+    """
+    return ''.join(random.choices(string.ascii_lowercase + string.ascii_uppercase + string.digits, k=15))
