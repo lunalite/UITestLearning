@@ -6,6 +6,7 @@ import random
 import sys
 
 from uiautomator import Device
+import xml.etree.ElementTree as ET
 
 import Utility
 from Config import Config
@@ -119,12 +120,8 @@ def main():
     # buttons = classify_buttons()
 
     # Create dictionary for more efficient method
-    btns_to_click = d(packageName=pack_name, clickable='true')
-    curr_state = Utility.get_state(d)
-    for btn in btns_to_click:
-        key = Utility.btn_to_key(btn)
-        key_to_btn[curr_state + '-' + key] = btn
-    key_to_btn[curr_state] = True
+
+    Utility.create_clickables_hash(key_to_btn, d)
 
     while True:
         try:
@@ -171,18 +168,22 @@ main()
 # random.choice(click_els).click()
 
 
-
-# """ XML Testing """
+""" XML Testing """
 # x = d.dump()
-# tree = ET.fromstring(x)
-# parent_map = dict((c, p) for p in tree.iter() for c in p)
-# # print(parent_map)
+# print(x)
+
+# print(parent_map)
 # click_els = d(clickable='true', packageName=pack_name)
-#
-# # print(click_els[0].info['className'])
-# # print(click_els[0].info['bounds'])
-# # parent = get_parent(click_els[0], parent_map)
-# # children = parent.findall('node')
-# # for child in children:
-# #     print(child.attrib['bounds'])
+
+# Utility.create_clickables_hash(key_to_btn, d)
+# click_els = d(resourceId='me.danielbarnett.addresstogps:id/app_title', packageName=pack_name)
+# print(click_els[0].info['className'])
+# print(click_els[0].info['bounds'])
+# parent = Utility.get_parent(click_els[0], Utility.create_child_to_parent(d.dump()))
+# # print(parent.attrib)
+# print(Utility.xml_btn_to_key(parent))
+
+# children = parent.findall('node')
+# for child in children:
+#     print(child.attrib['bounds'])
 # """ End of XML Testing """

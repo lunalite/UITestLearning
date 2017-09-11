@@ -20,7 +20,7 @@ relationship distance = 1
 
 3) Optimization of the for loops
 4) Use database MongoDB
-
+5) Consider using instance to optmize
 list of data for what will be collectedz
 
 literature review of model for sentimental analysis-like analysis 
@@ -32,6 +32,7 @@ Consider using database MongoDB
 ### 11 September 2017
 * Optimized improvement for a few seconds
 * Removed text in clickable storage since it isn't representative of an unchangeable unique key
+* Added parent node to clickable data structure
 
 ### 10 September 2017
 * Determine which activity page is more useful. == giving scores to activity based on no. of clickables

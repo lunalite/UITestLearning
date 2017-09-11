@@ -1,10 +1,7 @@
+import json
 import logging
 
-import time
-
 import Utility
-import json
-
 from Clickables import Clickables
 from Config import Config
 from DataActivity import DataActivity
@@ -14,14 +11,6 @@ logger = logging.getLogger(__name__)
 
 
 class Data(object):
-    """
-    @name: name of the application that is being accessed.
-    @description: the description of the application being accessed.
-    @dictionary: Currently only using a basic form of supervised learning and labeling, and dictionary is used for
-    storing word and score ratio.
-    @vocabulary: The list of all possible words that are being used in the APK file for RL/NLP later on.
-    """
-
     def __init__(self, appname, packname, _data_activity=None):
         self.appname = appname
         self.packname = packname
@@ -41,9 +30,11 @@ class Data(object):
         # Check if state in data_activity if not, add
         da = DataActivity(current_state)
         click_els = device(clickable='true', packageName=Config.pack_name) if _click_els is None else _click_els
+        parent_map = Utility.create_child_to_parent(dump=device.dump())
         for btn in click_els:
             key = Utility.btn_to_key(btn)
-            da.clickables.append(Clickables(key))
+            da.clickables.append(Clickables(name=key, _parent_name=Utility.xml_btn_to_key(
+                Utility.get_parent(btn, _parent_map=parent_map))))
             da.clickables_score.append(1)
         da.clickables_length = len(da.clickables)
         self.data_activity.append(da)

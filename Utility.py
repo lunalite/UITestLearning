@@ -47,7 +47,7 @@ def load_data(name):
 
     def t(j):
         if 'name' in j:
-            c = Clickables(j['name'], j['score'], j['next_transition_state'])
+            c = Clickables(j['name'], j['score'], j['next_transition_state'], _parent_name=j['parent_name'])
             carr.append(c)
             carr_score.append(c.score)
         elif 'activity_state' in j:
@@ -84,6 +84,11 @@ def convert_bounds(node):
 # a = '[0,210][1080,1316]'
 # print(convert_bounds(click_els[0]))
 
+def create_child_to_parent(dump):
+    tree = ET.fromstring(dump)
+    parent_map = dict((c, p) for p in tree.iter() for c in p)
+    return parent_map
+
 
 def get_parent(_child, _parent_map):
     """
@@ -92,7 +97,7 @@ def get_parent(_child, _parent_map):
     :param _parent_map: The parent to child map.
     :return: parent node
     """
-    for child, parent in _parent_map.iteritems():
+    for child, parent in _parent_map.items():
 
         # method 1 to compare all these classes
         # if child.attrib['class'] == _child.info['className'] and child.attrib['package'] == _child.info['packageName'] \
@@ -134,6 +139,14 @@ def btn_to_key(btn):
     return key
 
 
+def xml_btn_to_key(xml_btn):
+    info = xml_btn.attrib
+    # return info
+    key = '{' + info['class'].split('.')[-1] + '}-{' + str(
+        info['content-desc']) + '}-{' + info['bounds'] + '}'
+    return key
+
+
 # def key_to_btn(key):
 #     attributes = {}
 #     print(key)
@@ -152,3 +165,12 @@ def get_text():
     :return: random string
     """
     return ''.join(random.choices(string.ascii_lowercase + string.ascii_uppercase + string.digits, k=15))
+
+
+def create_clickables_hash(_key_to_btn, d):
+    btns_to_click = d(packageName=Config.pack_name, clickable='true')
+    curr_state = get_state(d)
+    for btn in btns_to_click:
+        key = btn_to_key(btn)
+        _key_to_btn[curr_state + '-' + key] = btn
+    _key_to_btn[curr_state] = True
