@@ -112,7 +112,7 @@ def get_state(device):
     """
 
     def get_bit_rep():
-        xml = device.dump(comrpessed=False)
+        xml = device.dump()
         root = ET.fromstring(xml.encode('utf-8'))
         bit_rep = ''
         for element in root.iter('node'):

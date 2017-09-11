@@ -151,7 +151,7 @@ def main():
             sys.exit(0)
 
 
-# main()
+main()
 # print(Utility.get_state(d))
 # print(d.dump(compressed=False))
 # for i in range(30):
