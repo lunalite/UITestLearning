@@ -58,19 +58,3 @@ class Data(object):
             if activity.activity_state == state:
                 return activity
         return None
-
-        # def initialize_dictionary(self, clickable_btns):
-        #     """
-        #     Initialize dictionary with score 0s
-        #     Format of key is as follow:
-        #     {widget_truncated_className}-{text}-{contentDescription}-{[L,T][R,B]}
-        #     Where [L,T] represent left and top bound coords and [R,B] represent right and bottom coords
-        #     :param clickable_btns: present buttons on UI with clickable set as True
-        #     :return:
-        #     """
-        #     for btn in clickable_btns:
-        #         info = btn.info
-        #         key = '{' + info['className'].split('.')[-1] + '}-{' + info['text'] + '}-{' + info[
-        #             'contentDescription'] + '}-{' + Utility.convert_bounds(btn) + '}'
-        #         if key not in self.dictionary:
-        #             self.dictionary[key] = 0

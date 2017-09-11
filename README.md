@@ -29,6 +29,10 @@ twitter-like NN model
 Consider using database MongoDB
 !-->
 
+### 11 September 2017
+* Optimized improvement for a few seconds
+* Removed text in clickable storage since it isn't representative of an unchangeable unique key
+
 ### 10 September 2017
 * Determine which activity page is more useful. == giving scores to activity based on no. of clickables
 * Added length parameter into data_activity object for faster matching of length of clickables

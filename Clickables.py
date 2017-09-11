@@ -5,4 +5,4 @@ class Clickables(object):
         self.next_transition_state = next_transition_state
 
     def __str__(self):
-        return '\n' + '; name: ' + self.name + '; score: ' + str(self.score)
+        return '\n' + 'name: ' + self.name + '; score: ' + str(self.score)

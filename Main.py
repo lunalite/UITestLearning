@@ -23,14 +23,8 @@ key_to_btn = {}
 
 
 def click_button_intelligently_from(_clickables, data_activity, curr_state):
-    """
-    Choosing the right button to click by determining if state changes, and changing the respective scores.
-    :param _clickables: All clickable object gathered.
-    :param data_activity: activity data structure
-    :param curr_state: current state
-    :return:
-    """
     btn_to_click = make_button_decision(_clickables, data_activity)
+
     if btn_to_click is None:
         logger.info('No observable buttons to click from after making decision')
         return None, None
@@ -47,8 +41,6 @@ def click_button_intelligently_from(_clickables, data_activity, curr_state):
     else:
         logger.info('A new state. Appending next_transition_state to ' + str(old_clickable))
         old_clickable.next_transition_state = new_state
-
-
 
         def increase_score():
             # TODO: Change scale of increase based on number of clickables for next page
@@ -76,12 +68,6 @@ def click_button_intelligently_from(_clickables, data_activity, curr_state):
 
 
 def make_button_decision(_clickables, data_activity):
-    """
-    Supervised learning, to make the decision of choosing the right buttons to click.
-    :param _clickables: all possible clickable object choices.
-    :param data_activity: current activity data storage
-    :return: returns the button to be clicked.
-    """
     if len(_clickables) == 0:
         logger.info('No clickable buttons available. Returning None.')
         return None
@@ -97,18 +83,8 @@ def make_button_decision(_clickables, data_activity):
         for i in data_activity.clickables_score:
             curr_score += i
             if curr_score >= value:
-                return _clickables[i]
+                return _clickables[index]
             index += 1
-
-        '''Old inefficient method
-                for btn in buttons:
-                    clickable = data_activity.get_clickable_by_name(Utility.btn_to_key(btn))
-                    total_score += clickable.score
-                    score_arrangement[total_score] = btn
-                    # for i in score_arrangement:
-                #     if i >= value:
-                #         return score_arrangement[i]
-                '''
 
 
 def main():
@@ -155,7 +131,6 @@ def main():
             # TODO: Temporary no edit box first. WIll add here later by changing data structure
             curr_state = Utility.get_state(d)
             dat = learning_data.get_activity_by_state(curr_state)
-
             btn_click_result = click_button_intelligently_from(dat.clickables, dat,
                                                                curr_state)
             state_result, new_click_els = btn_click_result
@@ -176,14 +151,22 @@ def main():
             sys.exit(0)
 
 
-main()
+# main()
 # print(Utility.get_state(d))
-# print(d.dump())
+# print(d.dump(compressed=False))
 # for i in range(30):
-#     click_el = d(packageName=pack_name, instance=i)
-#     print(str(i) + ': ' + click_el.info['text'])
+#     click_els = d(clickable='true', packageName=pack_name, instance=i)
+#     print(str(i) + ': ' + click_els.info['contentDescription'])
+
+# click_els.click()
+# for i in range(30):
+#     click_els.click()
+# print(len(click_els))
+    # print(str(i) + ': ' + click_el.info['text'])
+
 # for btn in click_els:
 #     print(btn.info)
+
 #
 # random.choice(click_els).click()
 

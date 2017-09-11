@@ -30,7 +30,7 @@ def store_data(data, name):
     :param name: contains the filename of the file to be saved to.
     """
     logger.info('Storing data into file at ' + data_store_location + name + '.txt')
-    with open(data_store_location + name + '.txt', 'w+') as f:
+    with open(data_store_location + name + '.txt', 'w') as f:
         json.dump(data, default=lambda o: o.__dict__, fp=f)
 
 
@@ -112,7 +112,7 @@ def get_state(device):
     """
 
     def get_bit_rep():
-        xml = device.dump()
+        xml = device.dump(comrpessed=False)
         root = ET.fromstring(xml.encode('utf-8'))
         bit_rep = ''
         for element in root.iter('node'):
@@ -127,21 +127,23 @@ def get_state(device):
 
 def btn_to_key(btn):
     info = btn.info
-    key = '{' + info['className'].split('.')[-1] + '}-{' + str(info['text']) + '}-{' + str(
+    # key = '{' + info['className'].split('.')[-1] + '}-{' + str(info['text']) + '}-{' + str(
+    #     info['contentDescription']) + '}-{' + convert_bounds(btn) + '}'
+    key = '{' + info['className'].split('.')[-1] + '}-{' + str(
         info['contentDescription']) + '}-{' + convert_bounds(btn) + '}'
     return key
 
 
-def key_to_btn(key):
-    attributes = {}
-    print(key)
-    m = re.findall('{(.*?)}', key)
-    # Typically android.widget class name
-    attributes['className'] = 'android.widget.' + m[0]
-    attributes['text'] = m[1]
-    attributes['contentDescription'] = m[2]
-    attributes['bounds'] = m[3]
-    return attributes
+# def key_to_btn(key):
+#     attributes = {}
+#     print(key)
+#     m = re.findall('{(.*?)}', key)
+#     # Typically android.widget class name
+#     attributes['className'] = 'android.widget.' + m[0]
+#     attributes['text'] = m[1]
+#     attributes['contentDescription'] = m[2]
+#     attributes['bounds'] = m[3]
+#     return attributes
 
 
 def get_text():
