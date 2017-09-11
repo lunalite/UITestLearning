@@ -1,7 +1,7 @@
-import logging
-import Utility
 import json
+import logging
 
+import Utility
 from Clickables import Clickables
 from Config import Config
 from DataActivity import DataActivity
@@ -11,20 +11,12 @@ logger = logging.getLogger(__name__)
 
 
 class Data(object):
-    """
-    @name: name of the application that is being accessed.
-    @description: the description of the application being accessed.
-    @dictionary: Currently only using a basic form of supervised learning and labeling, and dictionary is used for
-    storing word and score ratio.
-    @vocabulary: The list of all possible words that are being used in the APK file for RL/NLP later on.
-    """
-
-    def __init__(self, appname, packname, data_activity=[]):
+    def __init__(self, appname, packname, _data_activity=None):
         self.appname = appname
         self.packname = packname
         self.app_description = None
         self.category = None
-        self.data_activity = data_activity
+        self.data_activity = [] if _data_activity is None else _data_activity
 
         # self.store_content = {}
         # self.vocabulary = []
@@ -32,15 +24,19 @@ class Data(object):
     def __str__(self):
         return json.dumps(self, default=lambda o: o.__dict__)
 
-    def add_new_activity(self, device, current_state=None):
+    def add_new_activity(self, device, current_state=None, _click_els=None):
         if current_state is None:
             current_state = Utility.get_state(device)
         # Check if state in data_activity if not, add
         da = DataActivity(current_state)
-        click_els = device(clickable='true', packageName=Config.pack_name)
+        click_els = device(clickable='true', packageName=Config.pack_name) if _click_els is None else _click_els
+        parent_map = Utility.create_child_to_parent(dump=device.dump())
         for btn in click_els:
             key = Utility.btn_to_key(btn)
-            da.clickables.append(Clickables(key))
+            da.clickables.append(Clickables(name=key, _parent_name=Utility.xml_btn_to_key(
+                Utility.get_parent(btn, _parent_map=parent_map))))
+            da.clickables_score.append(1)
+        da.clickables_length = len(da.clickables)
         self.data_activity.append(da)
         logger.info('Added new activity to data.')
 
@@ -53,19 +49,3 @@ class Data(object):
             if activity.activity_state == state:
                 return activity
         return None
-
-        # def initialize_dictionary(self, clickable_btns):
-        #     """
-        #     Initialize dictionary with score 0s
-        #     Format of key is as follow:
-        #     {widget_truncated_className}-{text}-{contentDescription}-{[L,T][R,B]}
-        #     Where [L,T] represent left and top bound coords and [R,B] represent right and bottom coords
-        #     :param clickable_btns: present buttons on UI with clickable set as True
-        #     :return:
-        #     """
-        #     for btn in clickable_btns:
-        #         info = btn.info
-        #         key = '{' + info['className'].split('.')[-1] + '}-{' + info['text'] + '}-{' + info[
-        #             'contentDescription'] + '}-{' + Utility.convert_bounds(btn) + '}'
-        #         if key not in self.dictionary:
-        #             self.dictionary[key] = 0
