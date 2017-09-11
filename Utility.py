@@ -7,6 +7,8 @@ Utility file that holds every single miscellaneous tasks
 import json
 import logging
 import os
+import random
+import string
 import xml.etree.ElementTree as ET
 
 from Clickables import Clickables
@@ -26,7 +28,7 @@ def store_data(data, name):
     :param name: contains the filename of the file to be saved to.
     """
     logger.info('Storing data into file at ' + data_store_location + name + '.txt')
-    with open(data_store_location + name + '.txt', 'w+') as f:
+    with open(data_store_location + name + '.txt', 'w') as f:
         json.dump(data, default=lambda o: o.__dict__, fp=f)
 
 
@@ -121,5 +123,14 @@ def get_state(device):
 def btn_to_key(btn):
     info = btn.info
     key = '{' + info['className'].split('.')[-1] + '}-{' + str(info['text']) + '}-{' + str(info[
-        'contentDescription']) + '}-{' + convert_bounds(btn) + '}'
+                                                                                               'contentDescription']) + '}-{' + convert_bounds(
+        btn) + '}'
     return key
+
+
+def get_text():
+    """
+    Getting random 15 characters and join them.
+    :return: random string
+    """
+    return ''.join(random.choices(string.ascii_lowercase + string.ascii_uppercase + string.digits, k=15))

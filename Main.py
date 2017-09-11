@@ -45,9 +45,23 @@ def click_button_intelligently_from(buttons, data_activity, curr_state):
         logger.info('A new state. Appending next_transition_state to ' + str(old_clickable))
         old_clickable.next_transition_state = new_state
 
-        # TODO: Change scale of inrease based on number of clickables for next page
-        old_clickable.score += 1
+        def increase_score():
 
+            # TODO: Change scale of increase based on number of clickables for next page
+            # Currently, the increment is based on absolute number of how many clickables the new state contains.
+            # The rationale is that the more clickable elements, the greter the chances of having more coverage.
+            # So, more points will be given to increase the factor of exploration.
+            # _new_click_els = d(clickable='true', packageName=pack_name)
+            # old_length_of_clickables = len(data_activity.clickables)
+            _new_click_els = d(packageName=pack_name, clickable='true')
+            new_length_of_clickables = len(_new_click_els)
+            score_increment = new_length_of_clickables // 5 + 1
+            # Currently, its not addition but rather, giving an absolute value of score.
+            old_clickable.score = score_increment
+            logger.info('Appending score ' + str(score_increment))
+            return _new_click_els
+
+        _new_click_els = increase_score()
         return new_state
 
 
@@ -58,9 +72,7 @@ def make_button_decision(buttons, data_activity):
     :param data_activity: current activity data storage
     :return: returns the button to be clicked.
     """
-    max_val = -9999
-    max_btns = []
-    print(len(buttons))
+    logger.info(len(buttons))
     if len(buttons) == 0:
         logger.info('No clickable buttons available. Returning None.')
         return None
@@ -78,24 +90,6 @@ def make_button_decision(buttons, data_activity):
         for i in score_arrangement:
             if i >= value:
                 return score_arrangement[i]
-
-            '''
-            score = old_clickable.score
-            if score > max_val:
-                max_btns = [btn]
-                max_val = score
-            elif score == max_val:
-                max_btns.append(btn)
-        return random.choice(max_btns)
-            '''
-
-
-def get_text():
-    """
-    Getting random 15 characters and join them.
-    :return: random string
-    """
-    return ''.join(random.choices(string.ascii_lowercase + string.ascii_uppercase + string.digits, k=15))
 
 
 def main():
@@ -123,7 +117,7 @@ def main():
             else:
                 buttons.append(el)
         for edit in edit_box:
-            edit.set_text(get_text())
+            edit.set_text(Utility.get_text())
         return buttons
 
     buttons = classify_buttons()
