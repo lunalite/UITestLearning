@@ -22,11 +22,17 @@ relationship distance = 1
 5) Consider using instance to optmize
 list of data for what will be collectedz
 
+6) Consider subtracting score if button is being pressed simultaneously at the same time
+
 literature review of model for sentimental analysis-like analysis 
 twitter-like NN model
 
 Consider using database MongoDB
 !-->
+
+### 13 September 2017
+* Transferring from local file storage system over to Mongodb so as to optimize storage and search
+* Removed clickable hash that optimizes and reduce time interval between clicks since there might be different possible click objects in a single activity 
 
 ### 11 September 2017
 * Optimized improvement for a few seconds

@@ -7,9 +7,10 @@ Config file that holds the variables being used.
 
 class Config:
     apk_selection = [
-        ['me.danielbarnett.addresstogps', 'AddressToGPS'],
-        ['me.dbarnett.acastus', 'Acastus'],
-        ['com.android.calculator2', 'Calculator']
+        ['me.danielbarnett.addresstogps', 'AddressToGPS', 2],
+        ['me.dbarnett.acastus', 'Acastus', 2],
+        ['com.android.calculator2', 'Calculator', 5]
+        # ['View.TestSchedule.SangGeon.Cauly', '각종 시험 일정 정보 2016']
     ]
 
     """========================================
@@ -20,10 +21,14 @@ class Config:
     device_name = 'emulator-5554'
 
     # Selecting the package and application name for the application to be used
-    selection_num = 0
+    selection_num = 2
 
     # Selecting the data where data is being stored at.
     data_store_location = './data/'
+
+    # Set the MongoDB settings
+    mongoHost = 'localhost'
+    mongoPort = 27017
 
     """========================================
             End of variable setting
@@ -36,6 +41,7 @@ class Config:
 
     app_name = apk_selection[selection_num][1]
     pack_name = apk_selection[selection_num][0]
+    score_para = apk_selection[selection_num][2]
 
     def __init__(self):
         pass
