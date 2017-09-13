@@ -10,12 +10,8 @@ import os
 import random
 import string
 import xml.etree.ElementTree as ET
-import random
-import string
 
-import re
-
-from Clickables import Clickables
+from Clickable import Clickable
 from Config import Config
 from Data import Data
 from DataActivity import DataActivity
@@ -42,18 +38,25 @@ def load_data(name):
     :param name: filename of the file to be read from.
     :return: a dictionary file
     """
-    carr = []
-    carr_score = []
+    carr = {}
+    carr_score = {}
     darr = []
     logger.info('Loading data from file ' + data_store_location + name + '.txt')
 
     def t(j):
+        # print(j)
         if 'name' in j:
-            c = Clickables(j['name'], j['score'], j['next_transition_state'], _parent_name=j['parent_name'])
-            carr.append(c)
-            carr_score.append(c.score)
+            parent_activity_state = j['parent_activity_state']
+            c = Clickable(j['name'], parent_activity_state, j['score'], j['next_transition_state'],
+                          _parent_name=j['parent_name'])
+            if parent_activity_state not in carr:
+                carr[parent_activity_state] = []
+                carr_score[parent_activity_state] = []
+            carr[parent_activity_state].append(c)
+            carr_score[parent_activity_state].append(c.score)
         elif 'activity_state' in j:
-            da = DataActivity(state=j['activity_state'], _clickables=carr, _clickables_score=carr_score,
+            da = DataActivity(state=j['activity_state'], _clickables=carr[j['activity_state']],
+                              _clickables_score=carr_score[j['activity_state']],
                               _clickables_length=len(carr))
             darr.append(da)
         else:

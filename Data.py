@@ -2,7 +2,7 @@ import json
 import logging
 
 import Utility
-from Clickables import Clickables
+from Clickable import Clickable
 from Config import Config
 from DataActivity import DataActivity
 
@@ -33,8 +33,9 @@ class Data(object):
         parent_map = Utility.create_child_to_parent(dump=device.dump())
         for btn in click_els:
             key = Utility.btn_to_key(btn)
-            da.clickables.append(Clickables(name=key, _parent_name=Utility.xml_btn_to_key(
-                Utility.get_parent(btn, _parent_map=parent_map))))
+            da.clickables.append(
+                Clickable(name=key, _parent_activity_state=current_state, _parent_name=Utility.xml_btn_to_key(
+                    Utility.get_parent(btn, _parent_map=parent_map))))
             da.clickables_score.append(1)
         da.clickables_length = len(da.clickables)
         self.data_activity.append(da)

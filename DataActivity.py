@@ -1,6 +1,6 @@
 import logging
 
-from Clickables import Clickables
+from Clickable import Clickable
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -26,6 +26,6 @@ class DataActivity(object):
 
         # TODO: Issue about change in text but not instate, causing error sine no clickable could be found
         logger.info('No clickable found. Creating clickable...')
-        c = Clickables(name)
+        c = Clickable(name)
         self.clickables.append(c)
         return c

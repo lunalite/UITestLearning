@@ -28,6 +28,9 @@ twitter-like NN model
 Consider using database MongoDB
 !-->
 
+### 13 September 2017
+* Fixed bugs for loading of json
+
 ### 11 September 2017
 * Optimized improvement for a few seconds
 * Removed text in clickable storage since it isn't representative of an unchangeable unique key

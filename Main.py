@@ -59,7 +59,7 @@ def click_button_intelligently_from(_clickables, data_activity, curr_state):
                     key_to_btn[new_state + '-' + key] = btn
 
             new_length_of_clickables = len(_new_click_els)
-            score_increment = new_length_of_clickables // 5 + 1
+            score_increment = new_length_of_clickables // Config.score_parameter + 1
             # Currently, its not addition but rather, giving an absolute value of score.
             old_clickable.score = score_increment
             logger.info('Appending score ' + str(score_increment))
@@ -135,7 +135,7 @@ def main():
             state_result, new_click_els = btn_click_result
             if state_result is None:
                 # No buttons to click
-                break
+                d.press('back')
             elif state_result == -1:
                 # No change states
                 continue
@@ -150,7 +150,10 @@ def main():
             sys.exit(0)
 
 
-main()
+# main()
+a = Utility.load_data(app_name)
+print(a)
+
 # print(Utility.get_state(d))
 # print(d.dump(compressed=False))
 # for i in range(30):
