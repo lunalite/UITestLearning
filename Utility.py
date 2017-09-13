@@ -23,21 +23,12 @@ logger = logging.getLogger(__name__)
 
 
 def store_data(data, name):
-    """
-    Storing data into dictionary
-    :param name: contains the filename of the file to be saved to.
-    """
     logger.info('Storing data into file at ' + data_store_location + name + '.txt')
     with open(data_store_location + name + '.txt', 'w') as f:
         json.dump(data, default=lambda o: o.__dict__, fp=f)
 
 
 def load_data(name):
-    """
-    Loading data from file to dictionary
-    :param name: filename of the file to be read from.
-    :return: a dictionary file
-    """
     carr = {}
     carr_score = {}
     darr = []
@@ -56,8 +47,7 @@ def load_data(name):
             carr_score[parent_activity_state].append(c.score)
         elif 'activity_state' in j:
             da = DataActivity(state=j['activity_state'], _clickables=carr[j['activity_state']],
-                              _clickables_score=carr_score[j['activity_state']],
-                              _clickables_length=len(carr))
+                              _clickables_score=carr_score[j['activity_state']])
             darr.append(da)
         else:
             data = Data(appname=j['appname'], packname=j['packname'], _data_activity=darr)
@@ -71,11 +61,6 @@ def load_data(name):
 
 
 def convert_bounds(node):
-    """
-    Convert to bound from dictionary to string
-    :param node:
-    :return: String of [sx, sy][ex, ey] representing the bounds of where widget is placed at.
-    """
     sbound = ''
     if hasattr(node, 'info'):
         bounds = node.info['bounds']
@@ -96,12 +81,6 @@ def create_child_to_parent(dump):
 
 
 def get_parent(_child, _parent_map):
-    """
-    Gets parent of the child in XML dump by iterating through parent to child map - very inefficient.
-    :param _child: the child obtained from d(new UISelector).
-    :param _parent_map: The parent to child map.
-    :return: parent node
-    """
     for child, parent in _parent_map.items():
 
         # method 1 to compare all these classes
@@ -115,24 +94,21 @@ def get_parent(_child, _parent_map):
 
 
 def get_state(device):
-    """
-    Get state of the current UI via getting a dump of the XML structure before forming a string with the indices of node.
-    :param device:
-    :return: the bit representation of current state in string
-    """
-
     def get_bit_rep():
-        xml = device.dump()
+        xml = device.dump(compressed=False)
         root = ET.fromstring(xml.encode('utf-8'))
         bit_rep = ''
         for element in root.iter('node'):
             bit_rep += element.get('index')
         return bit_rep
 
-    if len(get_bit_rep()) >= 75:
+    # Assumes that there is a consecutive index from 0 to 32 within dump itself
+    a = '01234567891011121314151617181920212223242526272829303132'
+
+    if a in get_bit_rep():
         device.press.back()
 
-    return get_bit_rep()
+    return get_bit_rep()[-20:]
 
 
 def btn_to_key(btn):
@@ -164,17 +140,13 @@ def xml_btn_to_key(xml_btn):
 #     return attributes
 
 
-
 def get_text():
-    """
-    Getting random 15 characters and join them.
-    :return: random string
-    """
     return ''.join(random.choices(string.ascii_lowercase + string.ascii_uppercase + string.digits, k=15))
 
 
 def create_clickables_hash(_key_to_btn, d):
-    btns_to_click = d(packageName=Config.pack_name, clickable='true')
+    # btns_to_click = d(packageName=Config.pack_name, clickable='true')
+    btns_to_click = d(clickable='true')
     curr_state = get_state(d)
     for btn in btns_to_click:
         key = btn_to_key(btn)

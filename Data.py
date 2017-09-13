@@ -29,7 +29,8 @@ class Data(object):
             current_state = Utility.get_state(device)
         # Check if state in data_activity if not, add
         da = DataActivity(current_state)
-        click_els = device(clickable='true', packageName=Config.pack_name) if _click_els is None else _click_els
+        # click_els = device(clickable='true', packageName=Config.pack_name) if _click_els is None else _click_els
+        click_els = device(clickable='true') if _click_els is None else _click_els
         parent_map = Utility.create_child_to_parent(dump=device.dump())
         for btn in click_els:
             key = Utility.btn_to_key(btn)
@@ -37,7 +38,6 @@ class Data(object):
                 Clickable(name=key, _parent_activity_state=current_state, _parent_name=Utility.xml_btn_to_key(
                     Utility.get_parent(btn, _parent_map=parent_map))))
             da.clickables_score.append(1)
-        da.clickables_length = len(da.clickables)
         self.data_activity.append(da)
         logger.info('Added new activity to data.')
 

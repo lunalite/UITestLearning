@@ -6,7 +6,6 @@ import random
 import sys
 
 from uiautomator import Device
-import xml.etree.ElementTree as ET
 
 import Utility
 from Config import Config
@@ -51,8 +50,8 @@ def click_button_intelligently_from(_clickables, data_activity, curr_state):
             # _new_click_els = d(clickable='true', packageName=pack_name)
             # old_length_of_clickables = len(data_activity.clickables)
 
-
-            _new_click_els = d(packageName=pack_name, clickable='true')
+            # _new_click_els = d(packageName=pack_name, clickable='true')
+            _new_click_els = d(clickable='true')
             if new_state not in key_to_btn:
                 for btn in _new_click_els:
                     key = Utility.btn_to_key(btn)
@@ -150,12 +149,29 @@ def main():
             sys.exit(0)
 
 
-# main()
-a = Utility.load_data(app_name)
-print(a)
+main()
+
+# click_els = d(clickable='true')
+# parent_map = Utility.create_child_to_parent(dump=d.dump(compressed=False))
+# print(d.dump(compressed=False))
+# for btn in click_els:
+#     print(btn.info['text'])
+# click_els[21].click.wait()
+    # p = Utility.xml_btn_to_key(Utility.get_parent(btn, _parent_map=parent_map))
+    # print(p)
+# a = Utility.load_data(app_name)
+# print(a)
 
 # print(Utility.get_state(d))
 # print(d.dump(compressed=False))
+# a = d(resourceId='com.android.inputmethod.latin:id/keyboard_view')
+# a = d(packageName='com.android.inputmethod.latin')
+# a = d(clickable='true')
+# print(a.child(text=""))
+# for i in a:
+#     print(i.info)
+
+
 # for i in range(30):
 #     click_els = d(clickable='true', packageName=pack_name, instance=i)
 #     print(str(i) + ': ' + click_els.info['contentDescription'])

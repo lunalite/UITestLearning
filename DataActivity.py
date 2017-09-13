@@ -7,12 +7,11 @@ logger = logging.getLogger(__name__)
 
 
 class DataActivity(object):
-    def __init__(self, state, _clickables=None, _clickables_score=None, _clickables_length=0):
+    def __init__(self, state, _clickables=None, _clickables_score=None):
         # state is the key
         self.activity_state = state
         self.clickables = [] if _clickables is None else _clickables
         self.clickables_score = [] if _clickables_score is None else _clickables_score
-        self.clickables_length = _clickables_length
 
     def __str__(self):
         return 'activity_state: ' + self.activity_state + '; clickables: ' + ''.join(str(c) for c in self.clickables)
