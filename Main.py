@@ -6,7 +6,7 @@ import random
 import sys
 
 from uiautomator import Device
-
+import xml.etree.ElementTree as ET
 import Utility
 from Config import Config
 from Data import Data
@@ -33,7 +33,10 @@ def click_button_intelligently_from(_clickables, data_activity, curr_state):
     # TODO: Add index hierarchy search
     btn_to_click = key_to_btn[curr_state + '-' + btn_to_click.name]
     logger.info('Clicking button, ' + str(btn_to_click.info['text']))
-    btn_to_click.click.wait()
+    if btn_to_click.exists:
+        btn_to_click.click.wait()
+    else:
+        raise Exception('btn_to_click doesnt exist in click_btn_intelligently_from')
     new_state = Utility.get_state(d)
     if new_state == curr_state:
         logger.info('Nothing changed in state')
@@ -96,7 +99,8 @@ def main():
     logger.info('Force stopping ' + pack_name + ' to reset states')
     os.system('adb shell am force-stop ' + pack_name)
     d(resourceId='com.google.android.apps.nexuslauncher:id/all_apps_handle').click()
-    d(text=app_name).click.wait()
+    if d(text=app_name).exists:
+        d(text=app_name).click.wait()
 
     learning_data = Utility.load_data(app_name)
     if learning_data is None:
@@ -149,16 +153,25 @@ def main():
             sys.exit(0)
 
 
-main()
+# main()
 
-# click_els = d(clickable='true')
-# parent_map = Utility.create_child_to_parent(dump=d.dump(compressed=False))
-# print(d.dump(compressed=False))
-# for btn in click_els:
-#     print(btn.info['text'])
+click_els = d(clickable='true')
+parent_map = Utility.create_child_to_parent(dump=d.dump(compressed=False))
+dump = d.dump(compressed=False)
+tree = ET.fromstring(dump)
+# # print(d.dump(compressed=False))
+for btn in click_els:
+    print(btn.info['text'])
 # click_els[21].click.wait()
-    # p = Utility.xml_btn_to_key(Utility.get_parent(btn, _parent_map=parent_map))
-    # print(p)
+#     p = Utility.xml_btn_to_key(Utility.get_parent(btn, _parent_map=parent_map))
+    p = Utility.get_parent(btn, _parent_map=parent_map)
+    desc = Utility.get_siblings(btn, p)
+    print(desc)
+    print(p)
+
+
+
+
 # a = Utility.load_data(app_name)
 # print(a)
 

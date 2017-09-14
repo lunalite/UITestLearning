@@ -93,6 +93,11 @@ def get_parent(_child, _parent_map):
             return parent
 
 
+def get_siblings(child_btn, p):
+    descendents = [elem for elem in p.iter() if xml_btn_to_key(elem) != btn_to_key(child_btn)]
+    return descendents
+
+
 def get_state(device):
     def get_bit_rep():
         xml = device.dump(compressed=False)
