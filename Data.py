@@ -34,9 +34,12 @@ class Data(object):
         parent_map = Utility.create_child_to_parent(dump=device.dump())
         for btn in click_els:
             key = Utility.btn_to_key(btn)
+            # da.clickables.append(
+            #     Clickable(name=key, _parent_activity_state=current_state, _parent_name=Utility.xml_btn_to_key(
+            #         Utility.get_parent(btn, _parent_map=parent_map)), _siblings=Utility.get_sibling(dededededede)))
             da.clickables.append(
                 Clickable(name=key, _parent_activity_state=current_state, _parent_name=Utility.xml_btn_to_key(
-                    Utility.get_parent(btn, _parent_map=parent_map)), _siblings=Utility.get_sibling(dededededede)))
+                    Utility.get_parent(btn, _parent_map=parent_map))))
             da.clickables_score.append(1)
         self.data_activity.append(da)
         logger.info('Added new activity to data.')

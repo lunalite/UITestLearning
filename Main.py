@@ -61,7 +61,9 @@ def click_button_intelligently_from(_clickables, data_activity, curr_state):
                     key_to_btn[new_state + '-' + key] = btn
 
             new_length_of_clickables = len(_new_click_els)
-            score_increment = new_length_of_clickables // Config.score_parameter + 1
+            score_increment = new_length_of_clickables
+            # temporary given score based on number of clickables for next page
+            # Possibly give a log score but in future
             # Currently, its not addition but rather, giving an absolute value of score.
             old_clickable.score = score_increment
             logger.info('Appending score ' + str(score_increment))
@@ -153,21 +155,21 @@ def main():
             sys.exit(0)
 
 
-# main()
-
+main()
+#
 click_els = d(clickable='true')
-parent_map = Utility.create_child_to_parent(dump=d.dump(compressed=False))
+# parent_map = Utility.create_child_to_parent(dump=d.dump(compressed=False))
 dump = d.dump(compressed=False)
-tree = ET.fromstring(dump)
-# # print(d.dump(compressed=False))
-for btn in click_els:
-    print(btn.info['text'])
-# click_els[21].click.wait()
-#     p = Utility.xml_btn_to_key(Utility.get_parent(btn, _parent_map=parent_map))
-    p = Utility.get_parent(btn, _parent_map=parent_map)
-    desc = Utility.get_siblings(btn, p)
-    print(desc)
-    print(p)
+# tree = ET.fromstring(dump)
+# # # print(d.dump(compressed=False))
+# for btn in click_els:
+#     print(btn.info['text'])
+# # click_els[21].click.wait()
+# #     p = Utility.xml_btn_to_key(Utility.get_parent(btn, _parent_map=parent_map))
+#     p = Utility.get_parent(btn, _parent_map=parent_map)
+#     desc = Utility.get_siblings(btn, p)
+#     print(desc)
+#     print(p)
 
 
 
