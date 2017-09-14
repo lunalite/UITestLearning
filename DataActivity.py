@@ -1,10 +1,14 @@
 import logging
 
+from Clickable import Clickable
+
+
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 
 class DataActivity(object):
+
     def __init__(self, state, _parent_app, _clickable=None):
         # state is the key
         self.state = state

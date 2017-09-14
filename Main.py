@@ -6,6 +6,7 @@ import random
 
 from uiautomator import Device
 
+import xml.etree.ElementTree as ET
 import Utility
 from Clickable import Clickable
 from Config import Config
@@ -86,7 +87,10 @@ def click_button_intelligently_from(_clickables, data_activity, curr_state):
     # TODO: Add index hierarchy search
     btn_to_click = key_to_btn[curr_state + '-' + btn_to_click.name]
     logger.info('Clicking button, ' + str(btn_to_click.info['text']))
-    btn_to_click.click.wait()
+    if btn_to_click.exists:
+        btn_to_click.click.wait()
+    else:
+        raise Exception('btn_to_click doesnt exist in click_btn_intelligently_from')
     new_state = Utility.get_state(d)
     if new_state == curr_state:
         logger.info('Nothing changed in state')
@@ -103,14 +107,20 @@ def click_button_intelligently_from(_clickables, data_activity, curr_state):
             # _new_click_els = d(clickable='true', packageName=pack_name)
             # old_length_of_clickables = len(data_activity.clickables)
 
-            _new_click_els = d(packageName=pack_name, clickable='true')
+
+            # _new_click_els = d(packageName=pack_name, clickable='true')
+            _new_click_els = d(clickable='true')
+
             if new_state not in key_to_btn:
                 for btn in _new_click_els:
                     key = Utility.btn_to_key(btn)
                     key_to_btn[new_state + '-' + key] = btn
 
             new_length_of_clickables = len(_new_click_els)
-            score_increment = new_length_of_clickables // Config.score_para + 1
+            score_increment = new_length_of_clickables
+            # temporary given score based on number of clickables for next page
+            # Possibly give a log score but in future
+
             # Currently, its not addition but rather, giving an absolute value of score.
             old_clickable.score = score_increment
             logger.info('Appending score ' + str(score_increment))
@@ -148,7 +158,8 @@ def main():
     logger.info('Force stopping ' + pack_name + ' to reset states')
     os.system('adb shell am force-stop ' + pack_name)
     d(resourceId='com.google.android.apps.nexuslauncher:id/all_apps_handle').click()
-    d(text=app_name).click.wait()
+    if d(text=app_name).exists:
+        d(text=app_name).click.wait()
 
     logger.info('Unable to find loaded data. Initializing empty data object.')
     learning_data = Data(appname=app_name, packname=pack_name)
@@ -215,6 +226,7 @@ def main():
 
     # Create dictionary for more efficient method
 
+
     # Utility.create_clickables_hash(key_to_btn, d, mongoClickable)
     # while True:
     # curr_state = Utility.get_state(d)
@@ -251,9 +263,40 @@ def main():
 # learning_data = Utility.load_data(app_name)
 # print(learning_data)
 #
+
 main()
+#
+click_els = d(clickable='true')
+# parent_map = Utility.create_child_to_parent(dump=d.dump(compressed=False))
+dump = d.dump(compressed=False)
+# tree = ET.fromstring(dump)
+# # # print(d.dump(compressed=False))
+# for btn in click_els:
+#     print(btn.info['text'])
+# # click_els[21].click.wait()
+# #     p = Utility.xml_btn_to_key(Utility.get_parent(btn, _parent_map=parent_map))
+#     p = Utility.get_parent(btn, _parent_map=parent_map)
+#     desc = Utility.get_siblings(btn, p)
+#     print(desc)
+#     print(p)
+
+
+
+
+# a = Utility.load_data(app_name)
+# print(a)
+
 # print(Utility.get_state(d))
-# print(d.dump())
+
+# print(d.dump(compressed=False))
+# a = d(resourceId='com.android.inputmethod.latin:id/keyboard_view')
+# a = d(packageName='com.android.inputmethod.latin')
+# a = d(clickable='true')
+# print(a.child(text=""))
+# for i in a:
+#     print(i.info)
+
+
 # for i in range(30):
 #     click_els = d(clickable='true', packageName=pack_name, instance=i)
 #     print(str(i) + ': ' + click_els.info['contentDescription'])
