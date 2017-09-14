@@ -3,9 +3,11 @@ Currently, appium automated test is made just for clickable buttons.
 """
 
 import unittest
+
 from appium import webdriver
 from appium.webdriver.common.touch_action import TouchAction
-from Utility import Utility
+
+from old2.Utility import Utility
 
 
 class ContactAppTestAppium(unittest.TestCase):
