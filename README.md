@@ -35,6 +35,10 @@ Why would it stop halfway?
 d() keeps to package_name of the application itself
 !-->
 
+### 17 September 2017
+* Redid the entire Main.py to suit datacollection and storage into mongodb
+* Redid `get_siblings` and `get_parent` methods using strings so as to reduce time taken for search
+
 ### 13 September 2017
 * Transferring from local file storage system over to Mongodb so as to optimize storage and search
 * Removed clickable hash that optimizes and reduce time interval between clicks since there might be different possible click objects in a single activity 

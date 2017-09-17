@@ -1,3 +1,6 @@
+import json
+
+
 class Clickable(object):
     def __init__(self, name, _parent_activity_state, score=1, next_transition_state=None, _parent=None,
                  _siblings=None):
@@ -7,6 +10,9 @@ class Clickable(object):
         self.parent = _parent
         self.parent_activity_state = _parent_activity_state
         self.siblings = _siblings
+
+    def __str__(self):
+        return json.dumps(self.__dict__)
 
     @staticmethod
     def encode_data(clickable):

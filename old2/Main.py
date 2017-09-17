@@ -26,50 +26,50 @@ scores = []
 
 mongo = Mongo()
 
-
-def click_button_intelligently(click_els, curr_state):
-    # Click_els is array of UIAutomator buttons
-    btn_index = make_button_decision(click_els, curr_state)
-    if btn_index == -1:
-        logger.info('No observable buttons to click from after making decision')
-        return None
-    else:
-        logger.info('index is ' + str(btn_index))
-        click_els[btn_index].click.wait()c
-        new_state = Utility.get_state(d)
-        if new_state == curr_state:
-            logger.info('Nothing changed in state')
-            return -1
-        else:
-            # logger.info('A new state. Appending next_transition_state to ' + str(old_clickable))
-            for i in range(btn_index, len(clickables[curr_state])):
-                if clickables[curr_state][i].name == Utility.btn_to_key(click_els[btn_index]):
-                    print('yes')
-c
-            # def increase_score():
-            #     # TODO: Change scale of increase based on number of clickables for next page
-            #     # Currently, the increment is based on absolute number of how many clickables the new state contains.
-            #     # The rationale is that the more clickable elements, the greter the chances of having more coverage.
-            #     # So, more points will be given to increase the factor of exploration.
-            #     # _new_click_els = d(clickable='true', packageName=pack_name)
-            #     # old_length_of_clickables = len(data_activity.clickables)
-            #
-            #     _new_click_els = d(packageName=pack_name, clickable='true')
-            #     if new_state not in key_to_btn:
-            #         for btn in _new_click_els:
-            #             key = Utility.btn_to_key(btn)
-            #             key_to_btn[new_state + '-' + key] = btn
-            #
-            #     new_length_of_clickables = len(_new_click_els)
-            #     score_increment = new_length_of_clickables // Config.score_para + 1
-            #     # Currently, its not addition but rather, giving an absolute value of score.
-            #     old_clickable.score = score_increment
-            #     logger.info('Appending score ' + str(score_increment))
-            #     return _new_click_els
-            #
-            # new_click_els = increase_score()
-            # return new_state, new_click_els
-            return new_state
+#
+# def click_button_intelligently(click_els, curr_state):
+#     # Click_els is array of UIAutomator buttons
+#     btn_index = make_button_decision(click_els, curr_state)
+#     if btn_index == -1:
+#         logger.info('No observable buttons to click from after making decision')
+#         return None
+#     else:
+#         logger.info('index is ' + str(btn_index))
+#         click_els[btn_index].click.wait()c
+#         new_state = Utility.get_state(d)
+#         if new_state == curr_state:
+#             logger.info('Nothing changed in state')
+#             return -1
+#         else:
+#             # logger.info('A new state. Appending next_transition_state to ' + str(old_clickable))
+#             for i in range(btn_index, len(clickables[curr_state])):
+#                 if clickables[curr_state][i].name == Utility.btn_to_key(click_els[btn_index]):
+#                     print('yes')
+# c
+#             # def increase_score():
+#             #     # TODO: Change scale of increase based on number of clickables for next page
+#             #     # Currently, the increment is based on absolute number of how many clickables the new state contains.
+#             #     # The rationale is that the more clickable elements, the greter the chances of having more coverage.
+#             #     # So, more points will be given to increase the factor of exploration.
+#             #     # _new_click_els = d(clickable='true', packageName=pack_name)
+#             #     # old_length_of_clickables = len(data_activity.clickables)
+#             #
+#             #     _new_click_els = d(packageName=pack_name, clickable='true')
+#             #     if new_state not in key_to_btn:
+#             #         for btn in _new_click_els:
+#             #             key = Utility.btn_to_key(btn)
+#             #             key_to_btn[new_state + '-' + key] = btn
+#             #
+#             #     new_length_of_clickables = len(_new_click_els)
+#             #     score_increment = new_length_of_clickables // Config.score_para + 1
+#             #     # Currently, its not addition but rather, giving an absolute value of score.
+#             #     old_clickable.score = score_increment
+#             #     logger.info('Appending score ' + str(score_increment))
+#             #     return _new_click_els
+#             #
+#             # new_click_els = increase_score()
+#             # return new_state, new_click_els
+#             return new_state
 
 
 
@@ -169,12 +169,12 @@ def main():
     parent_map = Utility.create_child_to_parent(dump=d.dump())
     ar = []
     for btn in click_els:
-        key = Utility.btn_to_key(btn)c
+        key = Utility.btn_to_key(btn)
         ar.append(Clickable(name=key, _parent_activity=state, _parent_name=Utility.xml_btn_to_key(
             Utility.get_parent(btn, _parent_map=parent_map))))
         scores.append(1)
     clickables[state] = ar
-    click_button_intelligently(click_els, state)
+    # click_button_intelligently(click_els, state)
 
     while True:
         curr_state = Utility.get_state(d)
