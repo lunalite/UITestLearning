@@ -3,8 +3,43 @@ import xml.etree.ElementTree as ET
 
 import re
 
+from Clickable import Clickable
+from Data import Data
+from DataActivity import DataActivity
+
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
+
+
+def store_data(data, activities, clickables, mongo):
+    print('-----')
+    print(data)
+    print('-----')
+    print(activities)
+    print('-----')
+    print(clickables)
+
+    for state, activity in activities.items():
+        data.data_activity.append(activity.state)
+        for clickable in clickables[state]:
+            activity.clickables.append(clickable.name)
+
+    print('-----')
+    print(data)
+    print('-----')
+    print(activities)
+    print('-----')
+    print(clickables)
+
+    logger.info('Storing data to database.')
+    mongo.app.update({"_type": "data"}, Data.encode_data(data), upsert=True)
+    for state, activity in activities.items():
+        mongo.activity.update({"state": state}, DataActivity.encode_data(activity), upsert=True)
+    for state, v in clickables.items():
+        for clickable in v:
+            mongo.clickable.update({"name": clickable.name, "parent_activity_state": state},
+                                   Clickable.encode_data(clickable),
+                                   upsert=True)
 
 
 def get_state(device):
@@ -47,11 +82,18 @@ def get_parent_with_bound(bound, _parent_map):
             return parent
 
 
-def get_siblings(child_key, p):
-    piter = p.iter()
-    next(piter)  # skip parent
-    descendents = [elem for elem in piter if xml_btn_to_key(elem) != child_key]
-    return descendents
+def get_siblings(p):
+    siblings = []
+    for sibling in p:
+        siblings.append(sibling)
+    return siblings
+
+
+def get_children(p):
+    children = []
+    for child in p[0]:
+        children.append(child)
+    return children
 
 
 def get_bounds_from_key(key):

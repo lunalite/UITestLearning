@@ -1,3 +1,4 @@
+import json
 import logging
 
 logging.basicConfig(level=logging.INFO)
@@ -11,6 +12,9 @@ class DataActivity(object):
         self.parent_app = _parent_app
         self.clickables = [] if _clickables is None else _clickables
 
+    def __str__(self):
+        return json.dumps(self.__dict__)
+
     @staticmethod
     def encode_data(activity):
         return {"_type": "activity", "state": activity.state, "parent_app": activity.parent_app,
@@ -21,3 +25,4 @@ class DataActivity(object):
         assert document['_type'] == 'data'
         return DataActivity(_state=document['state'], _parent_app=document['parent_app'],
                             _clickables=document['clickables'])
+

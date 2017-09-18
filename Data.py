@@ -1,3 +1,6 @@
+import json
+
+
 class Data(object):
     def __init__(self, _appname, _packname, _app_description=None, _category=None, _data_activity=None):
         self.appname = _appname
@@ -5,6 +8,9 @@ class Data(object):
         self.app_description = _app_description
         self.category = _category
         self.data_activity = [] if _data_activity is None else _data_activity
+
+    def __str__(self):
+        return json.dumps(self.__dict__)
 
     @staticmethod
     def encode_data(data):

@@ -2,6 +2,8 @@ import logging
 import os
 import random
 
+import sys
+
 import Utility
 from Clickable import Clickable
 from Config import Config
@@ -70,8 +72,8 @@ def make_decision(click_els, _scores_arr):
         for i in _scores_arr:
             curr_score += i
             if curr_score >= value:
-                print(index)
-                print('----')
+                # print(index)
+                # print('----')
                 return index
             index += 1
 
@@ -106,9 +108,10 @@ def main():
         for btn in click_hash[local_state]:
             bound = Utility.get_bounds_from_key(btn)
             _parent = Utility.get_parent_with_bound(bound, parent_map)
-            sibs = Utility.get_siblings(btn, _parent)
+            sibs = Utility.get_siblings(_parent)
+            children = Utility.get_children(_parent)
             ar.append(Clickable(name=btn, _parent_activity_state=local_state, _parent=Utility.xml_btn_to_key(_parent),
-                                _siblings=[Utility.xml_btn_to_key(sib) for sib in sibs]))
+                                _siblings=[Utility.xml_btn_to_key(sib) for sib in sibs], _children=[Utility.xml_btn_to_key(child) for child in children]))
             ars.append(1)
 
         clickables[local_state] = ar
@@ -122,17 +125,17 @@ def main():
 
     new_click_els = None
     while True:
-        new_click_els, new_state = click_button(old_state, new_click_els)
-        # print(scores)
-        if new_state != old_state and new_state not in scores:
-            rec(new_state)
+        try:
+            new_click_els, new_state = click_button(old_state, new_click_els)
+            logger.info(scores)
+            if new_state != old_state and new_state not in scores:
+                rec(new_state)
 
-        old_state = new_state
-
+            old_state = new_state
+        except KeyboardInterrupt:
+            logger.info('KeyboardInterrupt...')
+            Utility.store_data(learning_data, activities, clickables, mongo)
+            sys.exit(0)
 
 
 main()
-# a = [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2]
-# b = [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2]
-# for i in range(100):
-#     print(make_decision(b, a))

@@ -35,6 +35,11 @@ Why would it stop halfway?
 d() keeps to package_name of the application itself
 !-->
 
+### 18 September 2017
+* Implemented database storing system
+* Fixed bugs for showing of siblings
+* Added get_children(), splitting up siblings 
+
 ### 17 September 2017
 * Redid the entire Main.py to suit datacollection and storage into mongodb
 * Redid `get_siblings` and `get_parent` methods using strings so as to reduce time taken for search
