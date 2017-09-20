@@ -1,16 +1,16 @@
-from __future__ import print_function
-
 import logging
 import os
 import random
+
 import sys
 
-from uiautomator import Device
-import xml.etree.ElementTree as ET
-
 import Utility
+from Clickable import Clickable
 from Config import Config
 from Data import Data
+from DataActivity import DataActivity
+from Mongo import Mongo
+from uiautomator import Device
 
 d = Device(Config.device_name)
 
@@ -20,74 +20,65 @@ app_name = Config.app_name
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-key_to_btn = {}
+mongo = Mongo()
+
+activities = {}
+clickables = {}
+click_hash = {}
+scores = {}
 
 
-def click_button_intelligently_from(_clickables, data_activity, curr_state):
-    btn_to_click = make_button_decision(_clickables, data_activity)
-
-    if btn_to_click is None:
-        logger.info('No observable buttons to click from after making decision')
-        return None, None
-    old_clickable = btn_to_click
-
-    # TODO: Add index hierarchy search
-    btn_to_click = key_to_btn[curr_state + '-' + btn_to_click.name]
-    logger.info('Clicking button, ' + str(btn_to_click.info['text']))
-    btn_to_click.click.wait()
-    new_state = Utility.get_state(d)
-    if new_state == curr_state:
-        logger.info('Nothing changed in state')
-        return -1, None
+def click_button(old_state, new_click_els):
+    # Have to use packageName since there might be buttons leading to popups,
+    # which can continue exploding into more activity if not limited.
+    click_els = d(clickable='true', packageName=pack_name) if new_click_els is None else new_click_els
+    btn_result = make_decision(click_els, scores[old_state])
+    if btn_result == -1:
+        d.press('back')
+        return None, Utility.get_state(d)
     else:
-        logger.info('A new state. Appending next_transition_state to ' + str(old_clickable))
-        old_clickable.next_transition_state = new_state
+        if click_els[btn_result].exists:
+            # logger.info('Clicking button, ' + str(click_hash[old_state][btn_result]))
+            click_els[btn_result].click.wait()
+            new_state = Utility.get_state(d)
 
-        def increase_score():
-            # TODO: Change scale of increase based on number of clickables for next page
-            # Currently, the increment is based on absolute number of how many clickables the new state contains.
-            # The rationale is that the more clickable elements, the greter the chances of having more coverage.
-            # So, more points will be given to increase the factor of exploration.
-            # _new_click_els = d(clickable='true', packageName=pack_name)
-            # old_length_of_clickables = len(data_activity.clickables)
-
-
-            _new_click_els = d(packageName=pack_name, clickable='true')
-            if new_state not in key_to_btn:
-                for btn in _new_click_els:
-                    key = Utility.btn_to_key(btn)
-                    key_to_btn[new_state + '-' + key] = btn
-
-            new_length_of_clickables = len(_new_click_els)
-            score_increment = new_length_of_clickables // 5 + 1
-            # Currently, its not addition but rather, giving an absolute value of score.
-            old_clickable.score = score_increment
-            logger.info('Appending score ' + str(score_increment))
-            return _new_click_els
-
-        new_click_els = increase_score()
-        return new_state, new_click_els
+            if new_state != old_state:
+                clickables[old_state][btn_result].next_state_transition = new_state
+                new_click_els = d(clickable='true', packageName=pack_name)
+                score_increment = len(new_click_els)
+                scores[old_state][btn_result] = score_increment
+                clickables[old_state][btn_result].score = score_increment
+                return new_click_els, new_state
+            else:
+                return click_els, new_state
+        else:
+            raise Exception('Warning, no such buttons available in click_button()')
 
 
-def make_button_decision(_clickables, data_activity):
-    if len(_clickables) == 0:
-
-        logger.info('No clickable buttons available. Returning None.')
-        return None
-    elif len(_clickables) == 1:
-        logger.info('One clickable button available. Returning button.')
-        return _clickables[0]
+def make_decision(click_els, _scores_arr):
+    if len(click_els) == 0:
+        logger.info('No clickable buttons available. Returning -1.')
+        return -1
+    elif len(click_els) == 1:
+        logger.info('One clickable button available. Returning 0.')
+        return 0
     else:
-        total_score = sum(data_activity.clickables_score)
-        # TODO: Improve by using dictionary
+        total_score = sum(_scores_arr)
         value = random.uniform(0, total_score)
+
+        # For the case that a button has 0 score, we ignore them
+        # This happens for cases when the button leads to an external link
+        zeroes = [idex for idex, iscore in enumerate(_scores_arr) if iscore == 0]
+
         curr_score = 0
         index = 0
-        for i in data_activity.clickables_score:
+        for i in _scores_arr:
             curr_score += i
             if curr_score >= value:
-                return _clickables[index]
+                if index not in zeroes:
+                    return index
             index += 1
+        return -1
 
 
 def main():
@@ -97,95 +88,78 @@ def main():
     logger.info('Force stopping ' + pack_name + ' to reset states')
     os.system('adb shell am force-stop ' + pack_name)
     d(resourceId='com.google.android.apps.nexuslauncher:id/all_apps_handle').click()
+    # if d(text=app_name).exists:
     d(text=app_name).click.wait()
+    # else:
+    #     logger.warning('doesnt exist')
 
-    learning_data = Utility.load_data(app_name)
-    if learning_data is None:
-        logger.info('Unable to find loaded data. Initializing Data object.')
-        learning_data = Data(appname=app_name, packname=pack_name)
-        learning_data.add_new_activity(d)
+    learning_data = Data(_appname=app_name,
+                         _packname=pack_name,
+                         _data_activity=[])
+    old_state = Utility.get_state(d)
 
-    # def classify_buttons(click_els=None):
-    #     edit_box = []
-    #     buttons = []
-    #     # Only applicable to those within the package. Any external links or applications opened will be ignored.
-    #     click_els = d(clickable='true', packageName=pack_name)
-    #     for el in click_els:
-    #         if el.info['className'] == Config.edit_widget:
-    #             edit_box.append(el)
-    #         else:
-    #             buttons.append(el)
-    #     for edit in edit_box:
-    #         edit.set_text(get_text())
-    #     return buttons
+    def rec(local_state):
+        da = DataActivity(local_state, app_name, [])
+        activities[local_state] = da
+        click_els = d(clickable='true')
+        parent_map = Utility.create_child_to_parent(dump=d.dump(compressed=False))
+        ar = []
+        arch = []
+        ars = []
+        for btn in click_els:
+            arch.append(Utility.btn_to_key(btn))
+        click_hash[local_state] = arch
 
-    # buttons = classify_buttons()
+        for btn in click_hash[local_state]:
+            bound = Utility.get_bounds_from_key(btn)
+            _parent = Utility.get_parent_with_bound(bound, parent_map)
+            sibs = Utility.get_siblings(_parent)
+            children = Utility.get_children(_parent)
+            ar.append(Clickable(name=btn,
+                                _parent_activity_state=local_state,
+                                _parent_app_name=app_name,
+                                _parent=Utility.xml_btn_to_key(_parent),
+                                _siblings=[Utility.xml_btn_to_key(sib) for sib in sibs],
+                                _children=[Utility.xml_btn_to_key(child) for child in children]))
+            ars.append(1)
 
-    # Create dictionary for more efficient method
+        clickables[local_state] = ar
+        scores[local_state] = ars
 
-    Utility.create_clickables_hash(key_to_btn, d)
+    rec(old_state)
 
+    # TODO: Add in storage of clickables into dataactivity
+    # TODO: Add in storage of dataactivity into data
+    # TODO: Determine if there can be new clickables in an unchanged state
+
+    new_click_els = None
+    counter = 0
     while True:
         try:
-            # TODO: Temporary no edit box first. WIll add here later by changing data structure
-            curr_state = Utility.get_state(d)
-            dat = learning_data.get_activity_by_state(curr_state)
-            btn_click_result = click_button_intelligently_from(dat.clickables, dat,
-                                                               curr_state)
-            state_result, new_click_els = btn_click_result
-            if state_result is None:
-                # No buttons to click
-                break
-            elif state_result == -1:
-                # No change states
-                continue
-            elif type(state_result) == str:
-                if learning_data.get_activity_by_state(state_result) is None:
-                    logger.info('Adding new activity to data')
-                    learning_data.add_new_activity(d, state_result)
-                    # buttons = classify_buttons(click_els=new_click_els)
+            new_click_els, new_state = click_button(old_state, new_click_els)
+            logger.info(scores)
+            if new_state != old_state and new_state not in scores:
+                rec(new_state)
+
+            old_state = new_state
+            if counter % 10 == 0:
+                logger.info('Saving data to database...')
+                Utility.store_data(learning_data, activities, clickables, mongo)
+            counter += 1
+
         except KeyboardInterrupt:
             logger.info('KeyboardInterrupt...')
-            Utility.store_data(learning_data, app_name)
             sys.exit(0)
 
 
 main()
-# print(Utility.get_state(d))
 # print(d.dump(compressed=False))
-# for i in range(30):
-#     click_els = d(clickable='true', packageName=pack_name, instance=i)
-#     print(str(i) + ': ' + click_els.info['contentDescription'])
-
-# click_els.click()
-# for i in range(30):
-#     click_els.click()
-# print(len(click_els))
-# print(str(i) + ': ' + click_el.info['text'])
-
-# for btn in click_els:
-#     print(btn.info)
-
-#
-# random.choice(click_els).click()
-
-
-""" XML Testing """
-# x = d.dump()
-# print(x)
-
-# print(parent_map)
+# old_state = Utility.get_state(d)
+# new_state = old_state
+# print(old_state)
 # click_els = d(clickable='true', packageName=pack_name)
+# for i in click_els:
+#     print(i)
+# btn_result = make_decision(click_els, scores[old_state])
 
-# Utility.create_clickables_hash(key_to_btn, d)
-# click_els = d(resourceId='me.danielbarnett.addresstogps:id/app_title', packageName=pack_name)
-# print(click_els[0].info['className'])
-# print(click_els[0].info['bounds'])
-# parent = Utility.get_parent(click_els[0], Utility.create_child_to_parent(d.dump()))
-# # print(parent.attrib)
-# print(Utility.xml_btn_to_key(parent))
-
-# children = parent.findall('node')
-# for child in children:
-#     print(child.attrib['bounds'])
-# """ End of XML Testing """
+# rec(new_state)

@@ -9,7 +9,8 @@ class Config:
     apk_selection = [
         ['me.danielbarnett.addresstogps', 'AddressToGPS'],
         ['me.dbarnett.acastus', 'Acastus'],
-        ['com.android.calculator2', 'Calculator']
+        ['com.android.calculator2', 'Calculator'],
+        ['nerd.tuxmobil.fahrplan.camp', 'Camp 2015']
     ]
 
     """========================================
@@ -20,10 +21,14 @@ class Config:
     device_name = 'emulator-5554'
 
     # Selecting the package and application name for the application to be used
-    selection_num = 0
+    selection_num = 2
 
     # Selecting the data where data is being stored at.
     data_store_location = './data/'
+
+    # Set the MongoDB settings
+    mongoHost = 'localhost'
+    mongoPort = 27017
 
     """========================================
             End of variable setting
