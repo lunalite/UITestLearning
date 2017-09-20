@@ -14,12 +14,17 @@ class Data(object):
 
     @staticmethod
     def encode_data(data):
-        return {"_type": "data", "appname": data.appname, "packname": data.packname,
-                "app_description": data.app_description, "category": data.category, "data-activity": data.data_activity}
+        return {"_type": "data", "appname": data.appname,
+                "packname": data.packname,
+                "app_description": data.app_description,
+                "category": data.category,
+                "data-activity": data.data_activity}
 
     @staticmethod
     def decode_data(document):
         assert document['_type'] == 'data'
-        return Data(_appname=document['appname'], _packname=document['packname'],
-                    _app_description=document['app_description'], _category=document['category'],
+        return Data(_appname=document['appname'],
+                    _packname=document['packname'],
+                    _app_description=document['app_description'],
+                    _category=document['category'],
                     _data_activity=document['data_activity'])

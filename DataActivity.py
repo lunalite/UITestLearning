@@ -17,12 +17,13 @@ class DataActivity(object):
 
     @staticmethod
     def encode_data(activity):
-        return {"_type": "activity", "state": activity.state, "parent_app": activity.parent_app,
+        return {"_type": "activity", "state": activity.state,
+                "parent_app": activity.parent_app,
                 "clickables": activity.clickables}
 
     @staticmethod
     def decode_data(document):
         assert document['_type'] == 'data'
-        return DataActivity(_state=document['state'], _parent_app=document['parent_app'],
+        return DataActivity(_state=document['state'],
+                            _parent_app=document['parent_app'],
                             _clickables=document['clickables'])
-

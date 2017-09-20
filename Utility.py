@@ -3,6 +3,7 @@ import xml.etree.ElementTree as ET
 
 import re
 
+from Config import Config
 from Clickable import Clickable
 from Data import Data
 from DataActivity import DataActivity
@@ -12,34 +13,36 @@ logger = logging.getLogger(__name__)
 
 
 def store_data(data, activities, clickables, mongo):
-    print('-----')
-    print(data)
-    print('-----')
-    print(activities)
-    print('-----')
-    print(clickables)
+    # print('-----')
+    # print(data)r
+    # print('-----')
+    # print(activities)
+    # print('-----')
+    # print(clickables)
 
     for state, activity in activities.items():
         data.data_activity.append(activity.state)
         for clickable in clickables[state]:
             activity.clickables.append(clickable.name)
 
-    print('-----')
-    print(data)
-    print('-----')
-    print(activities)
-    print('-----')
-    print(clickables)
+    # print('-----')
+    # print(data)
+    # print('-----')
+    # print(activities)
+    # print('-----')
+    # print(clickables)
 
     logger.info('Storing data to database.')
-    mongo.app.update({"_type": "data"}, Data.encode_data(data), upsert=True)
+    mongo.app.update({"_type": "data", "appname": Config.app_name}, Data.encode_data(data), upsert=True)
     for state, activity in activities.items():
-        mongo.activity.update({"state": state}, DataActivity.encode_data(activity), upsert=True)
+        mongo.activity.update({"state": state, "parent_app": Config.app_name}, DataActivity.encode_data(activity),
+                              upsert=True)
     for state, v in clickables.items():
         for clickable in v:
-            mongo.clickable.update({"name": clickable.name, "parent_activity_state": state},
-                                   Clickable.encode_data(clickable),
-                                   upsert=True)
+            mongo.clickable.update(
+                {"name": clickable.name, "parent_activity_state": state, "parent_app": Config.app_name},
+                Clickable.encode_data(clickable),
+                upsert=True)
 
 
 def get_state(device):

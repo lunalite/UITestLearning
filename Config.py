@@ -7,9 +7,10 @@ Config file that holds the variables being used.
 
 class Config:
     apk_selection = [
-        ['me.danielbarnett.addresstogps', 'AddressToGPS', 2],
-        ['me.dbarnett.acastus', 'Acastus', 2],
-        ['com.android.calculator2', 'Calculator', 5]
+        ['me.danielbarnett.addresstogps', 'AddressToGPS'],
+        ['me.dbarnett.acastus', 'Acastus'],
+        ['com.android.calculator2', 'Calculator'],
+        ['nerd.tuxmobil.fahrplan.camp', 'Camp 2015']
     ]
 
     """========================================
@@ -20,7 +21,7 @@ class Config:
     device_name = 'emulator-5554'
 
     # Selecting the package and application name for the application to be used
-    selection_num = 1
+    selection_num = 2
 
     # Selecting the data where data is being stored at.
     data_store_location = './data/'
@@ -40,7 +41,6 @@ class Config:
 
     app_name = apk_selection[selection_num][1]
     pack_name = apk_selection[selection_num][0]
-    score_parameter = apk_selection[selection_num][2]
 
     def __init__(self):
         pass

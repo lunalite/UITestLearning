@@ -35,7 +35,7 @@ def click_button(old_state, new_click_els):
     btn_result = make_decision(click_els, scores[old_state])
     if btn_result == -1:
         d.press('back')
-        return None, old_state
+        return None, Utility.get_state(d)
     else:
         if click_els[btn_result].exists:
             # logger.info('Clicking button, ' + str(click_hash[old_state][btn_result]))
@@ -65,17 +65,20 @@ def make_decision(click_els, _scores_arr):
     else:
         total_score = sum(_scores_arr)
         value = random.uniform(0, total_score)
+
+        # For the case that a button has 0 score, we ignore them
+        # This happens for cases when the button leads to an external link
+        zeroes = [idex for idex, iscore in enumerate(_scores_arr) if iscore == 0]
+
         curr_score = 0
         index = 0
-        # print(len(_scores_arr))
-        # print(_scores_arr)
         for i in _scores_arr:
             curr_score += i
             if curr_score >= value:
-                # print(index)
-                # print('----')
-                return index
+                if index not in zeroes:
+                    return index
             index += 1
+        return -1
 
 
 def main():
@@ -90,7 +93,9 @@ def main():
     # else:
     #     logger.warning('doesnt exist')
 
-    learning_data = Data(_appname=app_name, _packname=pack_name, _data_activity=[])
+    learning_data = Data(_appname=app_name,
+                         _packname=pack_name,
+                         _data_activity=[])
     old_state = Utility.get_state(d)
 
     def rec(local_state):
@@ -110,8 +115,12 @@ def main():
             _parent = Utility.get_parent_with_bound(bound, parent_map)
             sibs = Utility.get_siblings(_parent)
             children = Utility.get_children(_parent)
-            ar.append(Clickable(name=btn, _parent_activity_state=local_state, _parent=Utility.xml_btn_to_key(_parent),
-                                _siblings=[Utility.xml_btn_to_key(sib) for sib in sibs], _children=[Utility.xml_btn_to_key(child) for child in children]))
+            ar.append(Clickable(name=btn,
+                                _parent_activity_state=local_state,
+                                _parent_app_name=app_name,
+                                _parent=Utility.xml_btn_to_key(_parent),
+                                _siblings=[Utility.xml_btn_to_key(sib) for sib in sibs],
+                                _children=[Utility.xml_btn_to_key(child) for child in children]))
             ars.append(1)
 
         clickables[local_state] = ar
@@ -124,6 +133,7 @@ def main():
     # TODO: Determine if there can be new clickables in an unchanged state
 
     new_click_els = None
+    counter = 0
     while True:
         try:
             new_click_els, new_state = click_button(old_state, new_click_els)
@@ -132,10 +142,24 @@ def main():
                 rec(new_state)
 
             old_state = new_state
+            if counter % 10 == 0:
+                logger.info('Saving data to database...')
+                Utility.store_data(learning_data, activities, clickables, mongo)
+            counter += 1
+
         except KeyboardInterrupt:
             logger.info('KeyboardInterrupt...')
-            Utility.store_data(learning_data, activities, clickables, mongo)
             sys.exit(0)
 
 
 main()
+# print(d.dump(compressed=False))
+# old_state = Utility.get_state(d)
+# new_state = old_state
+# print(old_state)
+# click_els = d(clickable='true', packageName=pack_name)
+# for i in click_els:
+#     print(i)
+# btn_result = make_decision(click_els, scores[old_state])
+
+# rec(new_state)

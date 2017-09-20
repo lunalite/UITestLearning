@@ -35,6 +35,11 @@ Why would it stop halfway?
 d() keeps to package_name of the application itself
 !-->
 
+### 20 September 2017
+* Fixed a bug of selecting button even if score is 0
+* Added an implementation for app to move back if score array is entirely 0
+* Added periodic database storage/
+
 ### 18 September 2017
 * Implemented database storing system
 * Fixed bugs for showing of siblings
