@@ -1,10 +1,15 @@
 import logging
 import os
 import random
-
 import sys
 
+import re
+
+import time
+
 import Utility
+import subprocess
+
 from Clickable import Clickable
 from Config import Config
 from Data import Data
@@ -14,7 +19,6 @@ from uiautomator import Device
 
 d = Device(Config.device_name)
 
-pack_name = Config.pack_name
 app_name = Config.app_name
 
 logging.basicConfig(level=logging.INFO)
@@ -28,19 +32,19 @@ click_hash = {}
 scores = {}
 
 
-def click_button(old_state, new_click_els):
+def click_button(old_state, new_click_els, pack_name):
     # Have to use packageName since there might be buttons leading to popups,
     # which can continue exploding into more activity if not limited.
     click_els = d(clickable='true', packageName=pack_name) if new_click_els is None else new_click_els
     btn_result = make_decision(click_els, scores[old_state])
     if btn_result == -1:
         d.press('back')
-        return None, Utility.get_state(d)
+        return None, Utility.get_state(d, pack_name)
     else:
         if click_els[btn_result].exists:
             # logger.info('Clicking button, ' + str(click_hash[old_state][btn_result]))
             click_els[btn_result].click.wait()
-            new_state = Utility.get_state(d)
+            new_state = Utility.get_state(d, pack_name)
 
             if new_state != old_state:
                 clickables[old_state][btn_result].next_state_transition = new_state
@@ -85,21 +89,24 @@ def main():
     logger.info('Starting UI testing')
     d.screen.on()
     d.press('home')
+    d(resourceId='com.google.android.apps.nexuslauncher:id/all_apps_handle').click()
+    logger.info('Getting the package name with the application name: ' + app_name)
+    d(text=app_name).click.wait()
+    pack_name = Utility.get_package_name(d)
+    logger.info('Package name is: ' + pack_name)
+
     logger.info('Force stopping ' + pack_name + ' to reset states')
     os.system('adb shell am force-stop ' + pack_name)
-    d(resourceId='com.google.android.apps.nexuslauncher:id/all_apps_handle').click()
-    # if d(text=app_name).exists:
     d(text=app_name).click.wait()
-    # else:
-    #     logger.warning('doesnt exist')
 
     learning_data = Data(_appname=app_name,
                          _packname=pack_name,
                          _data_activity=[])
-    old_state = Utility.get_state(d)
+    old_state = Utility.get_state(d, pack_name)
 
     def rec(local_state):
-        da = DataActivity(local_state, app_name, [])
+
+        da = DataActivity(local_state, Utility.get_activity_name(d, pack_name), app_name, [])
         activities[local_state] = da
         click_els = d(clickable='true')
         parent_map = Utility.create_child_to_parent(dump=d.dump(compressed=False))
@@ -136,7 +143,7 @@ def main():
     counter = 0
     while True:
         try:
-            new_click_els, new_state = click_button(old_state, new_click_els)
+            new_click_els, new_state = click_button(old_state, new_click_els, pack_name)
             logger.info(scores)
             if new_state != old_state and new_state not in scores:
                 rec(new_state)
@@ -153,13 +160,17 @@ def main():
 
 
 main()
-# print(d.dump(compressed=False))
+#
+# print(Utility.get_state(d, pn=Utility.get_package_name(d)))
+print(d.dump(compressed=False))
+
+# print(d.info)
 # old_state = Utility.get_state(d)
 # new_state = old_state
 # print(old_state)
-# click_els = d(clickable='true', packageName=pack_name)
+# click_els = d(clickable='true')
 # for i in click_els:
-#     print(i)
+#     print(i.info)
 # btn_result = make_decision(click_els, scores[old_state])
 
 # rec(new_state)

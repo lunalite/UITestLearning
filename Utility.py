@@ -1,4 +1,7 @@
+import json
 import logging
+import operator
+import subprocess
 import xml.etree.ElementTree as ET
 
 import re
@@ -13,29 +16,18 @@ logger = logging.getLogger(__name__)
 
 
 def store_data(data, activities, clickables, mongo):
-    # print('-----')
-    # print(data)r
-    # print('-----')
-    # print(activities)
-    # print('-----')
-    # print(clickables)
-
     for state, activity in activities.items():
         data.data_activity.append(activity.state)
         for clickable in clickables[state]:
             activity.clickables.append(clickable.name)
 
-    # print('-----')
-    # print(data)
-    # print('-----')
-    # print(activities)
-    # print('-----')
-    # print(clickables)
+    print(data)
 
     logger.info('Storing data to database.')
     mongo.app.update({"_type": "data", "appname": Config.app_name}, Data.encode_data(data), upsert=True)
     for state, activity in activities.items():
-        mongo.activity.update({"state": state, "parent_app": Config.app_name}, DataActivity.encode_data(activity),
+        mongo.activity.update({"state": state, "parent_app": Config.app_name, "name": activity.name},
+                              DataActivity.encode_data(activity),
                               upsert=True)
     for state, v in clickables.items():
         for clickable in v:
@@ -45,22 +37,29 @@ def store_data(data, activities, clickables, mongo):
                 upsert=True)
 
 
-def get_state(device):
-    def get_bit_rep():
+def get_state(device, pn):
+    # with open(Config.classwidgetdict) as f:
+    #     content = json.load(f)
+    #     dict_of_widget = content
+
+    def get_bit_rep(pn):
         xml = device.dump(compressed=False)
         root = ET.fromstring(xml.encode('utf-8'))
         bit_rep = ''
         for element in root.iter('node'):
             bit_rep += element.get('index')
+            # bit_rep += str(dict_of_widget[element.attrib['class']])
+            # TODO: Add the widgetType for lower abstraction
+
         return bit_rep
 
     # Assumes that there is a consecutive index from 0 to 32 within dump itself
     a = '01234567891011121314151617181920212223242526272829303132'
 
-    if a in get_bit_rep():
+    if a in get_bit_rep(pn):
         device.press.back()
 
-    return get_bit_rep()[-20:]
+    return pn + '-' + get_bit_rep(pn)[-30:]
 
 
 def create_child_to_parent(dump):
@@ -128,3 +127,41 @@ def convert_bounds(node):
     else:
         logger.warning('No "info" in node')
     return sbound
+
+
+def get_package_name(d):
+    info = d.info
+    return info['currentPackageName']
+
+
+def get_activity_name(d, pn):
+    cmd = 'adb shell dumpsys | grep mFocusedApp'
+    result = subprocess.check_output(cmd, shell=True)
+    a = result.decode()
+    m = re.findall(pn + r'.*(\b.+\b)\s\w\d+\}\}', a)
+    return m[0]
+
+
+def get_class_dict(d, fi):
+    x = d.dump(compressed=False)
+    root = ET.fromstring(x)
+    arr = []
+
+    with open(fi) as f:
+        content = json.load(f)
+    dict = content
+
+    if dict:
+        ind = max(dict.items(), key=operator.itemgetter(1))[1]
+        ind += 1
+    else:
+        ind = 0
+    for i in root.iter():
+        if 'class' in i.attrib:
+            if i.attrib['class'] not in dict:
+                dict[i.attrib['class']] = ind
+                ind += 1
+
+    print(dict)
+    with open(fi, 'w') as f:
+        json.dump(dict, f)

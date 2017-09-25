@@ -6,9 +6,10 @@ logger = logging.getLogger(__name__)
 
 
 class DataActivity(object):
-    def __init__(self, _state, _parent_app, _clickables=None):
+    def __init__(self, _state, _name, _parent_app, _clickables=None):
         # state is the key
         self.state = _state
+        self.name = _name
         self.parent_app = _parent_app
         self.clickables = [] if _clickables is None else _clickables
 
@@ -17,7 +18,9 @@ class DataActivity(object):
 
     @staticmethod
     def encode_data(activity):
-        return {"_type": "activity", "state": activity.state,
+        return {"_type": "activity",
+                "state": activity.state,
+                "name": activity.name,
                 "parent_app": activity.parent_app,
                 "clickables": activity.clickables}
 
@@ -25,5 +28,6 @@ class DataActivity(object):
     def decode_data(document):
         assert document['_type'] == 'data'
         return DataActivity(_state=document['state'],
+                            _name=document['name'],
                             _parent_app=document['parent_app'],
                             _clickables=document['clickables'])
