@@ -20,6 +20,12 @@ literature review of model for sentimental analysis-like analysis
 twitter-like NN model
 
 !-->
+
+### 27 September 2017
+* Added visited dict to determine if widget is visited or not using weighted probability
+* Fixed bug of repeated activity in app collection
+* Added conditional that if the current activity has different package name, press back
+
 ## #25 September 2017
 * Added dict representation as an option for reducing abstraction of `get_state()`
 * Changed `get_state()` representation by inserting packagename to the front.

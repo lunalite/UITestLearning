@@ -30,13 +30,15 @@ activities = {}
 clickables = {}
 click_hash = {}
 scores = {}
+visited = {}
 
 
 def click_button(old_state, new_click_els, pack_name):
     # Have to use packageName since there might be buttons leading to popups,
     # which can continue exploding into more activity if not limited.
     click_els = d(clickable='true', packageName=pack_name) if new_click_els is None else new_click_els
-    btn_result = make_decision(click_els, scores[old_state])
+    # btn_result = make_decision(click_els, scores[old_state])
+    btn_result = make_decision(click_els, visited[old_state])
     if btn_result == -1:
         d.press('back')
         return None, Utility.get_state(d, pack_name)
@@ -51,9 +53,16 @@ def click_button(old_state, new_click_els, pack_name):
                 new_click_els = d(clickable='true', packageName=pack_name)
                 score_increment = len(new_click_els)
                 scores[old_state][btn_result] = score_increment
+                visited[old_state][btn_result][1] += 1
+                visited[old_state][btn_result][0] = (score_increment / visited[old_state][btn_result][1])
+                # logger.info(visited)
                 clickables[old_state][btn_result].score = score_increment
                 return new_click_els, new_state
             else:
+                # No change in state so give it a score of 0 since it doesn't affect anything
+                # TODO: possibly increase abstraction so that change in state is determined by change in text too.
+                visited[old_state][btn_result][1] += 1
+                visited[old_state][btn_result][0] = (0 / visited[old_state][btn_result][1])
                 return click_els, new_state
         else:
             raise Exception('Warning, no such buttons available in click_button()')
@@ -67,17 +76,20 @@ def make_decision(click_els, _scores_arr):
         logger.info('One clickable button available. Returning 0.')
         return 0
     else:
-        total_score = sum(_scores_arr)
+        # total_score = sum(_scores_arr[0])
+        # print([x[0] for x in _scores_arr])
+        # print(sum([x[0] for x in _scores_arr]))
+        total_score = sum([x[0] for x in _scores_arr])
         value = random.uniform(0, total_score)
 
         # For the case that a button has 0 score, we ignore them
         # This happens for cases when the button leads to an external link
-        zeroes = [idex for idex, iscore in enumerate(_scores_arr) if iscore == 0]
+        zeroes = [idex for idex, iscore in enumerate(_scores_arr) if iscore[0] == 0]
 
         curr_score = 0
         index = 0
         for i in _scores_arr:
-            curr_score += i
+            curr_score += i[0]
             if curr_score >= value:
                 if index not in zeroes:
                     return index
@@ -105,7 +117,11 @@ def main():
     old_state = Utility.get_state(d, pack_name)
 
     def rec(local_state):
-
+        if Utility.get_package_name(d) == 'com.google.android.apps.nexuslauncher':
+            raise KeyboardInterrupt
+        elif Utility.get_package_name(d) != pack_name:
+            d.press('back')
+            return -1
         da = DataActivity(local_state, Utility.get_activity_name(d, pack_name), app_name, [])
         activities[local_state] = da
         click_els = d(clickable='true')
@@ -113,6 +129,7 @@ def main():
         ar = []
         arch = []
         ars = []
+        arv = []
         for btn in click_els:
             arch.append(Utility.btn_to_key(btn))
         click_hash[local_state] = arch
@@ -129,9 +146,12 @@ def main():
                                 _siblings=[Utility.xml_btn_to_key(sib) for sib in sibs],
                                 _children=[Utility.xml_btn_to_key(child) for child in children]))
             ars.append(1)
+            arv.append([1, 0])
 
         clickables[local_state] = ar
         scores[local_state] = ars
+        visited[local_state] = arv
+        return 1
 
     rec(old_state)
 
@@ -144,11 +164,15 @@ def main():
     while True:
         try:
             new_click_els, new_state = click_button(old_state, new_click_els, pack_name)
-            logger.info(scores)
+            # logger.info(scores)
+            logger.info(visited)
+            res = 1
             if new_state != old_state and new_state not in scores:
-                rec(new_state)
+                res = rec(new_state)
 
-            old_state = new_state
+            if res == 1:
+                old_state = new_state
+
             if counter % 10 == 0:
                 logger.info('Saving data to database...')
                 Utility.store_data(learning_data, activities, clickables, mongo)
@@ -156,13 +180,15 @@ def main():
 
         except KeyboardInterrupt:
             logger.info('KeyboardInterrupt...')
+            Utility.store_data(learning_data, activities, clickables, mongo)
             sys.exit(0)
 
 
 main()
-#
+
+# print(Utility.get_package_name(d))
 # print(Utility.get_state(d, pn=Utility.get_package_name(d)))
-print(d.dump(compressed=False))
+# print(d.dump(compressed=False))
 
 # print(d.info)
 # old_state = Utility.get_state(d)

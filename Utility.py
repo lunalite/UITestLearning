@@ -17,7 +17,8 @@ logger = logging.getLogger(__name__)
 
 def store_data(data, activities, clickables, mongo):
     for state, activity in activities.items():
-        data.data_activity.append(activity.state)
+        if state not in data.data_activity:
+            data.data_activity.append(activity.state)
         for clickable in clickables[state]:
             activity.clickables.append(clickable.name)
 
@@ -162,6 +163,6 @@ def get_class_dict(d, fi):
                 dict[i.attrib['class']] = ind
                 ind += 1
 
-    print(dict)
+    # print(dict)
     with open(fi, 'w') as f:
         json.dump(dict, f)
