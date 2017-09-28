@@ -20,9 +20,8 @@ def store_data(data, activities, clickables, mongo):
         if state not in data.data_activity:
             data.data_activity.append(activity.state)
         for clickable in clickables[state]:
-            activity.clickables.append(clickable.name)
-
-    print(data)
+            if clickable.name not in activity.clickables:
+                activity.clickables.append(clickable.name)
 
     logger.info('Storing data to database.')
     mongo.app.update({"_type": "data", "appname": Config.app_name}, Data.encode_data(data), upsert=True)
@@ -33,9 +32,14 @@ def store_data(data, activities, clickables, mongo):
     for state, v in clickables.items():
         for clickable in v:
             mongo.clickable.update(
-                {"name": clickable.name, "parent_activity_state": state, "parent_app": Config.app_name},
+                {"name": clickable.name, "parent_activity_state": state, "parent_app_name": Config.app_name},
                 Clickable.encode_data(clickable),
                 upsert=True)
+
+
+def load_data(mongo):
+    mongo.app.find({"_type": "data", "appname": Config.app_name})
+    return 1
 
 
 def get_state(device, pn):
@@ -81,8 +85,9 @@ def create_child_to_parent(dump):
 def get_parent_with_bound(bound, _parent_map):
     # TODO: What if no parent?
     for child, parent in _parent_map.items():
-        if bound == child.attrib['bounds']:
+        if bound == child.attrib['bounds'] and child.attrib['clickable'] == 'true':
             return parent
+    raise Exception('No parent when getting parent with bound')
 
 
 def get_siblings(p):

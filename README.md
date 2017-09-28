@@ -7,6 +7,19 @@ Project is on-going
 These instructions will get you a copy of the project up and running on your local machine for development and testing purposes. See deployment for notes on how to deploy the project on a live system.
 (TODO)
 
+## Data collection
+Apps are made to run until they finished or they crashed. Data is stored into mongodb via pymongo. The following are apps which have been tested on:
+
+No|Appname|packagename|Acitivty count | Clickable count
+---|---|---|---|---
+1|Calculator|com.android.calculator2|8|125
+2|AdressToGPS|me.danielbarnett.addresstogps|1|6
+3|Acastus|me.dbarnett.acastus|14|47
+4|Camp 2015|nerd.tuxmobil.fahrplan.camp|18|88
+5|
+
+
+
 ## Updates
 
 <!--
@@ -21,12 +34,19 @@ twitter-like NN model
 
 !-->
 
+### 28 September 2017
+* Fixed bug for `rec()` in `click_els = d(clickable='true')`
+* Added clickable factor in finding parent
+* Added check for change in buttons, removing and adding them accordingly
+* Fixed bug for repetition of storage of data
+
+
 ### 27 September 2017
 * Added visited dict to determine if widget is visited or not using weighted probability
 * Fixed bug of repeated activity in app collection
 * Added conditional that if the current activity has different package name, press back
 
-## #25 September 2017
+### 25 September 2017
 * Added dict representation as an option for reducing abstraction of `get_state()`
 * Changed `get_state()` representation by inserting packagename to the front.
 * Added activity name to storage 
