@@ -44,6 +44,11 @@ def click_button(old_state, new_click_els, pack_name):
         for click in clickables[old_state]:
             click_buffer.append(click.name)
 
+        logger.info('=======')
+        logger.info(buffer_check)
+        logger.info(click_buffer)
+        logger.info('=======')
+
         if len(click_buffer) > len(buffer_check):
             # In the case that there's one button less in the current state
             diff = list(set(click_buffer) - set(buffer_check))
@@ -212,6 +217,9 @@ def main():
     counter = 0
     while True:
         try:
+            edit_btns = d(clickable='true', packageName=pack_name,className='android.widget.EditText')
+            for i in edit_btns:
+                i.set_text(Utility.get_text())
             new_click_els, new_state = click_button(old_state, new_click_els, pack_name)
             # logger.info(scores)
             logger.info(visited)

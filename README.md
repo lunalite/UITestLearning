@@ -16,7 +16,7 @@ No|Appname|packagename|Acitivty count | Clickable count
 2|AdressToGPS|me.danielbarnett.addresstogps|1|6
 3|Acastus|me.dbarnett.acastus|14|47
 4|Camp 2015|nerd.tuxmobil.fahrplan.camp|18|88
-5|
+5|A Photo Map|de.k3b.android.androFotoFinder|15|133
 
 
 

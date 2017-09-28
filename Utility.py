@@ -1,6 +1,8 @@
 import json
 import logging
 import operator
+import random
+import string
 import subprocess
 import xml.etree.ElementTree as ET
 
@@ -171,3 +173,8 @@ def get_class_dict(d, fi):
     # print(dict)
     with open(fi, 'w') as f:
         json.dump(dict, f)
+
+
+def get_text():
+    # TODO: Improve the way text is chosen
+    return ''.join(random.choices(string.ascii_lowercase + string.ascii_uppercase + string.digits, k=10))
