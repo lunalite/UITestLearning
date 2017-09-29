@@ -17,6 +17,7 @@ No|Appname|packagename|Acitivty count | Clickable count
 3|Acastus|me.dbarnett.acastus|14|47
 4|Camp 2015|nerd.tuxmobil.fahrplan.camp|18|88
 5|A Photo Map|de.k3b.android.androFotoFinder|15|133
+6|AutomateIt|AutomateIt.mainPackage|27|274
 
 
 
@@ -33,6 +34,13 @@ literature review of model for sentimental analysis-like analysis
 twitter-like NN model
 
 !-->
+
+### 29 September 2017
+* Issue with autocomplete when adding text, causing UItester to crash. Added option to select first option for autocomplete
+* Issue with clickable elements increasing and decreasing in the same state.
+* Issue with having only a single button present on UI, causing deadlock. Add in a press back button after counting to 5.
+* Added hash encoding for key of state and state representation using the button type
+* Added in a check to determine if stored button matches with the button being clicked 
 
 ### 28 September 2017
 * Fixed bug for `rec()` in `click_els = d(clickable='true')`

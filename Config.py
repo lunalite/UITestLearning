@@ -10,7 +10,8 @@ class Config:
                      'Acastus',
                      'Calculator',
                      'Camp 2015',
-                     'A Photo Map']
+                     'A Photo Map',
+                     'AutomateIt']
 
     """========================================
     Change variables below to suit your settings
@@ -20,7 +21,7 @@ class Config:
     device_name = 'emulator-5554'
 
     # Selecting the package and application name for the application to be used
-    selection_num = 4
+    selection_num = 2
 
     # Selecting the data where data is being stored at.
     data_store_location = './data/'

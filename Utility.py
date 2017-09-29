@@ -1,3 +1,4 @@
+import hashlib
 import json
 import logging
 import operator
@@ -45,28 +46,38 @@ def load_data(mongo):
 
 
 def get_state(device, pn):
-    # with open(Config.classwidgetdict) as f:
-    #     content = json.load(f)
-    #     dict_of_widget = content
+    with open(Config.classwidgetdict) as f:
+        content = json.load(f)
+        dict_of_widget = content
 
     def get_bit_rep(pn):
         xml = device.dump(compressed=False)
         root = ET.fromstring(xml.encode('utf-8'))
         bit_rep = ''
+        btn_rep = ''
         for element in root.iter('node'):
             bit_rep += element.get('index')
-            # bit_rep += str(dict_of_widget[element.attrib['class']])
+            btn_rep += str(dict_of_widget[element.attrib['class']])
+
+
             # TODO: Add the widgetType for lower abstraction
 
-        return bit_rep
+        return bit_rep, btn_rep
 
     # Assumes that there is a consecutive index from 0 to 32 within dump itself
     a = '01234567891011121314151617181920212223242526272829303132'
 
-    if a in get_bit_rep(pn):
-        device.press.back()
+    try:
+        if a in get_bit_rep(pn)[0]:
+            device.press.back()
 
-    return pn + '-' + get_bit_rep(pn)[-30:]
+        final_rep = get_bit_rep(pn)
+        key = final_rep[0] + final_rep[1]
+        hash_key = hashlib.md5(key.encode('utf-8'))
+        return pn + '-' + hash_key.hexdigest()
+    except KeyError:
+        get_class_dict(device, Config.classwidgetdict)
+        return get_state(device, pn)
 
 
 def create_child_to_parent(dump):
