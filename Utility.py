@@ -82,24 +82,15 @@ def get_state(device, pn):
 
 def create_child_to_parent(dump):
     tree = ET.fromstring(dump)
-    parent_map = dict((c, p) for p in tree.iter() for c in p)
-    return parent_map
+    pmap = dict((c, p) for p in tree.iter() for c in p)
+    return pmap
 
 
-# def get_parent(_child, _parent_map):
-#     # TODO: inefficient method. Improve it.
-#     print(_child)
-#     print(_parent_map)
-#     for child, parent in _parent_map.items():
-#         if child.attrib['bounds'] == convert_bounds(_child):
-#             return parent
-
-
-def get_parent_with_bound(bound, _parent_map):
-    # TODO: What if no parent?
+def get_parent_with_key(key, _parent_map):
     for child, parent in _parent_map.items():
-        if bound == child.attrib['bounds'] and child.attrib['clickable'] == 'true':
+        if key == xml_btn_to_key(child) and child.attrib['clickable'] == 'true':
             return parent
+    # return None
     raise Exception('No parent when getting parent with bound')
 
 
@@ -124,16 +115,16 @@ def get_bounds_from_key(key):
 
 def btn_to_key(btn):
     info = btn.info
-    key = '{' + info['className'].split('.')[-1] + '}-{' + str(
-        info['contentDescription']) + '}-{' + convert_bounds(btn) + '}'
+    cd = '' if info['contentDescription'] is None else str(info['contentDescription'])
+    key = '{' + info['className'].split('.')[-1] + '}-{' + cd + '}-{' + convert_bounds(btn) + '}'
     return key
 
 
 def xml_btn_to_key(xml_btn):
     info = xml_btn.attrib
     # return info
-    key = '{' + info['class'].split('.')[-1] + '}-{' + str(
-        info['content-desc']) + '}-{' + info['bounds'] + '}'
+    cd = '' if info['content-desc'] is None else str(info['content-desc'])
+    key = '{' + info['class'].split('.')[-1] + '}-{' + cd + '}-{' + info['bounds'] + '}'
     return key
 
 
@@ -181,7 +172,6 @@ def get_class_dict(d, fi):
                 dict[i.attrib['class']] = ind
                 ind += 1
 
-    # print(dict)
     with open(fi, 'w') as f:
         json.dump(dict, f)
 
@@ -189,3 +179,9 @@ def get_class_dict(d, fi):
 def get_text():
     # TODO: Improve the way text is chosen
     return ''.join(random.choices(string.ascii_lowercase + string.ascii_uppercase + string.digits, k=10))
+
+
+def merge_dicts(d1, d2):
+    for k, v in d2.items():
+        if k not in d1:
+            d1[k] = v

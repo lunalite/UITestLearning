@@ -2,7 +2,8 @@ import logging
 import os
 import random
 import sys
-
+import subprocess
+import time
 from uiautomator import Device
 
 import Utility
@@ -30,85 +31,78 @@ parent_map = {}
 mask = {}
 zero_counter = 0
 
-def click_button(old_state, new_click_els, pack_name):
+
+def click_button(new_click_els, pack_name):
     # Have to use packageName since there might be buttons leading to popups,
     # which can continue exploding into more activity if not limited.
     global d, clickables, parent_map, visited, scores, mask, zero_counter
+    old_state = Utility.get_state(d, pack_name)
+
     click_els = d(clickable='true', packageName=pack_name) if new_click_els is None else new_click_els
 
-    if len(click_els) != len(visited[old_state]):
-        old_state = Utility.get_state(d, pack_name)
-        buffer_check = []
-        for click in click_els:
-            buffer_check.append((Utility.btn_to_key(click)))
-        click_buffer = []
-        for click in clickables[old_state]:
-            click_buffer.append(click.name)
-
-        logger.info('=======')
-        logger.info(buffer_check)
-        logger.info(click_buffer)
-        logger.info('=======')
-
-        if len(click_buffer) > len(buffer_check):
-            # In the case that there's one button less in the current state
-            diff = list(set(click_buffer) - set(buffer_check))
-            logger.info('=========@@@@@@@=@+@+@=@=@+@+@+@=@==========')
-            logger.info(diff)
-            logger.info(len(click_buffer))
-            logger.info(len(buffer_check))
-            for dx in diff:
-                ind = 0
-                for i in click_buffer:
-                    if i == dx:
-                        print('000-------000')
-                        # print(ind)
-                        # print(len(clickables[old_state]))
-                        # print(len(visited[old_state]))
-                        # del clickables[old_state][ind]
-                        # del visited[old_state][ind]
-                        # del scores[old_state][ind]
-                        # del i
-                    ind += 1
-        elif len(click_buffer) == len(buffer_check):
-            pass
-        else:
-            # In case there's additional button in current state
-            diff = list(set(buffer_check) - set(click_buffer))
-            for dx in diff:
-                ind = 0
-                for i in buffer_check:
-                    if i == dx:
-                        bound = Utility.get_bounds_from_key(i)
-                        _parent = Utility.get_parent_with_bound(bound, parent_map[old_state])
-                        sibs = Utility.get_siblings(_parent)
-                        children = Utility.get_children(_parent)
-                        clickables[old_state].insert(1, Clickable(name=i,
-                                                                  _parent_activity_state=old_state,
-                                                                  _parent_app_name=app_name,
-                                                                  _parent=Utility.xml_btn_to_key(_parent),
-                                                                  _siblings=[Utility.xml_btn_to_key(sib) for sib in
-                                                                             sibs],
-                                                                  _children=[Utility.xml_btn_to_key(child) for child in
-                                                                             children]))
-                        visited[old_state].insert(ind, [1, 0])
-                        scores[old_state].insert(ind, 1)
-
     btn_result = make_decision(click_els, visited[old_state])
+    logger.info(len(parent_map))
     if btn_result == -1 or zero_counter == 5:
         d.press('back')
+
+        # Issue with clicking back button prematurely
+        if Utility.get_package_name(d) == 'com.google.android.apps.nexuslauncher':
+            d(text=app_name).click.wait()
         return None, Utility.get_state(d, pack_name)
     else:
         try:
             if click_els[btn_result].exists:
-                if Utility.btn_to_key(click_els[btn_result]) == clickables[old_state][btn_result].name:
-                    click_els[btn_result].click.wait()
+                click_btn_key = Utility.btn_to_key(click_els[btn_result])
+                click_btn_class = click_els[btn_result].info['className']
+                click_btn = click_els[btn_result]
+
+                # Check if the key of button to be clicked is equal to the key of button stored in clickables
+                if click_btn_key == clickables[old_state][btn_result].name:
+                    click_btn.click()
+
+                # Search through list to see if the button is of another number
                 else:
-                    logger.warning('Tracing back reason why buttnon not matched')
-                    logger.warning(Utility.btn_to_key(click_els[btn_result]))
-                    logger.warning(clickables[old_state][btn_result].name)
-                    logger.warning(old_state)
-                    raise Exception('Button not matched')
+                    ind = 0
+                    found = False
+                    for i in clickables[old_state]:
+                        if click_btn_key == i.name:
+                            click_btn.click.wait()
+                            btn_result = ind
+                            found = True
+                        ind += 1
+                    if not found:
+                        logger.info('button to be found: ' + click_btn_key)
+                        logger.info(clickables[old_state][btn_result].name)
+                        logger.info(clickables[old_state][btn_result].name == click_btn_key)
+
+                        # If no such clickable is found, we append the clickable into the list
+                        logger.info(old_state)
+                        logger.info(Utility.get_state(d, pack_name))
+                        new_parent = Utility.create_child_to_parent(dump=d.dump(compressed=False))
+                        Utility.merge_dicts(parent_map[old_state], new_parent)
+                        logger.info(len(parent_map[old_state]))
+                        _parent = Utility.get_parent_with_key(click_btn_key, parent_map[old_state])
+                        sibs = Utility.get_siblings(_parent)
+                        children = Utility.get_children(_parent)
+                        clickables[old_state].append(Clickable(name=click_btn_key,
+                                                               _parent_activity_state=old_state,
+                                                               _parent_app_name=app_name,
+                                                               _parent=Utility.xml_btn_to_key(_parent),
+                                                               _siblings=[Utility.xml_btn_to_key(sib) for sib in
+                                                                          sibs],
+                                                               _children=[Utility.xml_btn_to_key(child) for child in
+                                                                          children]))
+                        visited[old_state].append([1, 0])
+                        scores[old_state].append(1)
+
+                # If the button that is clicked is EditText or TextView, it might cause autocomplete tab to appear
+                # We have to add this to close the tab that appears.
+                if click_btn_class == 'android.widget.EditText' or click_btn_class == 'android.widget.TextView':
+                    click_els = d(clickable='true', packageName=pack_name)
+                    for i in click_els:
+                        if i.info['text'] == 'ADD TO DICTIONARY':
+                            click_els[0].click.wait()
+                            break
 
                 new_state = Utility.get_state(d, pack_name)
 
@@ -134,7 +128,7 @@ def click_button(old_state, new_click_els, pack_name):
             logger.warning(len(click_els))
             logger.warning(len(visited[old_state]))
             logger.warning(btn_result)
-            sys.exit(0)
+            exit(0)
 
 
 def make_decision(click_els, _scores_arr):
@@ -185,19 +179,33 @@ def main():
     learning_data = Data(_appname=app_name,
                          _packname=pack_name,
                          _data_activity=[])
+    time.sleep(5)
     old_state = Utility.get_state(d, pack_name)
 
     def rec(local_state):
+        global parent_map
         if Utility.get_package_name(d) == 'com.google.android.apps.nexuslauncher':
             raise KeyboardInterrupt
         elif Utility.get_package_name(d) != pack_name:
+            initstate = Utility.get_state(d, pack_name)
             d.press('back')
-            return -1
+            nextstate = Utility.get_state(d, pack_name)
+            if nextstate != initstate:
+                return -1
+
+            # Prepare for the situation of when pressing back button doesn't work
+            elif nextstate == initstate:
+                while True:
+                    tryclick_btns = d(clickable='true')
+                    random.choice(tryclick_btns).click()
+                    nextstate = Utility.get_state(d, pack_name)
+                    if nextstate != initstate:
+                        return -1
+
         da = DataActivity(local_state, Utility.get_activity_name(d, pack_name), app_name, [])
         activities[local_state] = da
         click_els = d(clickable='true', packageName=pack_name)
-
-        parent_map[old_state] = Utility.create_child_to_parent(dump=d.dump(compressed=False))
+        parent_map[local_state] = Utility.create_child_to_parent(dump=d.dump(compressed=False))
         ar = []
         arch = []
         ars = []
@@ -206,25 +214,20 @@ def main():
             arch.append(Utility.btn_to_key(btn))
         click_hash[local_state] = arch
         for btn in click_hash[local_state]:
-            bound = Utility.get_bounds_from_key(btn)
-            _parent = Utility.get_parent_with_bound(bound, parent_map[old_state])
+            # logger.info('getting parents')
+            # logger.info(old_state)
+            # logger.info(Utility.get_state(d, pack_name))
+            _parent = Utility.get_parent_with_key(btn, parent_map[local_state])
             sibs = Utility.get_siblings(_parent)
             children = Utility.get_children(_parent)
-            clickables[local_state][btn]=Clickable(name=btn,
+            ar.append(Clickable(name=btn,
                                 _parent_activity_state=local_state,
                                 _parent_app_name=app_name,
                                 _parent=Utility.xml_btn_to_key(_parent),
                                 _siblings=[Utility.xml_btn_to_key(sib) for sib in sibs],
-                                _children=[Utility.xml_btn_to_key(child) for child in children])
-            scores[local_state][]
-            # ar.append(Clickable(name=btn,
-            #                     _parent_activity_state=local_state,
-            #                     _parent_app_name=app_name,
-            #                     _parent=Utility.xml_btn_to_key(_parent),
-            #                     _siblings=[Utility.xml_btn_to_key(sib) for sib in sibs],
-            #                     _children=[Utility.xml_btn_to_key(child) for child in children]))
-            # ars.append(1)
-            # arv.append([1, 0])
+                                _children=[Utility.xml_btn_to_key(child) for child in children]))
+            ars.append(1)
+            arv.append([1, 0])
 
         clickables[local_state] = ar
         scores[local_state] = ars
@@ -241,26 +244,19 @@ def main():
     counter = 0
     while True:
         try:
-            edit_btns = d(clickable='true', packageName=pack_name,className='android.widget.EditText')
+            edit_btns = d(clickable='true', packageName=pack_name, className='android.widget.EditText')
             for i in edit_btns:
-                i.set_text(Utility.get_text())
-                click_els = d(clickable='true', packageName=pack_name)
-                for i in click_els:
-                    if i.info['text'] == 'ADD TO DICTIONARY':
-                        click_els[0].click.wait()
-
-
-            new_click_els, new_state = click_button(old_state, new_click_els, pack_name)
+                if i.text == '':
+                    i.set_text(Utility.get_text())
+            Utility.get_state(d, pack_name)
+            new_click_els, new_state = click_button(new_click_els, pack_name)
             # logger.info(scores)
             logger.info(visited)
             res = 1
             if new_state != old_state and new_state not in scores:
                 res = rec(new_state)
 
-            if res == 1:
-                old_state = new_state
-            else:
-                print('dd')
+            # old_state = new_state
 
             if counter % 10 == 0:
                 logger.info('Saving data to database...')
@@ -270,62 +266,16 @@ def main():
         except KeyboardInterrupt:
             logger.info('KeyboardInterrupt...')
             Utility.store_data(learning_data, activities, clickables, mongo)
-            sys.exit(0)
+            return
+        except KeyError:
+            logger.info('KeyError...')
+            Utility.store_data(learning_data, activities, clickables, mongo)
+            return
 
 
-main()
-# pack_name = Utility.get_package_name(d)
-pack_name = 'AutomateIt.mainPackage'
-# print(Utility.get_state(d, pack_name))
-# click_els = d(clickable='true', packageName=pack_name)
-# for i in click_els:
-#     print(Utility.btn_to_key(i))
-# print(len(click_els))
+
+
+while True:
+    main()
 # print(d.dump(compressed=False))
-
-
-
-def rec(local_state):
-    if Utility.get_package_name(d) == 'com.google.android.apps.nexuslauncher':
-        raise KeyboardInterrupt
-    elif Utility.get_package_name(d) != pack_name:
-        d.press('back')
-        return -1
-    # da = DataActivity(local_state, Utility.get_activity_name(d, pack_name), app_name, [])
-    # activities[local_state] = da
-    # click_els = d(clickable='true', packageName=pack_name)
-
-    # parent_map[old_state] = Utility.create_child_to_parent(dump=d.dump(compressed=False))
-    # ar = []
-    # arch = []
-    # ars = []
-    # arv = []
-    # for btn in click_els:
-    #     arch.append(Utility.btn_to_key(btn))
-    # click_hash[local_state] = arch
-    # for btn in click_hash[local_state]:
-    #     bound = Utility.get_bounds_from_key(btn)
-    #     _parent = Utility.get_parent_with_bound(bound, parent_map[old_state])
-    #     sibs = Utility.get_siblings(_parent)
-    #     children = Utility.get_children(_parent)
-    #     ar.append(Clickable(name=btn,
-    #                         _parent_activity_state=local_state,
-    #                         _parent_app_name=app_name,
-    #                         _parent=Utility.xml_btn_to_key(_parent),
-    #                         _siblings=[Utility.xml_btn_to_key(sib) for sib in sibs],
-    #                         _children=[Utility.xml_btn_to_key(child) for child in children]))
-    #     ars.append(1)
-    #     arv.append([1, 0])
-    #
-    # clickables[local_state] = ar
-    # scores[local_state] = ars
-    # visited[local_state] = arv
-    return 1
-
-
-
-# s = Utility.get_state(d, pack_name)
-# r = rec(s)
-# print(r)
-#
-# print(Utility.get_state(d, pack_name))
+# print(d.info)

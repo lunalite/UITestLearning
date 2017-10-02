@@ -12,12 +12,21 @@ Apps are made to run until they finished or they crashed. Data is stored into mo
 
 No|Appname|packagename|Acitivty count | Clickable count
 ---|---|---|---|---
-1|Calculator|com.android.calculator2|8|125
+1|Calculator|com.android.calculator2|10|190
 2|AdressToGPS|me.danielbarnett.addresstogps|1|6
-3|Acastus|me.dbarnett.acastus|14|47
-4|Camp 2015|nerd.tuxmobil.fahrplan.camp|18|88
-5|A Photo Map|de.k3b.android.androFotoFinder|15|133
+3|Acastus|me.dbarnett.acastus|8|29
+4|Camp 2015|nerd.tuxmobil.fahrplan.camp|14|92
+5|A Photo Map|de.k3b.android.androFotoFinder|31|358
 6|AutomateIt|AutomateIt.mainPackage|27|274
+7|Agroid|B4A.Agroid_software|16|78
+8|Bacteriología|BacteriologiaFree.Doctor|5|44
+9|Dining Table Ideas|con.dinta.app1|25|65
+10|Pats Schedule|DrWebsterApps.New.England.Patriots.Trivia|12|63
+11|Minesweeper|Draziw.Button.Mines|1|231
+12|Geo-Wiki Pictures|GeoWikiMobile.GeoWikiMobile|11|77
+13|FOViewer Deluxe Free|JVC.FOViewerDX|32|593
+14|The speech the President of the United States|Js.Usa_Uspa|3|21
+15|Kolumbus Sanntid|Kolumbus.Sanntid.Android|
 
 
 
@@ -35,12 +44,28 @@ twitter-like NN model
 
 !-->
 
+### 1 October 2017
+* Fixed autocomplete bug by adding TextView widget into conditional check as well
+* Added time delay when an app first started in view of loading
+* If textbox is not empty, don't set the textbox again
+
+### 30 September 2017
+* Weird behavior when EditText widget is opened and closed. Two different states as a of `insertion_handler` appearing after closing the keyboard.
+* Fixed bug in parent_map storage
+* Return None if no parents
+* Using bound as key for buttons is bad because the activity might be scrollable, causing changes in bounds as well
+* Fixed bug where `str(info['content description]))` actually returns None for `btn_to_key()` and empty string for `xml_btn_to_key()`
+
+
 ### 29 September 2017
 * Issue with autocomplete when adding text, causing UItester to crash. Added option to select first option for autocomplete
-* Issue with clickable elements increasing and decreasing in the same state.
 * Issue with having only a single button present on UI, causing deadlock. Add in a press back button after counting to 5.
 * Added hash encoding for key of state and state representation using the button type
-* Added in a check to determine if stored button matches with the button being clicked 
+* Added in a check to determine if stored button matches with the button being clicked
+* Issue with clickable elements increasing and decreasing in the same state. Will be appending to the dict any elements that appear so as to prevent any unforeseen circumstances
+* Changed getting parent with bound to getting parent with key since there might be buttons with same bound but different text
+* Added mergence of two dicts for parent to key dict since there might be buttons with different keys in same state, causing the issue of `KeyError` when searching for child using parent 
+ 
 
 ### 28 September 2017
 * Fixed bug for `rec()` in `click_els = d(clickable='true')`
