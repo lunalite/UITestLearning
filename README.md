@@ -26,9 +26,24 @@ No|Appname|packagename|Acitivty count | Clickable count
 12|Geo-Wiki Pictures|GeoWikiMobile.GeoWikiMobile|11|77
 13|FOViewer Deluxe Free|JVC.FOViewerDX|32|593
 14|The speech the President of the United States|Js.Usa_Uspa|3|21
-15|Kolumbus Sanntid|Kolumbus.Sanntid.Android|
+15|Kolumbus Sanntid|Kolumbus.Sanntid.Android|22|172
+16|Bible Trivia Quiz Game|DrWebsterApps.BibleTriviaGame|10|85
+17|Macroscop|-|Unable to get info
+18|Show Me Wales|NVG.ShowMeWales|7|32
+19|Mega Tic Tac Toe|NoamStudios.Games.MegaTicTacToeFree|5|36
+20|OBDLink|OCTech.Mobile.Applications.OBDLink|10|49
+21|D-Day with Pictures|View.CountDownToSpecialDay.Admob|15|107
+22|A League Live|a.league.live|31|251
+23|Time Converter|abcom.com.timeconverter|16|123
+24|ABC 123 for Kids Child Toddler|abc123.kids.toddlers|6|25
+25|Aadhaar Info|aadhaar.driving.voterid.passport|15|53
+26|Java Programming|ab.java.programming|52|553
+27|Accounts Lite 2.0|accountslite.n2tech.namespace|25|239
+Total| | |416|3865
 
 
+Unable to test certain APKs like those of other languages, or those like 'Power Me Off' since it might shut down the entire emulator.
+Or some which there are no clickables(flash games)
 
 ## Updates
 
@@ -43,6 +58,10 @@ literature review of model for sentimental analysis-like analysis
 twitter-like NN model
 
 !-->
+
+### 2 October 2017
+* If sum of score is less than 1, press back to prevent repetition of clicks.
+* Added option if parent could not be found to change children and siblings to None as well
 
 ### 1 October 2017
 * Fixed autocomplete bug by adding TextView widget into conditional check as well

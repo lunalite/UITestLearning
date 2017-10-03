@@ -90,8 +90,8 @@ def get_parent_with_key(key, _parent_map):
     for child, parent in _parent_map.items():
         if key == xml_btn_to_key(child) and child.attrib['clickable'] == 'true':
             return parent
-    # return None
-    raise Exception('No parent when getting parent with bound')
+    return -1
+    # raise Exception('No parent when getting parent with bound')
 
 
 def get_siblings(p):
@@ -121,6 +121,8 @@ def btn_to_key(btn):
 
 
 def xml_btn_to_key(xml_btn):
+    if xml_btn == -1:
+        return None
     info = xml_btn.attrib
     # return info
     cd = '' if info['content-desc'] is None else str(info['content-desc'])

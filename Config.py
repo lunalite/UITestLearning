@@ -7,7 +7,19 @@ Config file that holds the variables being used.
 
 class Config:
     apk_selection = \
-        ['Kolumbus Sanntid',
+        ['Accounts Lite 2.0',
+         'Java Programming',
+         'Aadhaar Info',
+         'ABC 123 for Kids Child Toddler',
+         'Time Converter',
+         'A League Live',
+         'D-Day with Pictures',
+         'OBDLink',
+         'Mega Tic Tac Toe',
+         'Show Me Wales',
+         'Macroscop'
+         'Bible Trivia Quiz Game',
+         'Kolumbus Sanntid',
          'The speech the President of the United States',
          'FOViewer Deluxe Free',
          'Geo-Wiki Pictures',

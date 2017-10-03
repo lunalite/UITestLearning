@@ -82,8 +82,12 @@ def click_button(new_click_els, pack_name):
                         Utility.merge_dicts(parent_map[old_state], new_parent)
                         logger.info(len(parent_map[old_state]))
                         _parent = Utility.get_parent_with_key(click_btn_key, parent_map[old_state])
-                        sibs = Utility.get_siblings(_parent)
-                        children = Utility.get_children(_parent)
+                        if _parent != -1:
+                            sibs = Utility.get_siblings(_parent)
+                            children = Utility.get_children(_parent)
+                        else:
+                            sibs = None
+                            children = None
                         clickables[old_state].append(Clickable(name=click_btn_key,
                                                                _parent_activity_state=old_state,
                                                                _parent_app_name=app_name,
@@ -143,6 +147,8 @@ def make_decision(click_els, _scores_arr):
         return 0
     else:
         total_score = sum([x[0] for x in _scores_arr])
+        if total_score < 1.0:
+            return -1
         value = random.uniform(0, total_score)
 
         # For the case that a button has 0 score, we ignore them
@@ -218,14 +224,18 @@ def main():
             # logger.info(old_state)
             # logger.info(Utility.get_state(d, pack_name))
             _parent = Utility.get_parent_with_key(btn, parent_map[local_state])
-            sibs = Utility.get_siblings(_parent)
-            children = Utility.get_children(_parent)
+            if _parent != -1:
+                sibs = Utility.get_siblings(_parent)
+                children = Utility.get_children(_parent)
+            else:
+                sibs = None
+                children = None
             ar.append(Clickable(name=btn,
                                 _parent_activity_state=local_state,
                                 _parent_app_name=app_name,
                                 _parent=Utility.xml_btn_to_key(_parent),
-                                _siblings=[Utility.xml_btn_to_key(sib) for sib in sibs],
-                                _children=[Utility.xml_btn_to_key(child) for child in children]))
+                                _siblings=[Utility.xml_btn_to_key(sib) for sib in sibs or []],
+                                _children=[Utility.xml_btn_to_key(child) for child in children or []]))
             ars.append(1)
             arv.append([1, 0])
 
@@ -274,8 +284,5 @@ def main():
 
 
 
-
 while True:
     main()
-# print(d.dump(compressed=False))
-# print(d.info)
