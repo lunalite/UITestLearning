@@ -44,7 +44,7 @@ class Config:
     device_name = 'emulator-5554'
 
     # Selecting the package and application name for the application to be used
-    selection_num = 0
+    selection_num = 15
     # app_instance = 1
 
     # Selecting the data where data is being stored at.
@@ -56,6 +56,13 @@ class Config:
 
     # Set the name for widget to number representation
     classwidgetdict = './classWidget.txt'
+
+    # Probability of flinging the screen if scrollable is found
+    # not flinging, fling up, fling down
+    scroll_probability = [0.6, 0.8, 1.0]
+
+    # base storage location for logs like XML and screenshots
+    log_location = './log/'
 
     """========================================
             End of variable setting

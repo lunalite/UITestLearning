@@ -9,6 +9,10 @@ import xml.etree.ElementTree as ET
 
 import re
 
+import os
+
+import errno
+
 from Config import Config
 from Clickable import Clickable
 from Data import Data
@@ -187,3 +191,13 @@ def merge_dicts(d1, d2):
     for k, v in d2.items():
         if k not in d1:
             d1[k] = v
+
+
+def dump_log(d, packname, state):
+    location = Config.log_location
+    directory = location + packname + '/'
+    if not os.path.exists(directory):
+        os.makedirs(directory)
+
+    d.screenshot(directory + state + '.png')
+    d.dump(directory + state + '.xml')

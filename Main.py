@@ -1,9 +1,13 @@
+import codecs
 import logging
 import os
 import random
+import string
 import sys
 import subprocess
 import time
+
+import re
 from uiautomator import Device
 
 import Utility
@@ -14,8 +18,6 @@ from DataActivity import DataActivity
 from Mongo import Mongo
 
 d = Device(Config.device_name)
-
-app_name = Config.app_name
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -28,11 +30,25 @@ click_hash = {}
 scores = {}
 visited = {}
 parent_map = {}
-mask = {}
 zero_counter = 0
 
 
-def click_button(new_click_els, pack_name):
+def init():
+    """
+    Initializing all global variables back to its original state after every testing is done on APK
+    :return:
+    """
+    global clickables, scores, visited, parent_map, activities, click_hash, zero_counter
+    activities.clear()
+    clickables.clear()
+    click_hash.clear()
+    scores.clear()
+    visited.clear()
+    parent_map.clear()
+    zero_counter = 0
+
+
+def click_button(new_click_els, pack_name, app_name):
     # Have to use packageName since there might be buttons leading to popups,
     # which can continue exploding into more activity if not limited.
     global d, clickables, parent_map, visited, scores, mask, zero_counter
@@ -122,6 +138,7 @@ def click_button(new_click_els, pack_name):
                 else:
                     # No change in state so give it a score of 0 since it doesn't affect anything
                     # TODO: possibly increase abstraction so that change in state is determined by change in text too.
+                    clickables[old_state][btn_result].next_transition_state = old_state
                     visited[old_state][btn_result][1] += 1
                     visited[old_state][btn_result][0] = (0 / visited[old_state][btn_result][1])
                     return click_els, new_state
@@ -147,7 +164,7 @@ def make_decision(click_els, _scores_arr):
         return 0
     else:
         total_score = sum([x[0] for x in _scores_arr])
-        if total_score < 1.0:
+        if total_score < 0.5 * len(_scores_arr):
             return -1
         value = random.uniform(0, total_score)
 
@@ -167,25 +184,31 @@ def make_decision(click_els, _scores_arr):
         return -1
 
 
-def main():
+def main(app_name, pack_name):
     global clickables, scores, visited, parent_map, activities
     logger.info('Starting UI testing')
     d.screen.on()
     d.press('home')
-    d(resourceId='com.google.android.apps.nexuslauncher:id/all_apps_handle').click()
-    logger.info('Getting the package name with the application name: ' + app_name)
-    d(text=app_name).click.wait()
-    pack_name = Utility.get_package_name(d)
-    logger.info('Package name is: ' + pack_name)
+
+    # logger.info('Getting the package name with the application name: ' + app_name)
+    # d(text=app_name).click.wait()
+    # pack_name = Utility.get_package_name(d)
+    # logger.info('Package name is: ' + pack_name)
 
     logger.info('Force stopping ' + pack_name + ' to reset states')
     os.system('adb shell am force-stop ' + pack_name)
+    d(resourceId='com.google.android.apps.nexuslauncher:id/all_apps_handle').click()
+    d(scrollable=True).scroll.toEnd()
+    d(scrollable=True).scroll.vert.to(text=app_name)
     d(text=app_name).click.wait()
 
     learning_data = Data(_appname=app_name,
                          _packname=pack_name,
                          _data_activity=[])
-    time.sleep(5)
+
+    # To ensure that loading page and everything is done before starting testing
+    time.sleep(10)
+
     old_state = Utility.get_state(d, pack_name)
 
     def rec(local_state):
@@ -242,16 +265,13 @@ def main():
         clickables[local_state] = ar
         scores[local_state] = ars
         visited[local_state] = arv
+        Utility.dump_log(d, pack_name, local_state)
         return 1
 
     rec(old_state)
-
-    # TODO: Add in storage of clickables into dataactivity
-    # TODO: Add in storage of dataactivity into data
-    # TODO: Determine if there can be new clickables in an unchanged state
-
     new_click_els = None
     counter = 0
+
     while True:
         try:
             edit_btns = d(clickable='true', packageName=pack_name, className='android.widget.EditText')
@@ -259,19 +279,34 @@ def main():
                 if i.text == '':
                     i.set_text(Utility.get_text())
             Utility.get_state(d, pack_name)
-            new_click_els, new_state = click_button(new_click_els, pack_name)
-            # logger.info(scores)
-            logger.info(visited)
-            res = 1
-            if new_state != old_state and new_state not in scores:
-                res = rec(new_state)
+            if d(scrollable='true').exists:
+                r = random.uniform(0, Config.scroll_probability[2])
+                logger.info(r)
+                if r < Config.scroll_probability[0]:
+                    new_click_els, new_state = click_button(new_click_els, pack_name, app_name)
+                else:
+                    if r < Config.scroll_probability[1]:
+                        d(scrollable='true').fling()
+                    elif r < Config.scroll_probability[2]:
+                        d(scrollable='true').fling.backward()
 
-            # old_state = new_state
+                    new_state = Utility.get_state(d, pack_name)
+                    new_click_els = d(clickable='true', packageName=pack_name)
+            else:
+                new_click_els, new_state = click_button(new_click_els, pack_name, app_name)
+
+            logger.info(visited)
+            logger.info(counter)
+            if new_state != old_state and new_state not in scores:
+                rec(new_state)
 
             if counter % 10 == 0:
                 logger.info('Saving data to database...')
                 Utility.store_data(learning_data, activities, clickables, mongo)
+
             counter += 1
+            if counter >= 10:
+                return
 
         except KeyboardInterrupt:
             logger.info('KeyboardInterrupt...')
@@ -281,8 +316,51 @@ def main():
             logger.info('KeyError...')
             Utility.store_data(learning_data, activities, clickables, mongo)
             return
+        except IndexError:
+            logger.info('IndexError...')
+            Utility.store_data(learning_data, activities, clickables, mongo)
+            return
 
 
+def official():
+    dir = '/Users/hkoh006/Desktop/APK/dir_001/'
+    ANDROID_HOME = '/Users/hkoh006/Library/Android/sdk/'
+    x = subprocess.check_output(['ls', dir])
+    apks = (x.split(b'\n'))
+    apks = [x.decode('utf-8') for x in apks]
+    timestr = time.strftime("%Y%m%d%H%M%S")
+    file = codecs.open('information-' + timestr + '.txt', 'w', 'utf-8')
 
-while True:
-    main()
+    for i in apks:
+        english = True
+        m = re.findall('^(.*)\_.*\.apk', i)
+        apk_packname = m[0]
+        subprocess.Popen(['adb', 'install', dir + i]).wait()
+        ps = subprocess.Popen([ANDROID_HOME + 'build-tools/26.0.1/aapt', 'dump', 'badging', dir + i],
+                              stdout=subprocess.PIPE)
+        output = subprocess.check_output(('grep', 'application-label:'), stdin=ps.stdout)
+        label = output.decode('utf-8')
+        m = re.findall('^application-label:(.*)$', label)
+        appname = m[0][1:-1]
+        logger.info('====================')
+        logger.info('testing ' + appname)
+        for i in m[0]:
+            if i not in string.printable:
+                english = False
+                break
+        attempts = 0
+        if english:
+            init()
+            while attempts <= 0:
+                main(appname, apk_packname)
+                attempts += 1
+
+        act_c = mongo.activity.count({"_type": "activity", "parent_app": Config.app_name})
+        click_c = mongo.clickable.count({"_type": "clickable", "parent_app_name": Config.app_name})
+        file.write(appname + '|' + apk_packname + '|' + str(english) + '|' + str(act_c) + '|' + str(click_c) + '\n')
+        subprocess.Popen(['adb', 'uninstall', apk_packname]).wait()
+        # break
+
+
+official()
+

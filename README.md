@@ -43,7 +43,7 @@ Total| | |416|3865
 
 
 Unable to test certain APKs like those of other languages, or those like 'Power Me Off' since it might shut down the entire emulator.
-Or some which there are no clickables(flash games)
+Or some which there are no clickables(flash games) Or those that require login and internet like Absolute EMR and AccuManager .
 
 ## Updates
 
@@ -58,6 +58,16 @@ literature review of model for sentimental analysis-like analysis
 twitter-like NN model
 
 !-->
+
+### 6 October 2017
+* Added auto adb install/uninstall and inputting of information into `.information` file in preparation for deployment onto server for automatic crawl
+* .information file contains package name and application name of those crawled, including if file can be tested or not.
+* Added scrollable for finding of app to start it
+* Changed tester to return -1 if `total_score < 0.5 * len(_scores_arr)` so as to allow for the case that an activity has many clickables and isn't stopping for far too long.
+* Added counter limit so as to prevent the testing from happening for far too long on a single apk
+* Added `next_transition_state` to point to self if clickable doesn't lead to `new_state`.
+* Added probability of scrolling through the activtiy to allow for greater exploration. This is done according to a probability map if widget is scrollable.
+* Added dump for xml and screenshot of each states into log folder
 
 ### 2 October 2017
 * If sum of score is less than 1, press back to prevent repetition of clicks.
