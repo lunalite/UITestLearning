@@ -60,14 +60,14 @@ twitter-like NN model
 !-->
 
 ### 6 October 2017
-* Added auto adb install/uninstall and inputting of information into `.information` file in preparation for deployment onto server for automatic crawl
-* .information file contains package name and application name of those crawled, including if file can be tested or not.
+* Added auto adb install/uninstall and inputting of information into `information-{datetime}.txt` file in preparation for deployment onto server for automatic crawl
+* `information-{datetime}.txt` file contains package name and application name of those crawled, including if file can be tested or not.
 * Added scrollable for finding of app to start it
-* Changed tester to return -1 if `total_score < 0.5 * len(_scores_arr)` so as to allow for the case that an activity has many clickables and isn't stopping for far too long.
+* Changed tester to return `-1` if `total_score < 0.5 * len(_scores_arr)` so as to allow for the case that an activity has many clickables and isn't stopping for far too long.
 * Added counter limit so as to prevent the testing from happening for far too long on a single apk
 * Added `next_transition_state` to point to self if clickable doesn't lead to `new_state`.
 * Added probability of scrolling through the activtiy to allow for greater exploration. This is done according to a probability map if widget is scrollable.
-* Added dump for xml and screenshot of each states into log folder
+* Added dump for xml and screenshot of each states into `/log/{packagename}` folder with each file named according to its state.
 
 ### 2 October 2017
 * If sum of score is less than 1, press back to prevent repetition of clicks.
