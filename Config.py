@@ -6,35 +6,35 @@ Config file that holds the variables being used.
 
 
 class Config:
-    apk_selection = \
-        ['Accounts Lite 2.0',
-         'Java Programming',
-         'Aadhaar Info',
-         'ABC 123 for Kids Child Toddler',
-         'Time Converter',
-         'A League Live',
-         'D-Day with Pictures',
-         'OBDLink',
-         'Mega Tic Tac Toe',
-         'Show Me Wales',
-         'Macroscop'
-         'Bible Trivia Quiz Game',
-         'Kolumbus Sanntid',
-         'The speech the President of the United States',
-         'FOViewer Deluxe Free',
-         'Geo-Wiki Pictures',
-         'Minesweeper',
-         'AddressToGPS',
-         'Acastus',
-         'Calculator',
-         'Camp 2015',
-         'A Photo Map',
-         'AutomateIt',
-         'Agroid',
-         'Bacteriología',
-         'Dining Table Ideas',
-         'Pats Schedule',
-         'Chrome']
+    # apk_selection = \
+    #     ['Accounts Lite 2.0',
+    #      'Java Programming',
+    #      'Aadhaar Info',
+    #      'ABC 123 for Kids Child Toddler',
+    #      'Time Converter',
+    #      'A League Live',
+    #      'D-Day with Pictures',
+    #      'OBDLink',
+    #      'Mega Tic Tac Toe',
+    #      'Show Me Wales',
+    #      'Macroscop'
+    #      'Bible Trivia Quiz Game',
+    #      'Kolumbus Sanntid',
+    #      'The speech the President of the United States',
+    #      'FOViewer Deluxe Free',
+    #      'Geo-Wiki Pictures',
+    #      'Minesweeper',
+    #      'AddressToGPS',
+    #      'Acastus',
+    #      'Calculator',
+    #      'Camp 2015',
+    #      'A Photo Map',
+    #      'AutomateIt',
+    #      'Agroid',
+    #      'Bacteriologaa',
+    #      'Dining Table Ideas',
+    #      'Pats Schedule',
+    #      'Chrome']
 
     """========================================
     Change variables below to suit your settings
@@ -64,11 +64,20 @@ class Config:
     # base storage location for logs like XML and screenshots
     log_location = './log/'
 
+    # Directory where APKs are stored in for enumerating through them
+    apkdir = '/Users/hkoh006/Desktop/APK/dir_001/'
+    # apkdir = '/home/hongda/Document/apk/a/dir_001'
+
+    # ANDROID_HOME
+    ANDROID_HOME = '/Users/hkoh006/Library/Android/sdk/'
+    # ANDROID_HOME = '/home/hongda/Document/sdk'
+
     """========================================
             End of variable setting
     ========================================"""
 
-    app_name = apk_selection[selection_num]
+    # app_name = apk_selection[selection_num]
+    app_name = ''
 
     def __init__(self):
         pass

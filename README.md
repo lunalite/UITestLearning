@@ -59,6 +59,9 @@ twitter-like NN model
 
 !-->
 
+### 8 October 2017
+* Added function to start emulator and unlock screen.
+
 ### 6 October 2017
 * Added auto adb install/uninstall and inputting of information into `information-{datetime}.txt` file in preparation for deployment onto server for automatic crawl
 * `information-{datetime}.txt` file contains package name and application name of those crawled, including if file can be tested or not.

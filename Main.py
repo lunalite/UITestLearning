@@ -1,3 +1,4 @@
+import argparse
 import codecs
 import logging
 import os
@@ -305,7 +306,7 @@ def main(app_name, pack_name):
                 Utility.store_data(learning_data, activities, clickables, mongo)
 
             counter += 1
-            if counter >= 10:
+            if counter >= 200:
                 return
 
         except KeyboardInterrupt:
@@ -323,8 +324,8 @@ def main(app_name, pack_name):
 
 
 def official():
-    dir = '/Users/hkoh006/Desktop/APK/dir_001/'
-    ANDROID_HOME = '/Users/hkoh006/Library/Android/sdk/'
+    dir = Config.apkdir
+    ANDROID_HOME = Config.ANDROID_HOME
     x = subprocess.check_output(['ls', dir])
     apks = (x.split(b'\n'))
     apks = [x.decode('utf-8') for x in apks]
@@ -342,6 +343,7 @@ def official():
         label = output.decode('utf-8')
         m = re.findall('^application-label:(.*)$', label)
         appname = m[0][1:-1]
+        Config.app_name = appname
         logger.info('====================')
         logger.info('testing ' + appname)
         for i in m[0]:
@@ -351,7 +353,7 @@ def official():
         attempts = 0
         if english:
             init()
-            while attempts <= 0:
+            while attempts <= 3:
                 main(appname, apk_packname)
                 attempts += 1
 
@@ -362,5 +364,31 @@ def official():
         # break
 
 
-official()
+# if len(sys.argv) <= 2:
+#     print('Error. Not enough input')
+# else:
+# device_name = sys.argv[1]
+# device_port = sys.argv[2]
+device_name = 'Nexus_5X_API_26'
+device_port = '5554'
+device_serial = 'emulator-' + device_port
+subprocess.Popen(['emulator', '-avd', device_name, '-port', device_port, '-noaudio', '-no-window'])
 
+while True:
+    output = subprocess.check_output(['adb', 'devices'])
+    m = re.findall(device_serial + '\t(.*)', output.decode('utf-8'))
+    if len(m) >= 1:
+        if m[0] == 'offline':
+            pass
+        elif m[0] == 'device':
+            logger.info('Device is online. Unlocking screen...')
+            d.screen.on()
+            d.press('menu')
+            c = d(clickable='true')
+            if len(c) >= 10:
+                logger.info('Unlocked screen... Continuing with testing.')
+            break
+
+    time.sleep(5)
+
+official()
