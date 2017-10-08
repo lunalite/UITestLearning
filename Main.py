@@ -1,14 +1,18 @@
-import argparse
 import codecs
 import logging
-import os
 import random
+import re
 import string
-import sys
 import subprocess
 import time
 
-import re
+logging.basicConfig(filename='./log/main.log', level=logging.DEBUG)
+logger = logging.getLogger(__name__)
+logging.getLogger().addHandler(logging.StreamHandler())
+logging.info('================Begin logging==================')
+
+now = time.strftime("%c")
+logger.info(now)
 
 from uiautomator import Device
 
@@ -20,10 +24,6 @@ from DataActivity import DataActivity
 from Mongo import Mongo
 
 d = Device(Config.device_name)
-
-logging.basicConfig(level=logging.INFO)
-logging.getLogger().addHandler(logging.FileHandler('main.log'))
-logger = logging.getLogger(__name__)
 
 mongo = Mongo()
 
@@ -202,11 +202,14 @@ def main(app_name, pack_name):
 
     logger.info('Force stopping ' + pack_name + ' to reset states')
     subprocess.Popen([android_home + 'platform-tools/adb', 'shell', 'am', 'force-stop', pack_name])
-    d(resourceId='com.google.android.apps.nexuslauncher:id/all_apps_handle').click()
+
+    # d(resourceId='com.google.android.apps.nexuslauncher:id/all_apps_handle').click()
     # d(resourceId='').click()
-    d(scrollable=True).scroll.toEnd()
-    d(scrollable=True).scroll.vert.to(text=app_name)
-    d(text=app_name).click.wait()
+    # d(scrollable=True).scroll.toEnd()
+    # d(scrollable=True).scroll.vert.to(text=app_name)
+    # d(text=app_name).click.wait()
+
+    subprocess.Popen([android_home + '/platform-tools/adb', 'shell', 'monkey', '-p', pack_name, '1'])
 
     learning_data = Data(_appname=app_name,
                          _packname=pack_name,
@@ -362,6 +365,9 @@ def official():
                 main(appname, apk_packname)
                 attempts += 1
 
+            logger.info('Force stopping ' + apk_packname + ' to end test for the APK')
+            subprocess.Popen([android_home + 'platform-tools/adb', 'shell', 'am', 'force-stop', apk_packname])
+
         act_c = mongo.activity.count({"_type": "activity", "parent_app": Config.app_name})
         click_c = mongo.clickable.count({"_type": "clickable", "parent_app_name": Config.app_name})
         file.write(appname + '|' + apk_packname + '|' + str(english) + '|' + str(act_c) + '|' + str(click_c) + '\n')
@@ -369,4 +375,7 @@ def official():
         # break
 
 
-official()
+try:
+    official()
+except Exception as e:
+    logging.exception("message")

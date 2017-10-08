@@ -78,7 +78,9 @@ twitter-like NN model
 ### 8 October 2017
 * Added function to start emulator and unlock screen (removed).
 * Changed subprocess calls to fit in android_home. 
-* Added logging function to prepare for deployment. 
+* Added logging function into file to prepare for deployment.
+* Added force stop at the end of testing to prevent flooding of opened applications.
+* Change opening of application method into using `adb monkey` instead. 
 
 ### 6 October 2017
 * Added auto adb install/uninstall and inputting of information into `information-{datetime}.txt` file in preparation for deployment onto server for automatic crawl
