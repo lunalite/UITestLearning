@@ -7,6 +7,14 @@ Project is on-going
 These instructions will get you a copy of the project up and running on your local machine for development and testing purposes. See deployment for notes on how to deploy the project on a live system.
 (TODO)
 
+## Deployment
+
+In order to deploy the data collection server, the following are required:
+1. Python 3 (Current version Python 3.6.2)
+
+After installing python 3, do a `pip3 install -r requirements.txt` to obtain all python modules required for running the crawler.
+ 
+
 ## Data collection
 Apps are made to run until they finished or they crashed. Data is stored into mongodb via pymongo. The following are apps which have been tested on:
 
@@ -246,9 +254,7 @@ Explain what these tests test and why
 Give an example
 ```
 
-## Deployment
 
-Add additional notes about how to deploy this on a live system
 
 ## Built With
 
