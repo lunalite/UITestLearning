@@ -12,8 +12,16 @@ These instructions will get you a copy of the project up and running on your loc
 In order to deploy the data collection server, the following are required:
 1. Python 3 (Current version Python 3.6.2)
 
+Do note that `sudo` permissions might be needed for running all of the following due to the usage of kvm for the emulator in the case that no screen is provided, so install the following within the `sudo` environment.
+
 After installing python 3, do a `pip3 install -r requirements.txt` to obtain all python modules required for running the crawler.
- 
+Do note that depending on your system, it might be a `pip3.6` or `pip` instead of `pip3`. 
+
+Also depending on the permissions provided, it might be needed for the command `pip3 install --user -r requirements.txt` to be used instead.
+  
+It is up to the user whether he wants to create a `virtualenv` for the project or not. 
+
+Do remember to add into environment `PATH` the folders within android sdk such as `$ANDROID_HOME/platform-tools`, `$ANDROID_HOME/tools` and `$ANDROID_HOME/tools/bin`.
 
 ## Data collection
 Apps are made to run until they finished or they crashed. Data is stored into mongodb via pymongo. The following are apps which have been tested on:
@@ -69,6 +77,7 @@ twitter-like NN model
 
 ### 8 October 2017
 * Added function to start emulator and unlock screen.
+* Changed subprocess calls to fit in android_home. 
 
 ### 6 October 2017
 * Added auto adb install/uninstall and inputting of information into `information-{datetime}.txt` file in preparation for deployment onto server for automatic crawl

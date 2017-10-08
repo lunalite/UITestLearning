@@ -25,6 +25,8 @@ logger = logging.getLogger(__name__)
 
 mongo = Mongo()
 
+android_home = Config.android_home
+
 activities = {}
 clickables = {}
 click_hash = {}
@@ -197,7 +199,7 @@ def main(app_name, pack_name):
     # logger.info('Package name is: ' + pack_name)
 
     logger.info('Force stopping ' + pack_name + ' to reset states')
-    os.system('adb shell am force-stop ' + pack_name)
+    subprocess.Popen([android_home + 'platform-tools/adb', 'shell', 'am', 'force-stop', pack_name])
     d(resourceId='com.google.android.apps.nexuslauncher:id/all_apps_handle').click()
     d(scrollable=True).scroll.toEnd()
     d(scrollable=True).scroll.vert.to(text=app_name)
@@ -325,7 +327,7 @@ def main(app_name, pack_name):
 
 def official():
     dir = Config.apkdir
-    ANDROID_HOME = Config.ANDROID_HOME
+    android_home = Config.android_home
     x = subprocess.check_output(['ls', dir])
     apks = (x.split(b'\n'))
     apks = [x.decode('utf-8') for x in apks]
@@ -336,8 +338,8 @@ def official():
         english = True
         m = re.findall('^(.*)\_.*\.apk', i)
         apk_packname = m[0]
-        subprocess.Popen(['adb', 'install', dir + i]).wait()
-        ps = subprocess.Popen([ANDROID_HOME + 'build-tools/26.0.1/aapt', 'dump', 'badging', dir + i],
+        subprocess.Popen([android_home + 'platform-tools/adb', 'install', dir + i]).wait()
+        ps = subprocess.Popen([android_home + 'build-tools/26.0.1/aapt', 'dump', 'badging', dir + i],
                               stdout=subprocess.PIPE)
         output = subprocess.check_output(('grep', 'application-label:'), stdin=ps.stdout)
         label = output.decode('utf-8')
@@ -360,7 +362,7 @@ def official():
         act_c = mongo.activity.count({"_type": "activity", "parent_app": Config.app_name})
         click_c = mongo.clickable.count({"_type": "clickable", "parent_app_name": Config.app_name})
         file.write(appname + '|' + apk_packname + '|' + str(english) + '|' + str(act_c) + '|' + str(click_c) + '\n')
-        subprocess.Popen(['adb', 'uninstall', apk_packname]).wait()
+        subprocess.Popen([android_home + 'platform-tools/adb', 'uninstall', apk_packname]).wait()
         # break
 
 
@@ -372,13 +374,15 @@ def official():
 device_name = 'Nexus_5X_API_26'
 device_port = '5554'
 device_serial = 'emulator-' + device_port
-subprocess.Popen(['emulator', '-avd', device_name, '-port', device_port, '-noaudio', '-no-window'])
+subprocess.Popen(
+    [android_home + '/emulator/emulator', '-avd', device_name, '-port', device_port, '-noaudio', '-no-window'])
 
 while True:
-    output = subprocess.check_output(['adb', 'devices'])
+    output = subprocess.check_output([android_home + 'platform-tools/adb', 'devices'])
     m = re.findall(device_serial + '\t(.*)', output.decode('utf-8'))
     if len(m) >= 1:
         if m[0] == 'offline':
+            logger.info('offline.')
             pass
         elif m[0] == 'device':
             logger.info('Device is online. Unlocking screen...')

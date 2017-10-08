@@ -66,11 +66,11 @@ class Config:
 
     # Directory where APKs are stored in for enumerating through them
     apkdir = '/Users/hkoh006/Desktop/APK/dir_001/'
-    # apkdir = '/home/hongda/Document/apk/a/dir_001'
+    # apkdir = '/home/hongda/Document/apk/a/dir_001/'
 
-    # ANDROID_HOME
-    ANDROID_HOME = '/Users/hkoh006/Library/Android/sdk/'
-    # ANDROID_HOME = '/home/hongda/Document/sdk'
+    # android_home
+    android_home = '/Users/hkoh006/Library/Android/sdk/'
+    # android_home = '/home/hongda/Document/sdk/'
 
     """========================================
             End of variable setting
