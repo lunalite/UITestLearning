@@ -18,7 +18,6 @@ from Clickable import Clickable
 from Data import Data
 from DataActivity import DataActivity
 
-logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 

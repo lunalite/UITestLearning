@@ -9,6 +9,7 @@ import subprocess
 import time
 
 import re
+
 from uiautomator import Device
 
 import Utility
@@ -21,6 +22,7 @@ from Mongo import Mongo
 d = Device(Config.device_name)
 
 logging.basicConfig(level=logging.INFO)
+logging.getLogger().addHandler(logging.FileHandler('main.log'))
 logger = logging.getLogger(__name__)
 
 mongo = Mongo()
@@ -201,6 +203,7 @@ def main(app_name, pack_name):
     logger.info('Force stopping ' + pack_name + ' to reset states')
     subprocess.Popen([android_home + 'platform-tools/adb', 'shell', 'am', 'force-stop', pack_name])
     d(resourceId='com.google.android.apps.nexuslauncher:id/all_apps_handle').click()
+    # d(resourceId='').click()
     d(scrollable=True).scroll.toEnd()
     d(scrollable=True).scroll.vert.to(text=app_name)
     d(text=app_name).click.wait()
@@ -365,34 +368,5 @@ def official():
         subprocess.Popen([android_home + 'platform-tools/adb', 'uninstall', apk_packname]).wait()
         # break
 
-
-# if len(sys.argv) <= 2:
-#     print('Error. Not enough input')
-# else:
-# device_name = sys.argv[1]
-# device_port = sys.argv[2]
-device_name = 'Nexus_5X_API_26'
-device_port = '5554'
-device_serial = 'emulator-' + device_port
-subprocess.Popen(
-    [android_home + '/emulator/emulator', '-avd', device_name, '-port', device_port, '-noaudio', '-no-window'])
-
-while True:
-    output = subprocess.check_output([android_home + 'platform-tools/adb', 'devices'])
-    m = re.findall(device_serial + '\t(.*)', output.decode('utf-8'))
-    if len(m) >= 1:
-        if m[0] == 'offline':
-            logger.info('offline.')
-            pass
-        elif m[0] == 'device':
-            logger.info('Device is online. Unlocking screen...')
-            d.screen.on()
-            d.press('menu')
-            c = d(clickable='true')
-            if len(c) >= 10:
-                logger.info('Unlocked screen... Continuing with testing.')
-            break
-
-    time.sleep(5)
 
 official()

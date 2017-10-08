@@ -44,7 +44,7 @@ class Config:
     device_name = 'emulator-5554'
 
     # Selecting the package and application name for the application to be used
-    selection_num = 15
+    # selection_num = 15
     # app_instance = 1
 
     # Selecting the data where data is being stored at.
