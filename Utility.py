@@ -150,8 +150,10 @@ def get_package_name(d):
 
 
 def get_activity_name(d, pn):
-    cmd = 'adb shell dumpsys | grep mFocusedApp'
-    result = subprocess.check_output(cmd, shell=True)
+    android_home = Config.android_home
+    ps = subprocess.Popen([android_home + 'platform-tools/adb', 'shell', 'dumpsys'],
+                          stdout=subprocess.PIPE)
+    result = subprocess.check_output(['grep', 'mFocusedApp'], stdin=ps.stdout)
     a = result.decode()
     m = re.findall(pn + r'.*(\b.+\b)\s\w\d+\}\}', a)
     return m[0]

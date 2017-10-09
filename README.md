@@ -75,6 +75,10 @@ twitter-like NN model
 
 !-->
 
+### 9 October 2017
+* Fixed subprocess call in Utilty.py.
+
+
 ### 8 October 2017
 * Added function to start emulator and unlock screen (removed).
 * Changed subprocess calls to fit in android_home. 
