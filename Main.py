@@ -104,8 +104,10 @@ def click_button(new_click_els, pack_name, app_name):
                         logger.info(len(parent_map[old_state]))
                         _parent = Utility.get_parent_with_key(click_btn_key, parent_map[old_state])
                         if _parent != -1:
-                            sibs = Utility.get_siblings(_parent)
-                            children = Utility.get_children(_parent)
+                            sibs = [Utility.xml_btn_to_key(sib) for sib in
+                                    Utility.get_siblings(_parent)]
+                            children = [Utility.xml_btn_to_key(child) for child in
+                                        Utility.get_children(_parent)]
                         else:
                             sibs = None
                             children = None
@@ -113,10 +115,8 @@ def click_button(new_click_els, pack_name, app_name):
                                                                _parent_activity_state=old_state,
                                                                _parent_app_name=app_name,
                                                                _parent=Utility.xml_btn_to_key(_parent),
-                                                               _siblings=[Utility.xml_btn_to_key(sib) for sib in
-                                                                          sibs],
-                                                               _children=[Utility.xml_btn_to_key(child) for child in
-                                                                          children]))
+                                                               _siblings=sibs,
+                                                               _children=children))
                         visited[old_state].append([1, 0])
                         scores[old_state].append(1)
 

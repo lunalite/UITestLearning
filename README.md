@@ -77,6 +77,7 @@ twitter-like NN model
 
 ### 9 October 2017
 * Fixed subprocess call in Utilty.py.
+* Fixed bug in sibs and children args in the case that there are no parents.
 
 
 ### 8 October 2017
