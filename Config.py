@@ -70,7 +70,7 @@ class Config:
     if current_user == 'hkoh006':
         apkdir = '/Users/hkoh006/Desktop/APK/dir_001/'
         android_home = os.environ['ANDROID_HOME'] + '/' or '/Users/hkoh006/Library/Android/sdk/'
-    elif current_user == 'hongda':
+    elif current_user == 'root':
         apkdir = '/home/hongda/Document/apk/a/dir_001/'
         android_home = os.environ['ANDROID_HOME'] + '/' or '/home/hongda/Document/sdk/'
 
