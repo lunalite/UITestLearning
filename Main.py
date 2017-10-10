@@ -5,8 +5,16 @@ import re
 import string
 import subprocess
 import time
+import os
+from Mongo import Mongo
+from uiautomator import Device
 
-logging.basicConfig(filename='./log/main.log', level=logging.DEBUG)
+from Config import Config
+
+log_location = Config.log_location
+if not os.path.exists(log_location):
+    os.makedirs(log_location)
+logging.basicConfig(filename=log_location + 'main.log', level=logging.DEBUG)
 logger = logging.getLogger(__name__)
 logging.getLogger().addHandler(logging.StreamHandler())
 logging.info('================Begin logging==================')
@@ -14,14 +22,10 @@ logging.info('================Begin logging==================')
 now = time.strftime("%c")
 logger.info(now)
 
-from uiautomator import Device
-
 import Utility
 from Clickable import Clickable
-from Config import Config
 from Data import Data
 from DataActivity import DataActivity
-from Mongo import Mongo
 
 d = Device(Config.device_name)
 
@@ -62,13 +66,13 @@ def click_button(new_click_els, pack_name, app_name):
     click_els = d(clickable='true', packageName=pack_name) if new_click_els is None else new_click_els
 
     btn_result = make_decision(click_els, visited[old_state])
-    logger.info(len(parent_map))
+    logger.info('Length of the parent_map currently: ' + str(len(parent_map)))
     if btn_result == -1 or zero_counter == 5:
         d.press('back')
 
         # Issue with clicking back button prematurely
         if Utility.get_package_name(d) == 'com.google.android.apps.nexuslauncher':
-            d(text=app_name).click.wait()
+            subprocess.Popen([android_home + '/platform-tools/adb', 'shell', 'monkey', '-p', pack_name, '1'])
         return None, Utility.get_state(d, pack_name)
     else:
         try:
@@ -79,7 +83,7 @@ def click_button(new_click_els, pack_name, app_name):
 
                 # Check if the key of button to be clicked is equal to the key of button stored in clickables
                 if click_btn_key == clickables[old_state][btn_result].name:
-                    click_btn.click()
+                    click_btn.click.wait()
 
                 # Search through list to see if the button is of another number
                 else:
@@ -194,21 +198,8 @@ def main(app_name, pack_name):
     logger.info('Starting UI testing')
     d.screen.on()
     d.press('home')
-
-    # logger.info('Getting the package name with the application name: ' + app_name)
-    # d(text=app_name).click.wait()
-    # pack_name = Utility.get_package_name(d)
-    # logger.info('Package name is: ' + pack_name)
-
     logger.info('Force stopping ' + pack_name + ' to reset states')
     subprocess.Popen([android_home + 'platform-tools/adb', 'shell', 'am', 'force-stop', pack_name])
-
-    # d(resourceId='com.google.android.apps.nexuslauncher:id/all_apps_handle').click()
-    # d(resourceId='').click()
-    # d(scrollable=True).scroll.toEnd()
-    # d(scrollable=True).scroll.vert.to(text=app_name)
-    # d(text=app_name).click.wait()
-
     subprocess.Popen([android_home + '/platform-tools/adb', 'shell', 'monkey', '-p', pack_name, '1'])
 
     learning_data = Data(_appname=app_name,
@@ -235,7 +226,7 @@ def main(app_name, pack_name):
             elif nextstate == initstate:
                 while True:
                     tryclick_btns = d(clickable='true')
-                    random.choice(tryclick_btns).click()
+                    random.choice(tryclick_btns).click.wait()
                     nextstate = Utility.get_state(d, pack_name)
                     if nextstate != initstate:
                         return -1
@@ -252,9 +243,6 @@ def main(app_name, pack_name):
             arch.append(Utility.btn_to_key(btn))
         click_hash[local_state] = arch
         for btn in click_hash[local_state]:
-            # logger.info('getting parents')
-            # logger.info(old_state)
-            # logger.info(Utility.get_state(d, pack_name))
             _parent = Utility.get_parent_with_key(btn, parent_map[local_state])
             if _parent != -1:
                 sibs = Utility.get_siblings(_parent)
@@ -290,10 +278,10 @@ def main(app_name, pack_name):
             Utility.get_state(d, pack_name)
             if d(scrollable='true').exists:
                 r = random.uniform(0, Config.scroll_probability[2])
-                logger.info(r)
                 if r < Config.scroll_probability[0]:
                     new_click_els, new_state = click_button(new_click_els, pack_name, app_name)
                 else:
+                    logger.info('Scrolling...')
                     if r < Config.scroll_probability[1]:
                         d(scrollable='true').fling()
                     elif r < Config.scroll_probability[2]:
@@ -305,7 +293,7 @@ def main(app_name, pack_name):
                 new_click_els, new_state = click_button(new_click_els, pack_name, app_name)
 
             logger.info(visited)
-            logger.info(counter)
+            logger.info('Number of iterations: ' + str(counter))
             if new_state != old_state and new_state not in scores:
                 rec(new_state)
 
@@ -338,7 +326,11 @@ def official():
     apks = (x.split(b'\n'))
     apks = [x.decode('utf-8') for x in apks]
     timestr = time.strftime("%Y%m%d%H%M%S")
-    file = codecs.open('information-' + timestr + '.txt', 'w', 'utf-8')
+
+    info_location = Config.info_location
+    if not os.path.exists(info_location):
+        os.makedirs(info_location)
+    file = codecs.open(info_location + '/information-' + timestr + '.txt', 'w', 'utf-8')
 
     for i in apks:
         english = True

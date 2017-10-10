@@ -74,11 +74,14 @@ literature review of model for sentimental analysis-like analysis
 twitter-like NN model
 
 !-->
+### 10 October 2017
+* Fixed bug in 'Issue with clicking back button prematurely' where the app is reopened using the old method instead of monkey method.
+* Issue with screenshot being half taken. Suspicion to be because the buttons are clicked without waiting, causing transitioning to happen too fast and screenshots to be half taken.
+* Reduced probability for scrolling up and down if scrollable exists in page.
 
 ### 9 October 2017
 * Fixed subprocess call in Utilty.py.
 * Fixed bug in sibs and children args in the case that there are no parents.
-
 
 ### 8 October 2017
 * Added function to start emulator and unlock screen (removed).

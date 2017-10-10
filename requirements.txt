@@ -4,6 +4,6 @@
 # Mongo.py: 1
 pymongo == 3.5.1
 
-# Main.py: 12
+# Main.py: 21
 # old2/Main.py: 10
 uiautomator == 0.3.2

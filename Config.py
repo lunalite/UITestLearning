@@ -3,6 +3,8 @@
 Config file that holds the variables being used.
 
 ======================================================"""
+import getpass
+import os
 
 
 class Config:
@@ -43,10 +45,6 @@ class Config:
     # Sets the device name of emulator
     device_name = 'emulator-5554'
 
-    # Selecting the package and application name for the application to be used
-    # selection_num = 15
-    # app_instance = 1
-
     # Selecting the data where data is being stored at.
     data_store_location = './data/'
 
@@ -59,18 +57,22 @@ class Config:
 
     # Probability of flinging the screen if scrollable is found
     # not flinging, fling up, fling down
-    scroll_probability = [0.6, 0.8, 1.0]
+    scroll_probability = [0.8, 0.9, 1.0]
 
     # base storage location for logs like XML and screenshots
     log_location = './log/'
 
-    # Directory where APKs are stored in for enumerating through them
-    apkdir = '/Users/hkoh006/Desktop/APK/dir_001/'
-    # apkdir = '/home/hongda/Document/apk/a/dir_001/'
+    # Information location storing number of activities/clickables stored
+    info_location = './log/info'
 
-    # android_home
-    android_home = '/Users/hkoh006/Library/Android/sdk/'
-    # android_home = '/home/hongda/Document/sdk/'
+    # Directory where APKs are stored in for enumerating through them
+    current_user = getpass.getuser()
+    if current_user == 'hkoh006':
+        apkdir = '/Users/hkoh006/Desktop/APK/dir_001/'
+        android_home = os.environ['ANDROID_HOME'] + '/' or '/Users/hkoh006/Library/Android/sdk/'
+    elif current_user == 'hongda':
+        apkdir = '/home/hongda/Document/apk/a/dir_001/'
+        android_home = os.environ['ANDROID_HOME'] + '/' or '/home/hongda/Document/sdk/'
 
     """========================================
             End of variable setting
