@@ -74,6 +74,30 @@ literature review of model for sentimental analysis-like analysis
 twitter-like NN model
 
 !-->
+### 11 October 2017
+* Reason for screenshot being half taken at resolution 480x320 is because the skin is not chosen properly. Prior to this, the command used for creating the avd is: `android create avd -n avd1 -b x86 -k "system-images;android-26;google_apis;x86"` but this defaults to an avd that is skinless, causing error to arise.
+```
+Available Android Virtual Devices:
+    Name: Nexus_5X_API_26
+  Device: Nexus 5X (Google)
+    Path: /Users/hkoh006/.android/avd/Nexus_5X_API_26.avd
+  Target: Google Play (Google Inc.)
+          Based on: Android API 26 Tag/ABI: google_apis_playstore/x86
+    Skin: nexus_5x
+  Sdcard: 100M
+---------
+    Name: testAVD
+    Path: /Users/hkoh006/.android/avd/testAVD.avd
+  Target: Google APIs
+          Based on: Android API 26 Tag/ABI: google_apis/x86
+  Sdcard: 100M
+  
+```
+
+* The top AVD is created from Android Studio's AVD Manager and the subsequent one is created using the command.
+Thus, we have to add a skin to the testAVD by running the `emulator -avd testAVD -skin 1080x1920` command since `-skin` flag for the `android create avd` is not found/deprecated.
+ 
+
 ### 10 October 2017
 * Fixed bug in 'Issue with clicking back button prematurely' where the app is reopened using the old method instead of monkey method.
 * Issue with screenshot being half taken. Suspicion to be because the buttons are clicked without waiting, causing transitioning to happen too fast and screenshots to be half taken.

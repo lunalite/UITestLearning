@@ -84,6 +84,7 @@ def get_state(device, pn):
 
 
 def create_child_to_parent(dump):
+    dump = dump.encode('ascii', 'replace')
     tree = ET.fromstring(dump)
     pmap = dict((c, p) for p in tree.iter() for c in p)
     return pmap
