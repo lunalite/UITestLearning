@@ -2,23 +2,20 @@ import hashlib
 import json
 import logging
 import operator
+import os
 import random
+import re
 import string
 import subprocess
 import xml.etree.ElementTree as ET
 
-import re
-
-import os
-
-import errno
-
-from Config import Config
 from Clickable import Clickable
+from Config import Config
 from Data import Data
 from DataActivity import DataActivity
 
 logger = logging.getLogger(__name__)
+device_name = Config.device_name
 
 
 def store_data(data, activities, clickables, mongo):
@@ -152,7 +149,7 @@ def get_package_name(d):
 
 def get_activity_name(d, pn):
     android_home = Config.android_home
-    ps = subprocess.Popen([android_home + 'platform-tools/adb', 'shell', 'dumpsys'],
+    ps = subprocess.Popen([android_home + 'platform-tools/adb', '-s', device_name, 'shell', 'dumpsys'],
                           stdout=subprocess.PIPE)
     result = subprocess.check_output(['grep', 'mFocusedApp'], stdin=ps.stdout)
     a = result.decode()

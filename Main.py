@@ -27,7 +27,8 @@ from Clickable import Clickable
 from Data import Data
 from DataActivity import DataActivity
 
-d = Device(Config.device_name)
+device_name = Config.device_name
+d = Device(device_name)
 
 mongo = Mongo()
 
@@ -75,7 +76,8 @@ def click_button(new_click_els, pack_name, app_name):
 
         # Issue with clicking back button prematurely
         if Utility.get_package_name(d) == 'com.google.android.apps.nexuslauncher':
-            subprocess.Popen([android_home + '/platform-tools/adb', 'shell', 'monkey', '-p', pack_name, '1'])
+            subprocess.Popen(
+                [android_home + '/platform-tools/adb', '-s', device_name, 'shell', 'monkey', '-p', pack_name, '1'])
         return None, Utility.get_state(d, pack_name)
     else:
         try:
@@ -339,7 +341,7 @@ def official():
         english = True
         m = re.findall('^(.*)\_.*\.apk', i)
         apk_packname = m[0]
-        subprocess.Popen([android_home + 'platform-tools/adb', 'install', dir + i]).wait()
+        subprocess.Popen([android_home + 'platform-tools/adb', 's', device_name, 'install', dir + i]).wait()
         ps = subprocess.Popen([android_home + 'build-tools/26.0.1/aapt', 'dump', 'badging', dir + i],
                               stdout=subprocess.PIPE)
         output = subprocess.check_output(('grep', 'application-label:'), stdin=ps.stdout)
@@ -361,12 +363,13 @@ def official():
                 attempts += 1
 
             logger.info('Force stopping ' + apk_packname + ' to end test for the APK')
-            subprocess.Popen([android_home + 'platform-tools/adb', 'shell', 'am', 'force-stop', apk_packname])
+            subprocess.Popen(
+                [android_home + 'platform-tools/adb', 's', device_name, 'shell', 'am', 'force-stop', apk_packname])
 
         act_c = mongo.activity.count({"_type": "activity", "parent_app": Config.app_name})
         click_c = mongo.clickable.count({"_type": "clickable", "parent_app_name": Config.app_name})
         file.write(appname + '|' + apk_packname + '|' + str(english) + '|' + str(act_c) + '|' + str(click_c) + '\n')
-        subprocess.Popen([android_home + 'platform-tools/adb', 'uninstall', apk_packname]).wait()
+        subprocess.Popen([android_home + 'platform-tools/adb', '-s', device_name, 'uninstall', apk_packname]).wait()
         # break
 
 
