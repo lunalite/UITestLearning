@@ -64,8 +64,11 @@ def click_button(new_click_els, pack_name, app_name):
     old_state = Utility.get_state(d, pack_name)
 
     click_els = d(clickable='true', packageName=pack_name) if new_click_els is None else new_click_els
-
-    btn_result = make_decision(click_els, visited[old_state])
+    try:
+        btn_result = make_decision(click_els, visited[old_state])
+    except KeyError:
+        logger.info('Why would there be a KeyError after making decision?')
+        return None, Utility.get_state(d, pack_name)
     logger.info('Length of the parent_map currently: ' + str(len(parent_map)))
     if btn_result == -1 or zero_counter == 5:
         d.press('back')

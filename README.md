@@ -63,17 +63,9 @@ Or some which there are no clickables(flash games) Or those that require login a
 
 ## Updates
 
-<!--
-TODO:
-3) Optimization of the for loops 
-6) Consider subtracting score if button is being pressed simultaneously at the same time
-8) Main thing is exploration and one off.
-9) Check why duplicates 
+### 12 October 2017
+* Main error now is with KeyError...
 
-literature review of model for sentimental analysis-like analysis 
-twitter-like NN model
-
-!-->
 ### 11 October 2017
 * Reason for screenshot being half taken at resolution 480x320 is because the skin is not chosen properly. Prior to this, the command used for creating the avd is: `android create avd -n avd1 -b x86 -k "system-images;android-26;google_apis;x86"` but this defaults to an avd that is skinless, causing error to arise.
 ```
