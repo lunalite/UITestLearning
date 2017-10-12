@@ -66,6 +66,7 @@ Or some which there are no clickables(flash games) Or those that require login a
 ### 12 October 2017
 * Main error now is with KeyError...
 * Changed commands to allow for multiple emulators
+* Created `preprocessing.py` for selecting of APK filename into separate text files. 
 
 ### 11 October 2017
 * Reason for screenshot being half taken at resolution 480x320 is because the skin is not chosen properly. Prior to this, the command used for creating the avd is: `android create avd -n avd1 -b x86 -k "system-images;android-26;google_apis;x86"` but this defaults to an avd that is skinless, causing error to arise.

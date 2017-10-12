@@ -315,6 +315,7 @@ def main(app_name, pack_name):
             Utility.store_data(learning_data, activities, clickables, mongo)
             return
         except KeyError:
+            logger.info('@@@@@@@@@@@@@@@=============================')
             logger.info('KeyError...')
             Utility.store_data(learning_data, activities, clickables, mongo)
             return
