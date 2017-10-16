@@ -6,6 +6,9 @@ import string
 import subprocess
 import time
 import os
+
+import sys
+
 from Mongo import Mongo
 from uiautomator import Device
 
@@ -14,7 +17,7 @@ from Config import Config
 log_location = Config.log_location
 if not os.path.exists(log_location):
     os.makedirs(log_location)
-logging.basicConfig(filename=log_location + 'main.log', level=logging.DEBUG)
+logging.basicConfig(filename=log_location + 'main-' + sys.argv[1] + '.log', level=logging.DEBUG)
 logger = logging.getLogger(__name__)
 logging.getLogger().addHandler(logging.StreamHandler())
 logging.info('================Begin logging==================')
@@ -26,9 +29,6 @@ import Utility
 from Clickable import Clickable
 from Data import Data
 from DataActivity import DataActivity
-
-device_name = Config.device_name
-d = Device(device_name)
 
 mongo = Mongo()
 
@@ -77,7 +77,8 @@ def click_button(new_click_els, pack_name, app_name):
         # Issue with clicking back button prematurely
         if Utility.get_package_name(d) == 'com.google.android.apps.nexuslauncher':
             subprocess.Popen(
-                [android_home + '/platform-tools/adb', '-s', device_name, 'shell', 'monkey', '-p', pack_name, '1'])
+                [android_home + '/platform-tools/adb', '-s', device_name, 'shell', 'monkey', '-p', pack_name, '1'],
+                stdout=subprocess.DEVNULL, stderr=subprocess.STDOUT)
         return None, Utility.get_state(d, pack_name)
     else:
         try:
@@ -204,8 +205,8 @@ def main(app_name, pack_name):
     d.screen.on()
     d.press('home')
     logger.info('Force stopping ' + pack_name + ' to reset states')
-    subprocess.Popen([android_home + 'platform-tools/adb', 'shell', 'am', 'force-stop', pack_name])
-    subprocess.Popen([android_home + '/platform-tools/adb', 'shell', 'monkey', '-p', pack_name, '1'])
+    subprocess.Popen([android_home + 'platform-tools/adb', '-s', device_name, 'shell', 'am', 'force-stop', pack_name])
+    subprocess.Popen([android_home + '/platform-tools/adb', '-s', device_name, 'shell', 'monkey', '-p', pack_name, '1'])
 
     learning_data = Data(_appname=app_name,
                          _packname=pack_name,
@@ -236,7 +237,7 @@ def main(app_name, pack_name):
                     if nextstate != initstate:
                         return -1
 
-        da = DataActivity(local_state, Utility.get_activity_name(d, pack_name), app_name, [])
+        da = DataActivity(local_state, Utility.get_activity_name(d, pack_name, device_name), app_name, [])
         activities[local_state] = da
         click_els = d(clickable='true', packageName=pack_name)
         parent_map[local_state] = Utility.create_child_to_parent(dump=d.dump(compressed=False))
@@ -311,6 +312,7 @@ def main(app_name, pack_name):
                 return
 
         except KeyboardInterrupt:
+            logger.info('@@@@@@@@@@@@@@@=============================')
             logger.info('KeyboardInterrupt...')
             Utility.store_data(learning_data, activities, clickables, mongo)
             return
@@ -320,6 +322,7 @@ def main(app_name, pack_name):
             Utility.store_data(learning_data, activities, clickables, mongo)
             return
         except IndexError:
+            logger.info('@@@@@@@@@@@@@@@=============================')
             logger.info('IndexError...')
             Utility.store_data(learning_data, activities, clickables, mongo)
             return
@@ -329,8 +332,8 @@ def official():
     dir = Config.apkdir
     android_home = Config.android_home
     x = subprocess.check_output(['ls', dir])
-    apks = (x.split(b'\n'))
-    apks = [x.decode('utf-8') for x in apks]
+    with open(apklist, 'r') as f:
+        apks_to_test = [line.rstrip() for line in f]
     timestr = time.strftime("%Y%m%d%H%M%S")
 
     info_location = Config.info_location
@@ -338,11 +341,13 @@ def official():
         os.makedirs(info_location)
     file = codecs.open(info_location + '/information-' + timestr + '.txt', 'w', 'utf-8')
 
-    for i in apks:
+    for i in apks_to_test:
         english = True
         m = re.findall('^(.*)\_.*\.apk', i)
         apk_packname = m[0]
-        subprocess.Popen([android_home + 'platform-tools/adb', 's', device_name, 'install', dir + i]).wait()
+        subprocess.Popen([android_home + 'platform-tools/adb', '-s', device_name, 'install', dir + i],
+                         stdout=subprocess.DEVNULL).wait()
+        logger.info('Installed the ' + apk_packname + ' APK.')
         ps = subprocess.Popen([android_home + 'build-tools/26.0.1/aapt', 'dump', 'badging', dir + i],
                               stdout=subprocess.PIPE)
         output = subprocess.check_output(('grep', 'application-label:'), stdin=ps.stdout)
@@ -357,6 +362,7 @@ def official():
                 english = False
                 break
         attempts = 0
+
         if english:
             init()
             while attempts <= 3:
@@ -365,7 +371,7 @@ def official():
 
             logger.info('Force stopping ' + apk_packname + ' to end test for the APK')
             subprocess.Popen(
-                [android_home + 'platform-tools/adb', 's', device_name, 'shell', 'am', 'force-stop', apk_packname])
+                [android_home + 'platform-tools/adb', '-s', device_name, 'shell', 'am', 'force-stop', apk_packname])
 
         act_c = mongo.activity.count({"_type": "activity", "parent_app": Config.app_name})
         click_c = mongo.clickable.count({"_type": "clickable", "parent_app_name": Config.app_name})
@@ -375,6 +381,15 @@ def official():
 
 
 try:
+    """
+    device_name e.g. emulator-5554
+    apklist e.g. directory-to-apk-x
+    e.g. python3 Main.py emulator-5554 
+    """
+    device_name = sys.argv[1]
+    apklist = sys.argv[2]
+    d = Device(device_name)
     official()
+
 except Exception as e:
     logging.exception("message")

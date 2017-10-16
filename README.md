@@ -63,6 +63,9 @@ Or some which there are no clickables(flash games) Or those that require login a
 
 ## Updates
 
+### 16 October 2017
+* Added init file for shell
+
 ### 12 October 2017
 * Main error now is with KeyError...
 * Changed commands to allow for multiple emulators

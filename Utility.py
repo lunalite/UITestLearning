@@ -15,8 +15,6 @@ from Data import Data
 from DataActivity import DataActivity
 
 logger = logging.getLogger(__name__)
-device_name = Config.device_name
-
 
 def store_data(data, activities, clickables, mongo):
     for state, activity in activities.items():
@@ -147,7 +145,7 @@ def get_package_name(d):
     return info['currentPackageName']
 
 
-def get_activity_name(d, pn):
+def get_activity_name(d, pn, device_name):
     android_home = Config.android_home
     ps = subprocess.Popen([android_home + 'platform-tools/adb', '-s', device_name, 'shell', 'dumpsys'],
                           stdout=subprocess.PIPE)

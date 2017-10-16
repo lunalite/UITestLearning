@@ -43,7 +43,8 @@ class Config:
     ========================================"""
 
     # Sets the device name of emulator
-    device_name = 'emulator-5554'
+    # device_name = 'emulator-5554'
+    device_name = ''
 
     # Selecting the data where data is being stored at.
     data_store_location = './data/'
@@ -68,10 +69,10 @@ class Config:
     # Directory where APKs are stored in for enumerating through them
     current_user = getpass.getuser()
     if current_user == 'hkoh006':
-        apkdir = '/Users/hkoh006/Desktop/APK/dir_001/'
+        apkdir = '/Users/hkoh006/Desktop/APK/'
         android_home = os.environ['ANDROID_HOME'] + '/' or '/Users/hkoh006/Library/Android/sdk/'
     elif current_user == 'root':
-        apkdir = '/home/hongda/Document/apk/a/dir_001/'
+        apkdir = '/mnt/nas5/reps/googleplay/20170318'
         android_home = os.environ['ANDROID_HOME'] + '/' or '/home/hongda/Document/sdk/'
 
     """========================================
