@@ -160,11 +160,12 @@ def click_button(new_click_els, pack_name, app_name):
             else:
                 raise Exception('Warning, no such buttons available in click_button()')
         except IndexError:
-            logger.info("Index error")
+            logger.info('@@@@@@@@@@@@@@@=============================')
+            logger.info("Index error with finding right button to click. Restarting...")
             logger.warning(len(click_els))
             logger.warning(len(visited[old_state]))
             logger.warning(btn_result)
-            exit(0)
+            raise IndexError('')
 
 
 def make_decision(click_els, _scores_arr):
@@ -220,7 +221,7 @@ def main(app_name, pack_name):
     def rec(local_state):
         global parent_map
         if Utility.get_package_name(d) == 'com.google.android.apps.nexuslauncher':
-            raise KeyboardInterrupt
+            return -1
         elif Utility.get_package_name(d) != pack_name:
             initstate = Utility.get_state(d, pack_name)
             d.press('back')
@@ -276,7 +277,12 @@ def main(app_name, pack_name):
         Utility.dump_log(d, pack_name, local_state)
         return 1
 
-    rec(old_state)
+    try:
+        rec(old_state)
+    except IndexError:
+        logger.info('Index error transferring from rec(old_state) back to main.')
+        logger.info('Returning back to main')
+        return
     new_click_els = None
     counter = 0
 
@@ -331,6 +337,7 @@ def main(app_name, pack_name):
             logger.info('IndexError...')
             Utility.store_data(learning_data, activities, clickables, mongo)
             return
+
 
 
 def official():
