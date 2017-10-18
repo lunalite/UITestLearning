@@ -231,11 +231,16 @@ def main(app_name, pack_name):
             # Prepare for the situation of when pressing back button doesn't work
             elif nextstate == initstate:
                 while True:
-                    tryclick_btns = d(clickable='true')
-                    random.choice(tryclick_btns).click.wait()
-                    nextstate = Utility.get_state(d, pack_name)
-                    if nextstate != initstate:
-                        return -1
+                    try:
+                        tryclick_btns = d(clickable='true')
+                        random.choice(tryclick_btns).click.wait()
+                        nextstate = Utility.get_state(d, pack_name)
+                        if nextstate != initstate:
+                            return -1
+                    except IndexError:
+                        logger.info('@@@@@@@@@@@@@@@=============================')
+                        logger.info('IndexError... No buttons clickable in new state')
+                        raise IndexError
 
         da = DataActivity(local_state, Utility.get_activity_name(d, pack_name, device_name), app_name, [])
         activities[local_state] = da
@@ -363,7 +368,7 @@ def official():
                 break
         attempts = 0
 
-        if english:
+        if english and all(ord(c) < 128 for c in appname):
             init()
             while attempts <= 3:
                 main(appname, apk_packname)

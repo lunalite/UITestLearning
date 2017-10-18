@@ -72,7 +72,7 @@ class Config:
         apkdir = '/Users/hkoh006/Desktop/APK/'
         android_home = os.environ['ANDROID_HOME'] + '/' or '/Users/hkoh006/Library/Android/sdk/'
     elif current_user == 'root':
-        apkdir = '/mnt/nas5/reps/googleplay/20170318'
+        apkdir = '/mnt/nas5/reps/googleplay/20170318/'
         android_home = os.environ['ANDROID_HOME'] + '/' or '/home/hongda/Document/sdk/'
 
     """========================================
