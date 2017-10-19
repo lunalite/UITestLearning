@@ -65,12 +65,11 @@ def click_button(new_click_els, pack_name, app_name):
     old_state = Utility.get_state(d, pack_name)
 
     click_els = d(clickable='true', packageName=pack_name) if new_click_els is None else new_click_els
-    try:
-        btn_result = make_decision(click_els, visited[old_state])
-    except KeyError:
-        logger.info('Why would there be a KeyError after making decision?')
-        raise KeyError
-        # return None, Utility.get_state(d, pack_name)
+    # try:
+    btn_result = make_decision(click_els, visited[old_state])
+    # logger.info('Why would there be a KeyError after making decision?')
+    # raise KeyError
+    # return None, Utility.get_state(d, pack_name)
     logger.info('Length of the parent_map currently: ' + str(len(parent_map)))
     if btn_result == -1 or zero_counter == 5:
         d.press('back')
@@ -233,16 +232,11 @@ def main(app_name, pack_name):
             # Prepare for the situation of when pressing back button doesn't work
             elif nextstate == initstate:
                 while True:
-                    try:
-                        tryclick_btns = d(clickable='true')
-                        random.choice(tryclick_btns).click.wait()
-                        nextstate = Utility.get_state(d, pack_name)
-                        if nextstate != initstate:
-                            return -1
-                    except IndexError:
-                        logger.info('@@@@@@@@@@@@@@@=============================')
-                        logger.info('IndexError... No buttons clickable in new state')
-                        raise IndexError
+                    tryclick_btns = d(clickable='true')
+                    random.choice(tryclick_btns).click.wait()
+                    nextstate = Utility.get_state(d, pack_name)
+                    if nextstate != initstate:
+                        return -1
 
         da = DataActivity(local_state, Utility.get_activity_name(d, pack_name, device_name), app_name, [])
         activities[local_state] = da
@@ -338,7 +332,6 @@ def main(app_name, pack_name):
             logger.info('IndexError...')
             Utility.store_data(learning_data, activities, clickables, mongo)
             return
-
 
 
 def official():
