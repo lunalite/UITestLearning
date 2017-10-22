@@ -221,13 +221,13 @@ def main(app_name, pack_name):
     def rec(local_state):
         global parent_map
         if Utility.get_package_name(d) == 'com.google.android.apps.nexuslauncher':
-            return -1
+            return -2, local_state
         elif Utility.get_package_name(d) != pack_name:
             initstate = Utility.get_state(d, pack_name)
             d.press('back')
             nextstate = Utility.get_state(d, pack_name)
             if nextstate != initstate:
-                return -1
+                return -1, nextstate
 
             # Prepare for the situation of when pressing back button doesn't work
             elif nextstate == initstate:
@@ -236,7 +236,7 @@ def main(app_name, pack_name):
                     random.choice(tryclick_btns).click.wait()
                     nextstate = Utility.get_state(d, pack_name)
                     if nextstate != initstate:
-                        return -1
+                        return -1, nextstate
 
         da = DataActivity(local_state, Utility.get_activity_name(d, pack_name, device_name), app_name, [])
         activities[local_state] = da
@@ -270,14 +270,9 @@ def main(app_name, pack_name):
         scores[local_state] = ars
         visited[local_state] = arv
         Utility.dump_log(d, pack_name, local_state)
-        return 1
+        return 1, local_state
 
-    try:
-        rec(old_state)
-    except IndexError:
-        logger.info('Index error transferring from rec(old_state) back to main.')
-        logger.info('Returning back to main')
-        return
+    rec(old_state)
     new_click_els = None
     counter = 0
 
@@ -307,14 +302,17 @@ def main(app_name, pack_name):
             logger.info(visited)
             logger.info('Number of iterations: ' + str(counter))
             if new_state != old_state and new_state not in scores:
-                rec(new_state)
+                recvalue = -1
+                while recvalue == -1:
+                    recvalue, new_state = rec(new_state)
+
 
             if counter % 10 == 0:
                 logger.info('Saving data to database...')
                 Utility.store_data(learning_data, activities, clickables, mongo)
 
             counter += 1
-            if counter >= 200:
+            if counter >= 100:
                 return
 
         except KeyboardInterrupt:
@@ -322,11 +320,11 @@ def main(app_name, pack_name):
             logger.info('KeyboardInterrupt...')
             Utility.store_data(learning_data, activities, clickables, mongo)
             return
-        except KeyError:
-            logger.info('@@@@@@@@@@@@@@@=============================')
-            logger.info('KeyError...')
-            Utility.store_data(learning_data, activities, clickables, mongo)
-            return
+        # except KeyError:
+        #     logger.info('@@@@@@@@@@@@@@@=============================')
+        #     logger.info('KeyError...')
+        #     Utility.store_data(learning_data, activities, clickables, mongo)
+        #     return
         except IndexError:
             logger.info('@@@@@@@@@@@@@@@=============================')
             logger.info('IndexError...')
@@ -396,6 +394,10 @@ try:
     device_name = sys.argv[1]
     apklist = sys.argv[2]
     d = Device(device_name)
+    # clicks_els = d(clickable='true')
+    # print(Utility.get_state(d, 'aadhaar.driving.voterid.passport'))
+    # for i in clicks_els:
+    #     print(i.info)
     official()
 
 except Exception as e:

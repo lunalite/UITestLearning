@@ -14,9 +14,8 @@ do
     z=$((5554 + i*2))
     $ANDROID_HOME/emulator/emulator -avd avd-$i -skin 480x800 -port $z -noaudio -no-window &
     $ANDROID_HOME/platform-tools/adb -s emulator-$z shell input keyevent 82
-    $ANDROID_HOME/platform-tools/adb -s emulator-$z shell svc data disable
+    $ANDROID_HOME/platform  -tools/adb -s emulator-$z shell svc data disable
 done
-
 
 
 

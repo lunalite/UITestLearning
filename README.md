@@ -62,6 +62,9 @@ Unable to test certain APKs like those of other languages, or those like 'Power 
 Or some which there are no clickables(flash games) Or those that require login and internet like Absolute EMR and AccuManager .
 
 ## Updates
+### 22 October 2017
+* Patched an issue resulting in KeyError
+
 ### 18 October 2017
 * Added check for ASCII name
 * Catch IndexError if no buttons clickable in new state
