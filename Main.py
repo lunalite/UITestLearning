@@ -337,17 +337,17 @@ def main(app_name, pack_name):
             logger.info('KeyboardInterrupt...')
             Utility.store_data(learning_data, activities, clickables, mongo)
             return -1
-        # except KeyError:
-        #     Utility.dump_log(d, pack_name, Utility.get_state(d, pack_name))
-        #     logger.info('@@@@@@@@@@@@@@@=============================')
-        #     logger.info('KeyError...')
-        #     Utility.store_data(learning_data, activities, clickables, mongo)
-        #     return -1
-        # except IndexError:
-        #     logger.info('@@@@@@@@@@@@@@@=============================')
-        #     logger.info('IndexError...')
-        #     Utility.store_data(learning_data, activities, clickables, mongo)
-        #     return -1
+            # except KeyError:
+            #     Utility.dump_log(d, pack_name, Utility.get_state(d, pack_name))
+            #     logger.info('@@@@@@@@@@@@@@@=============================')
+            #     logger.info('KeyError...')
+            #     Utility.store_data(learning_data, activities, clickables, mongo)
+            #     return -1
+            # except IndexError:
+            #     logger.info('@@@@@@@@@@@@@@@=============================')
+            #     logger.info('IndexError...')
+            #     Utility.store_data(learning_data, activities, clickables, mongo)
+            #     return -1
             # except Exception:
             #     logger.info('@@@@@@@@@@@@@@@=============================')
             #     logger.info("No idea what exception...")
@@ -369,6 +369,7 @@ def official():
     file = codecs.open(info_location + '/information-' + timestr + '.txt', 'w', 'utf-8')
 
     for i in apks_to_test:
+        english = True
         attempts = 0
         m = re.findall('^(.*)_.*\.apk', i)
         apk_packname = m[0]
@@ -391,49 +392,50 @@ def official():
             if i not in string.printable:
                 logger.info('There is a non-ASCII character in application name. Stop immediately.')
                 file.write('|' + apk_packname + '|' + 'Non-ASCII character detected in appname.' '\n')
+                english = False
                 break
 
-        ''' Start installation of the APK '''
-        x = subprocess.Popen([android_home + 'platform-tools/adb', '-s', device_name, 'install', dir + i],
+        if english:
+            ''' Start installation of the APK '''
+            x = subprocess.Popen([android_home + 'platform-tools/adb', '-s', device_name, 'install', dir + i],
+                                 stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            installmsg = x.communicate()[1].decode('utf-8')
+
+            if len(re.findall('Success', installmsg)) > 0:
+                logger.info("Installed success: " + apk_packname + ' APK.')
+                pass
+            if len(re.findall('INSTALL_FAILED_ALREADY_EXISTS', installmsg)) > 0:
+                logger.info("Already exist: " + apk_packname + ' APK.')
+                pass
+            elif len(re.findall('INSTALL_FAILED_NO_MATCHING_ABIS', installmsg)) > 0:
+                logger.info('No Matching ABIs: ' + apk_packname + ' APK.')
+                file.write('|' + apk_packname + '|' + 'Failed to install; no matching ABIs' '\n')
+                break
+            else:
+                pass
+
+            logger.info('\nDoing a UI testing on application ' + appname + '.')
+
+            init()
+            while attempts <= 3:
+                retvalue = main(appname, apk_packname)
+                if retvalue == -2:
+                    logger.info("Fail to start application using monkey.")
+                    file.write('|' + apk_packname + '|' + 'Failed to start application using monkey.' '\n')
+                    break
+                attempts += 1
+
+            logger.info('Force stopping ' + apk_packname + ' to end test for the APK')
+            subprocess.Popen(
+                [android_home + 'platform-tools/adb', '-s', device_name, 'shell', 'am', 'force-stop', apk_packname])
+
+            act_c = mongo.activity.count({"_type": "activity", "parent_app": Config.app_name})
+            click_c = mongo.clickable.count({"_type": "clickable", "parent_app_name": Config.app_name})
+            file.write(appname + '|' + apk_packname + '|True|' + str(act_c) + '|' + str(click_c) + '\n')
+            subprocess.Popen([android_home + 'platform-tools/adb', '-s', device_name, 'uninstall', apk_packname],
                              stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        installmsg = x.communicate()[1].decode('utf-8')
-
-        if len(re.findall('Success', installmsg)) > 0:
-            logger.info("Installed success: " + apk_packname + ' APK.')
-            pass
-        if len(re.findall('INSTALL_FAILED_ALREADY_EXISTS', installmsg)) > 0:
-            logger.info("Already exist: " + apk_packname + ' APK.')
-            pass
-        elif len(re.findall('INSTALL_FAILED_NO_MATCHING_ABIS', installmsg)) > 0:
-            logger.info('No Matching ABIs: ' + apk_packname + ' APK.')
-            file.write('|' + apk_packname + '|' + 'Failed to install; no matching ABIs' '\n')
-            break
-        else:
-            pass
-
-        logger.info('\nDoing a UI testing on application ' + appname + '.')
-
-        init()
-        while attempts <= 3:
-            retvalue = main(appname, apk_packname)
-            if retvalue == -2:
-                logger.info("Fail to start application using monkey.")
-                file.write('|' + apk_packname + '|' + 'Failed to start application using monkey.' '\n')
-                break
-            attempts += 1
-
-        logger.info('Force stopping ' + apk_packname + ' to end test for the APK')
-        subprocess.Popen(
-            [android_home + 'platform-tools/adb', '-s', device_name, 'shell', 'am', 'force-stop', apk_packname])
-
-        act_c = mongo.activity.count({"_type": "activity", "parent_app": Config.app_name})
-        click_c = mongo.clickable.count({"_type": "clickable", "parent_app_name": Config.app_name})
-        file.write(appname + '|' + apk_packname + '|True|' + str(act_c) + '|' + str(click_c) + '\n')
-        subprocess.Popen([android_home + 'platform-tools/adb', '-s', device_name, 'uninstall', apk_packname],
-                         stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        logger.info('Uninstalled ' + apk_packname)
-        logger.info('@@@@@@@@@@@ End ' + apk_packname + ' APK @@@@@@@@@@@')
-        # break
+            logger.info('Uninstalled ' + apk_packname)
+            logger.info('@@@@@@@@@@@ End ' + apk_packname + ' APK @@@@@@@@@@@')
 
 
 try:
