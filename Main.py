@@ -6,7 +6,6 @@ import string
 import subprocess
 import time
 import os
-
 import sys
 
 from Mongo import Mongo
@@ -203,7 +202,6 @@ def make_decision(click_els, _scores_arr):
 def main(app_name, pack_name):
     global clickables, scores, visited, parent_map, activities
     logger.info('Starting UI testing')
-    d.screen.on()
     d.press('home')
     logger.info('Force stopping ' + pack_name + ' to reset states')
     subprocess.Popen([android_home + 'platform-tools/adb', '-s', device_name, 'shell', 'am', 'force-stop', pack_name])
@@ -278,11 +276,10 @@ def main(app_name, pack_name):
 
     while True:
         try:
-            edit_btns = d(clickable='true', packageName=pack_name, className='android.widget.EditText')
+            edit_btns = d(clickable='true', packageName=pack_name)
             for i in edit_btns:
                 if i.text == '':
                     i.set_text(Utility.get_text())
-            Utility.get_state(d, pack_name)
             if d(scrollable='true').exists:
                 r = random.uniform(0, Config.scroll_probability[2])
                 if r < Config.scroll_probability[0]:
@@ -299,20 +296,19 @@ def main(app_name, pack_name):
             else:
                 new_click_els, new_state = click_button(new_click_els, pack_name, app_name)
 
-            logger.info(visited)
+            # logger.info(visited)
             logger.info('Number of iterations: ' + str(counter))
             if new_state != old_state and new_state not in scores:
                 recvalue = -1
                 while recvalue == -1:
                     recvalue, new_state = rec(new_state)
 
-
             if counter % 10 == 0:
                 logger.info('Saving data to database...')
                 Utility.store_data(learning_data, activities, clickables, mongo)
 
             counter += 1
-            if counter >= 100:
+            if counter >= 60:
                 return
 
         except KeyboardInterrupt:
@@ -320,8 +316,9 @@ def main(app_name, pack_name):
             logger.info('KeyboardInterrupt...')
             Utility.store_data(learning_data, activities, clickables, mongo)
             return
-        # except KeyError:
-        #     logger.info('@@@@@@@@@@@@@@@=============================')
+        except KeyError:
+            Utility.dump_log(d, pack_name, Utility.get_state(d, pack_name))
+        # logger.info('@@@@@@@@@@@@@@@=============================')
         #     logger.info('KeyError...')
         #     Utility.store_data(learning_data, activities, clickables, mongo)
         #     return
@@ -349,8 +346,13 @@ def official():
         english = True
         m = re.findall('^(.*)\_.*\.apk', i)
         apk_packname = m[0]
-        subprocess.Popen([android_home + 'platform-tools/adb', '-s', device_name, 'install', dir + i],
-                         stdout=subprocess.DEVNULL).wait()
+        try:
+            subprocess.Popen([android_home + 'platform-tools/adb', '-s', device_name, 'uninstall', apk_packname]).wait()
+            subprocess.check_output([android_home + 'platform-tools/adb', '-s', device_name, 'install', dir + i])
+        except subprocess.CalledProcessError:
+            logger.info("Failed to install " + apk_packname)
+            file.write('|' + apk_packname + '|' + 'Failed to install' '\n')
+            continue
         logger.info('Installed the ' + apk_packname + ' APK.')
         ps = subprocess.Popen([android_home + 'build-tools/26.0.1/aapt', 'dump', 'badging', dir + i],
                               stdout=subprocess.PIPE)
@@ -372,15 +374,18 @@ def official():
             while attempts <= 3:
                 main(appname, apk_packname)
                 attempts += 1
+        else:
+            logger.info("Not English APK.")
+            file.write('|' + apk_packname + '|' + 'Non-ASCII character' '\n')
 
-            logger.info('Force stopping ' + apk_packname + ' to end test for the APK')
-            subprocess.Popen(
-                [android_home + 'platform-tools/adb', '-s', device_name, 'shell', 'am', 'force-stop', apk_packname])
+        logger.info('Force stopping ' + apk_packname + ' to end test for the APK')
+        subprocess.Popen(
+            [android_home + 'platform-tools/adb', '-s', device_name, 'shell', 'am', 'force-stop', apk_packname])
 
         act_c = mongo.activity.count({"_type": "activity", "parent_app": Config.app_name})
         click_c = mongo.clickable.count({"_type": "clickable", "parent_app_name": Config.app_name})
         file.write(appname + '|' + apk_packname + '|' + str(english) + '|' + str(act_c) + '|' + str(click_c) + '\n')
-        subprocess.Popen([android_home + 'platform-tools/adb', '-s', device_name, 'uninstall', apk_packname]).wait()
+        subprocess.Popen([android_home + 'platform-tools/adb', '-s', device_name, 'uninstall', apk_packname])
         logger.info('Uninstalled ' + apk_packname)
         # break
 
@@ -394,11 +399,9 @@ try:
     device_name = sys.argv[1]
     apklist = sys.argv[2]
     d = Device(device_name)
-    # clicks_els = d(clickable='true')
-    # print(Utility.get_state(d, 'aadhaar.driving.voterid.passport'))
-    # for i in clicks_els:
-    #     print(i.info)
+    # x = d(clickable='true')
     official()
+    # Utility.get_state(d, 'an.ThaiKoreanTranslate')
 
 except Exception as e:
     logging.exception("message")

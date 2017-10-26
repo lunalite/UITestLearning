@@ -62,6 +62,10 @@ Unable to test certain APKs like those of other languages, or those like 'Power 
 Or some which there are no clickables(flash games) Or those that require login and internet like Absolute EMR and AccuManager .
 
 ## Updates
+### 25 October 2017
+* Edited issue with editText
+* Added a signal handler in case of being stuck for too long.
+
 ### 22 October 2017
 * Patched an issue resulting in KeyError
 

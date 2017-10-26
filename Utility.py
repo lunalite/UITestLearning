@@ -16,6 +16,7 @@ from DataActivity import DataActivity
 
 logger = logging.getLogger(__name__)
 
+
 def store_data(data, activities, clickables, mongo):
     for state, activity in activities.items():
         if state not in data.data_activity:
@@ -56,17 +57,23 @@ def get_state(device, pn):
         for element in root.iter('node'):
             bit_rep += element.get('index')
             btn_rep += str(dict_of_widget[element.attrib['class']])
-
-
             # TODO: Add the widgetType for lower abstraction
 
         return bit_rep, btn_rep
+
+    def check_text_box(pn):
+        xml = device.dump(compressed=True)
+        root = ET.fromstring(xml.encode('utf-8'))
+        keytxt = ''
+        for element in root.iter('node'):
+            keytxt += element.get('index')
+        return keytxt
 
     # Assumes that there is a consecutive index from 0 to 32 within dump itself
     a = '01234567891011121314151617181920212223242526272829303132'
 
     try:
-        if a in get_bit_rep(pn)[0]:
+        if a in check_text_box(pn):
             device.press.back()
 
         final_rep = get_bit_rep(pn)
@@ -146,13 +153,17 @@ def get_package_name(d):
 
 
 def get_activity_name(d, pn, device_name):
-    android_home = Config.android_home
-    ps = subprocess.Popen([android_home + 'platform-tools/adb', '-s', device_name, 'shell', 'dumpsys'],
-                          stdout=subprocess.PIPE)
-    result = subprocess.check_output(['grep', 'mFocusedApp'], stdin=ps.stdout)
-    a = result.decode()
-    m = re.findall(pn + r'.*(\b.+\b)\s\w\d+\}\}', a)
-    return m[0]
+    # android_home = Config.android_home
+    #    try:
+    # ps = subprocess.Popen([android_home + 'platform-tools/adb', '-s', device_name, 'shell', 'dumpsys'],
+    #                       stdout=subprocess.PIPE)
+    # result = subprocess.check_output(['grep', 'mFocusedApp'], stdin=ps.stdout)
+    # a = result.decode()
+    # m = re.findall(pn + r'.*(\b.+\b)\s\w\d+\}\}', a)
+    # return m[0]
+    #    except Exception:
+    #        logger.info("Timeout trying to catch mFocused")
+    return "UNKActivity"
 
 
 def get_class_dict(d, fi):
