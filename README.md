@@ -62,6 +62,16 @@ Unable to test certain APKs like those of other languages, or those like 'Power 
 Or some which there are no clickables(flash games) Or those that require login and internet like Absolute EMR and AccuManager .
 
 ## Updates
+### 26 October 2017
+* Discovered several issues related to why UIautomator stops. They are:
+1) crashes
+2) d(clickable=‘true’) UIautomator instrumentation fails to return a list
+3) no clickable buttons to proceed
+4) login page (random string so can’t enter)
+5) Page loading, but the UIAutomator doesn't wait. causing Key/index error
+* Changed catching of initial error and added logging to information txt
+* Changed catching of monkey error and added logigng
+
 ### 25 October 2017
 * Edited issue with editText
 * Added a signal handler in case of being stuck for too long.
