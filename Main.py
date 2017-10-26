@@ -338,12 +338,12 @@ def main(app_name, pack_name):
             logger.info('KeyboardInterrupt...')
             Utility.store_data(learning_data, activities, clickables, mongo)
             return -1
-            # except KeyError:
-            #     Utility.dump_log(d, pack_name, Utility.get_state(d, pack_name))
-            #     logger.info('@@@@@@@@@@@@@@@=============================')
-            #     logger.info('KeyError...')
-            #     Utility.store_data(learning_data, activities, clickables, mongo)
-            #     return -1
+        except KeyError:
+            Utility.dump_log(d, pack_name, Utility.get_state(d, pack_name))
+            logger.info('@@@@@@@@@@@@@@@=============================')
+            logger.info('Crash')
+            Utility.store_data(learning_data, activities, clickables, mongo)
+            return -3
             # except IndexError:
             #     logger.info('@@@@@@@@@@@@@@@=============================')
             #     logger.info('IndexError...')
@@ -388,7 +388,7 @@ def official():
         ''' Check if there is non-ASCII character. '''
         for scii in m[0]:
             if scii not in string.printable:
-                logger.info('There is a non-ASCII character in application name. Stop immediately.')
+                logger.info('There is a non-ASCII character in application name. Stop immediately.\n')
                 file.write('|' + apk_packname + '|' + 'Non-ASCII character detected in appname.' '\n')
                 english = False
                 break
@@ -407,9 +407,9 @@ def official():
             elif len(re.findall('INSTALL_FAILED_NO_MATCHING_ABIS', installmsg)) > 0:
                 logger.info('No Matching ABIs: ' + apk_packname + ' APK.')
                 file.write('|' + apk_packname + '|' + 'Failed to install; no matching ABIs' '\n')
-                break
+                pass
             else:
-                break
+                pass
 
             logger.info('\nDoing a UI testing on application ' + appname + '.')
 
@@ -420,6 +420,9 @@ def official():
                     logger.info("Fail to start application using monkey.")
                     file.write('|' + apk_packname + '|' + 'Failed to start application using monkey.' '\n')
                     break
+                elif retvalue == -3:
+                    logger.info("Fail to start application using monkey.")
+                    file.write('|' + apk_packname + '|' + 'Crashed - KeyError' '\n')
                 attempts += 1
 
             logger.info('Force stopping ' + apk_packname + ' to end test for the APK')
