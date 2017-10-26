@@ -221,9 +221,10 @@ def main(app_name, pack_name):
     subprocess.Popen([android_home + 'platform-tools/adb', '-s', device_name, 'shell', 'am', 'force-stop', pack_name])
     logger.info('Starting ' + pack_name + ' using monkey...')
     msg = subprocess.Popen(
-        [android_home + '/platform-tools/adb', '-s', device_name, 'shell', 'monkey', '-p', pack_name, '1'],
+        [android_home + '/platform-tools/adb', '-s', device_name, 'shell', 'monkey', '-p', pack_name, '5'],
         stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     startmsg = msg.communicate()[0].decode('utf-8')
+    print(startmsg)
     if len(re.findall('No activities found to run', startmsg)) > 0:
         return -2
 
@@ -375,21 +376,18 @@ def official():
         apk_packname = m[0]
 
         ''' Get the application name from badge. '''
-        try:
-            ps = subprocess.Popen([android_home + 'build-tools/26.0.1/aapt', 'dump', 'badging', dir + i],
-                                  stdout=subprocess.PIPE)
-            output = subprocess.check_output(('grep', 'application-label:'), stdin=ps.stdout)
-            label = output.decode('utf-8')
-            m = re.findall('^application-label:(.*)$', label)
-            appname = m[0][1:-1]
-        except Exception:
-            appname = apk_packname
+        ps = subprocess.Popen([android_home + 'build-tools/26.0.1/aapt', 'dump', 'badging', dir + i],
+                              stdout=subprocess.PIPE)
+        output = subprocess.check_output(('grep', 'application-label:'), stdin=ps.stdout)
+        label = output.decode('utf-8')
+        m = re.findall('^application-label:(.*)$', label)
+        appname = m[0][1:-1]
 
         Config.app_name = appname
 
         ''' Check if there is non-ASCII character. '''
-        for i in m[0]:
-            if i not in string.printable:
+        for scii in m[0]:
+            if scii not in string.printable:
                 logger.info('There is a non-ASCII character in application name. Stop immediately.')
                 file.write('|' + apk_packname + '|' + 'Non-ASCII character detected in appname.' '\n')
                 english = False
@@ -400,7 +398,6 @@ def official():
             x = subprocess.Popen([android_home + 'platform-tools/adb', '-s', device_name, 'install', dir + i],
                                  stdout=subprocess.PIPE, stderr=subprocess.PIPE)
             installmsg = x.communicate()[1].decode('utf-8')
-
             if len(re.findall('Success', installmsg)) > 0:
                 logger.info("Installed success: " + apk_packname + ' APK.')
                 pass
@@ -412,7 +409,7 @@ def official():
                 file.write('|' + apk_packname + '|' + 'Failed to install; no matching ABIs' '\n')
                 break
             else:
-                pass
+                break
 
             logger.info('\nDoing a UI testing on application ' + appname + '.')
 
