@@ -72,17 +72,21 @@ def click_button(new_click_els, pack_name, app_name):
     old_state = Utility.get_state(d, pack_name)
 
     click_els = d(clickable='true', packageName=pack_name) if new_click_els is None else new_click_els
-    if (old_state not in visited):
+    if old_state not in visited:
         print('===')
         print(old_state)
         print(visited)
         print('errror')
+    counter = 0
     while True:
         btn_result = make_decision(click_els, visited[old_state])
         if btn_result < len(click_els):
             break
         else:
             logger.info('trying to make decision and find btn to click again.')
+        if counter >= 200:
+            raise Exception('No buttons to click')
+
     logger.info('Length of the parent_map currently: ' + str(len(parent_map)))
     if btn_result == -1 or zero_counter == 5:
         d.press('back')
@@ -147,6 +151,7 @@ def click_button(new_click_els, pack_name, app_name):
                 # We have to add this to close the tab that appears.
                 if click_btn_class == 'android.widget.EditText' or click_btn_class == 'android.widget.TextView':
                     click_els = d(clickable='true', packageName=pack_name)
+
                     for i in click_els:
                         if i.info['text'] == 'ADD TO DICTIONARY':
                             click_els[0].click.wait()
@@ -224,7 +229,6 @@ def main(app_name, pack_name):
         [android_home + '/platform-tools/adb', '-s', device_name, 'shell', 'monkey', '-p', pack_name, '5'],
         stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     startmsg = msg.communicate()[0].decode('utf-8')
-    print(startmsg)
     if len(re.findall('No activities found to run', startmsg)) > 0:
         return -2
 
@@ -344,11 +348,11 @@ def main(app_name, pack_name):
             logger.info('Crash')
             Utility.store_data(learning_data, activities, clickables, mongo)
             return -3
-            # except IndexError:
-            #     logger.info('@@@@@@@@@@@@@@@=============================')
-            #     logger.info('IndexError...')
-            #     Utility.store_data(learning_data, activities, clickables, mongo)
-            #     return -1
+        except IndexError:
+            logger.info('@@@@@@@@@@@@@@@=============================')
+            logger.info('IndexError...')
+            Utility.store_data(learning_data, activities, clickables, mongo)
+            return -1
             # except Exception:
             #     logger.info('@@@@@@@@@@@@@@@=============================')
             #     logger.info("No idea what exception...")
@@ -407,7 +411,7 @@ def official():
             elif len(re.findall('INSTALL_FAILED_NO_MATCHING_ABIS', installmsg)) > 0:
                 logger.info('No Matching ABIs: ' + apk_packname + ' APK.')
                 file.write('|' + apk_packname + '|' + 'Failed to install; no matching ABIs' '\n')
-                pass
+                continue
             else:
                 pass
 
@@ -415,15 +419,21 @@ def official():
 
             init()
             while attempts <= 3:
-                retvalue = main(appname, apk_packname)
-                if retvalue == -2:
-                    logger.info("Fail to start application using monkey.")
-                    file.write('|' + apk_packname + '|' + 'Failed to start application using monkey.' '\n')
-                    break
-                elif retvalue == -3:
-                    logger.info("Fail to start application using monkey.")
-                    file.write('|' + apk_packname + '|' + 'Crashed - KeyError' '\n')
-                attempts += 1
+                signal.alarm(400)
+                try:
+                    retvalue = main(appname, apk_packname)
+                    if retvalue == -2:
+                        logger.info("Fail to start application using monkey.")
+                        file.write('|' + apk_packname + '|' + 'Failed to start application using monkey.' '\n')
+                        break
+                    elif retvalue == -3:
+                        logger.info("Fail to start application using monkey.")
+                        file.write('|' + apk_packname + '|' + 'Crashed - KeyError' '\n')
+                    attempts += 1
+                except Exception:
+                    logger.info("Timeout. Stop application.")
+                finally:
+                    signal.alarm(0)
 
             logger.info('Force stopping ' + apk_packname + ' to end test for the APK')
             subprocess.Popen(
@@ -448,7 +458,6 @@ try:
     apklist = sys.argv[2]
     d = Device(device_name)
     official()
-
 
 except Exception as e:
     logging.exception("message")

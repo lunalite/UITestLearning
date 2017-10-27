@@ -61,7 +61,7 @@ def get_state(device, pn):
 
         return bit_rep, btn_rep
 
-    def check_text_box(pn):
+    def check_text_box():
         xml = device.dump(compressed=True)
         root = ET.fromstring(xml.encode('utf-8'))
         keytxt = ''
@@ -73,7 +73,7 @@ def get_state(device, pn):
     a = '01234567891011121314151617181920212223242526272829303132'
 
     try:
-        if a in check_text_box(pn):
+        if a in check_text_box():
             device.press.back()
 
         final_rep = get_bit_rep(pn)
