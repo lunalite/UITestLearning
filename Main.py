@@ -48,7 +48,7 @@ no_clickable_btns_counter = 0
 
 
 def signal_handler(signum, frame):
-    raise Exception("Timed out!")
+    raise TimeoutError("Timed out!")
 
 
 signal.signal(signal.SIGALRM, signal_handler)
@@ -62,6 +62,7 @@ class APP_STATE(Enum):
     CRASHED = -5
     DEADLOCK = -6
     TIMEOUT = -7
+    JSONRPCERROR = -8
     UNK = -10
 
 
@@ -356,7 +357,6 @@ def main(app_name, pack_name):
 
             edit_btns = d(clickable='true', packageName=pack_name)
             for i in edit_btns:
-                # if i.text == '':
                 i.set_text(Utility.get_text())
             if d(scrollable='true').exists:
                 r = random.uniform(0, Config.scroll_probability[2])
@@ -414,11 +414,16 @@ def main(app_name, pack_name):
             logger.info('IndexError...')
             Utility.store_data(learning_data, activities, clickables, mongo)
             return APP_STATE.INDEXERROR
-        except Exception:
+        except TimeoutError:
             logger.info('@@@@@@@@@@@@@@@=============================')
             logger.info('Timeout...')
             Utility.store_data(learning_data, activities, clickables, mongo)
             return APP_STATE.TIMEOUT
+        except uiautomator.JsonRPCError:
+            logger.info('@@@@@@@@@@@@@@@=============================')
+            logger.info('JSONRPCError...')
+            Utility.store_data(learning_data, activities, clickables, mongo)
+            return APP_STATE.JSONRPCERROR
         finally:
             signal.alarm(0)
 
@@ -488,26 +493,34 @@ def official():
 
             init()
             while attempts <= 3:
-                retvalue = main(appname, apk_packname)
-                if retvalue == APP_STATE.FAILTOSTART:
-                    logger.info("Fail to start application using monkey.")
-                    file.write('|' + apk_packname + '|' + 'Failed to start application using monkey.' '\n')
-                    break
-                elif retvalue == APP_STATE.KEYERROR:
-                    logger.info("Keyerror crash.")
-                    file.write('|' + apk_packname + '|' + 'Crashed - KeyError' '\n')
-                elif retvalue == APP_STATE.INDEXERROR:
-                    logger.info("Indexerror crash.")
-                    file.write('|' + apk_packname + '|' + 'Crashed - IndexError' '\n')
-                elif retvalue == APP_STATE.CRASHED:
-                    logger.info("App crashed")
-                    file.write('|' + apk_packname + '|' + 'Crashed - UnknownError' '\n')
-                    break
-                elif retvalue == APP_STATE.DEADLOCK:
-                    logger.info("Dead lock. Restarting...")
-                elif retvalue == APP_STATE.TIMEOUT:
-                    logger.info("Timeout. Restarting...")
-                attempts += 1
+                signal.alarm(30)
+                try:
+                    retvalue = main(appname, apk_packname)
+                    if retvalue == APP_STATE.FAILTOSTART:
+                        logger.info("Fail to start application using monkey.")
+                        file.write('|' + apk_packname + '|' + 'Failed to start application using monkey.' '\n')
+                        break
+                    elif retvalue == APP_STATE.KEYERROR:
+                        logger.info("Keyerror crash.")
+                        file.write('|' + apk_packname + '|' + 'Crashed - KeyError' '\n')
+                    elif retvalue == APP_STATE.INDEXERROR:
+                        logger.info("Indexerror crash.")
+                        file.write('|' + apk_packname + '|' + 'Crashed - IndexError' '\n')
+                    elif retvalue == APP_STATE.CRASHED:
+                        logger.info("App crashed")
+                        file.write('|' + apk_packname + '|' + 'Crashed - UnknownError' '\n')
+                        break
+                    elif retvalue == APP_STATE.DEADLOCK:
+                        logger.info("Dead lock. Restarting...")
+                    elif retvalue == APP_STATE.TIMEOUT:
+                        logger.info("Timeout. Restarting...")
+                    elif retvalue == APP_STATE.JSONRPCERROR:
+                        logger.info("JSONRPCError. Restarting...")
+                except TimeoutError:
+                    logger.info("Timeout of 30 seconds from nothing happening. Restarting... ")
+                finally:
+                    signal.alarm(0)
+                    attempts += 1
 
             logger.info('Force stopping ' + apk_packname + ' to end test for the APK')
             subprocess.Popen(
@@ -526,7 +539,7 @@ try:
     """
     device_name e.g. emulator-5554
     apklist e.g. directory-to-apk-x
-    e.g. python3 Main.py emulator-5554 
+    e.g. python3 Main.py emulator-5554
     """
     device_name = sys.argv[1]
     apklist = sys.argv[2]

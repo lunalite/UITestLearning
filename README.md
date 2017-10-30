@@ -15,11 +15,11 @@ In order to deploy the data collection server, the following are required:
 Do note that `sudo` permissions might be needed for running all of the following due to the usage of kvm for the emulator in the case that no screen is provided, so install the following within the `sudo` environment.
 
 After installing python 3, do a `pip3 install -r requirements.txt` to obtain all python modules required for running the crawler.
-Do note that depending on your system, it might be a `pip3.6` or `pip` instead of `pip3`. 
+Do note that depending on your system, it might be a `pip3.6` or `pip` instead of `pip3`.
 
 Also depending on the permissions provided, it might be needed for the command `pip3 install --user -r requirements.txt` to be used instead.
-  
-It is up to the user whether he wants to create a `virtualenv` for the project or not. 
+
+It is up to the user whether he wants to create a `virtualenv` for the project or not.
 
 Do remember to add into environment `PATH` the folders within android sdk such as `$ANDROID_HOME/platform-tools`, `$ANDROID_HOME/tools` and `$ANDROID_HOME/tools/bin`.
 
@@ -59,18 +59,22 @@ Total| | |416|3865
 
 
 Unable to test certain APKs like those of other languages, or those like 'Power Me Off' since it might shut down the entire emulator.
-Or some which there are no clickables(flash games) Or those that require login and internet like Absolute EMR and AccuManager .
+Or some which there are no clickables(flash games) Or those that require login and internet like Absolute EMR and AccuManager.
+
+## Examples of such APKs
+* at.alladin.rmbt.android_20214.apk - no clickable buttons
 
 ## Updates
 ### 30 October 2017
 * Added enum states for app crashes
 * Fixed issue with APK that does not have androidmanifest.xml
+* Added timeout for inactivity and for clicking of a single button
 
 ### 28 October 2017
 * Fixed issue regarding horizontal panes
 
 ### 27 October 2017
-* Added timeout function of 400 seconds for overall testing 
+* Added timeout function of 400 seconds for overall testing
 
 ### 26 October 2017
 * Discovered several issues related to why UIautomator stops. They are:
@@ -99,7 +103,7 @@ Or some which there are no clickables(flash games) Or those that require login a
 ### 12 October 2017
 * Main error now is with KeyError...
 * Changed commands to allow for multiple emulators
-* Created `preprocessing.py` for selecting of APK filename into separate text files. 
+* Created `preprocessing.py` for selecting of APK filename into separate text files.
 
 ### 11 October 2017
 * Reason for screenshot being half taken at resolution 480x320 is because the skin is not chosen properly. Prior to this, the command used for creating the avd is: `android create avd -n avd1 -b x86 -k "system-images;android-26;google_apis;x86"` but this defaults to an avd that is skinless, causing error to arise.
@@ -118,12 +122,12 @@ Available Android Virtual Devices:
   Target: Google APIs
           Based on: Android API 26 Tag/ABI: google_apis/x86
   Sdcard: 100M
-  
+
 ```
 
 * The top AVD is created from Android Studio's AVD Manager and the subsequent one is created using the command.
 Thus, we have to add a skin to the testAVD by running the `emulator -avd testAVD -skin 1080x1920` command since `-skin` flag for the `android create avd` is not found/deprecated.
- 
+
 
 ### 10 October 2017
 * Fixed bug in 'Issue with clicking back button prematurely' where the app is reopened using the old method instead of monkey method.
@@ -136,10 +140,10 @@ Thus, we have to add a skin to the testAVD by running the `emulator -avd testAVD
 
 ### 8 October 2017
 * Added function to start emulator and unlock screen (removed).
-* Changed subprocess calls to fit in android_home. 
+* Changed subprocess calls to fit in android_home.
 * Added logging function into file to prepare for deployment.
 * Added force stop at the end of testing to prevent flooding of opened applications.
-* Change opening of application method into using `adb monkey` instead. 
+* Change opening of application method into using `adb monkey` instead.
 
 ### 6 October 2017
 * Added auto adb install/uninstall and inputting of information into `information-{datetime}.txt` file in preparation for deployment onto server for automatic crawl
@@ -175,8 +179,8 @@ Thus, we have to add a skin to the testAVD by running the `emulator -avd testAVD
 * Added in a check to determine if stored button matches with the button being clicked
 * Issue with clickable elements increasing and decreasing in the same state. Will be appending to the dict any elements that appear so as to prevent any unforeseen circumstances
 * Changed getting parent with bound to getting parent with key since there might be buttons with same bound but different text
-* Added mergence of two dicts for parent to key dict since there might be buttons with different keys in same state, causing the issue of `KeyError` when searching for child using parent 
- 
+* Added mergence of two dicts for parent to key dict since there might be buttons with different keys in same state, causing the issue of `KeyError` when searching for child using parent
+
 
 ### 28 September 2017
 * Fixed bug for `rec()` in `click_els = d(clickable='true')`
@@ -193,11 +197,11 @@ Thus, we have to add a skin to the testAVD by running the `emulator -avd testAVD
 ### 25 September 2017
 * Added dict representation as an option for reducing abstraction of `get_state()`
 * Changed `get_state()` representation by inserting packagename to the front.
-* Added activity name to storage 
+* Added activity name to storage
 * Increased len of state to last 30 so as to reduce chance of collision.
 
 ### 22 September 2017
-* Data dump repetition 
+* Data dump repetition
 
 ### 20 September 2017
 * Fixed a bug of selecting button even if score is 0
@@ -207,7 +211,7 @@ Thus, we have to add a skin to the testAVD by running the `emulator -avd testAVD
 ### 18 September 2017
 * Implemented database storing system
 * Fixed bugs for showing of siblings
-* Added get_children(), splitting up siblings 
+* Added get_children(), splitting up siblings
 
 ### 17 September 2017
 * Redid the entire Main.py to suit datacollection and storage into mongodb
@@ -215,7 +219,7 @@ Thus, we have to add a skin to the testAVD by running the `emulator -avd testAVD
 
 ### 13 September 2017
 * Transferring from local file storage system over to Mongodb so as to optimize storage and search
-* Removed clickable hash that optimizes and reduce time interval between clicks since there might be different possible click objects in a single activity 
+* Removed clickable hash that optimizes and reduce time interval between clicks since there might be different possible click objects in a single activity
 * Fixed bugs for loading of json
 * Changed `get_state()` method with compressed=false for dump, allowing greater robustness.
 
@@ -234,7 +238,7 @@ Thus, we have to add a skin to the testAVD by running the `emulator -avd testAVD
 ### 6 September 2017
 * Added mutation for decision of choosing buttons
 * Initialization of scores changed to 1 instead for mutation
-* Removed subtraction of -1 to score if no change states 
+* Removed subtraction of -1 to score if no change states
 
 ### 4 September 2017
 * Added logging into project
@@ -247,7 +251,7 @@ Thus, we have to add a skin to the testAVD by running the `emulator -avd testAVD
 * Changed to python3 for latest implementations.
 * Changed key structure for node to score dictionary
 * Addressed the structure of storage
-* Added storing and loading of data structure in json format 
+* Added storing and loading of data structure in json format
 
 
 ### 30 August 2017
