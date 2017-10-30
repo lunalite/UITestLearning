@@ -112,8 +112,8 @@ def click_button(new_click_els, pack_name, app_name):
             return None, None, APP_STATE.DEADLOCK
 
         try:
-        # Check if more states available when swiping it
-        # For the case of apps where there's horizontal motion with 4 panes usually.
+            # Check if more states available when swiping it
+            # For the case of apps where there's horizontal motion with 4 panes usually.
             for i in range(5):
                 d(scrollable=True).fling.horiz.forward()
         except uiautomator.JsonRPCError:
@@ -298,7 +298,7 @@ def main(app_name, pack_name):
                     crashapp = d(clickable='true', packageName='android')
                     for i in crashapp:
                         print(i.info)
-                        if i.info['resourceName'] == 'android:id/aerr_restart'\
+                        if i.info['resourceName'] == 'android:id/aerr_restart' \
                                 or i.info['resourceName'] == 'android:id/aerr_close':
                             return APP_STATE.CRASHED, nextstate
 
@@ -341,8 +341,6 @@ def main(app_name, pack_name):
         visited[local_state] = arv
         Utility.dump_log(d, pack_name, local_state)
         return 1, local_state
-
-
 
     recvalue, new_state = rec(old_state)
     if recvalue == APP_STATE.CRASHED:
@@ -419,9 +417,11 @@ def main(app_name, pack_name):
         except Exception:
             logger.info('@@@@@@@@@@@@@@@=============================')
             logger.info('Timeout...')
-            signal.alarm(0)
             Utility.store_data(learning_data, activities, clickables, mongo)
             return APP_STATE.TIMEOUT
+        finally:
+            signal.alarm(0)
+
 
 def official():
     dir = Config.apkdir
