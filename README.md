@@ -64,6 +64,7 @@ Or some which there are no clickables(flash games) Or those that require login a
 ## Updates
 ### 30 October 2017
 * Added enum states for app crashes
+* Fixed issue with APK that does not have androidmanifest.xml
 
 ### 28 October 2017
 * Fixed issue regarding horizontal panes

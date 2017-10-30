@@ -351,7 +351,7 @@ def main(app_name, pack_name):
     no_clickable_btns_counter = 0
 
     while True:
-        signal.alarm(10)
+        signal.alarm(30)
         try:
 
             edit_btns = d(clickable='true', packageName=pack_name)
@@ -443,12 +443,18 @@ def official():
         apk_packname = m[0]
 
         ''' Get the application name from badge. '''
-        ps = subprocess.Popen([android_home + 'build-tools/26.0.1/aapt', 'dump', 'badging', dir + i],
+        try:
+            ps = subprocess.Popen([android_home + 'build-tools/26.0.1/aapt', 'dump', 'badging', dir + i],
                               stdout=subprocess.PIPE)
-        output = subprocess.check_output(('grep', 'application-label:'), stdin=ps.stdout)
-        label = output.decode('utf-8')
+            output = subprocess.check_output(('grep', 'application-label:'), stdin=ps.stdout)
+            label = output.decode('utf-8')
+        except subprocess.CalledProcessError:
+            logger.info("No android application available.")
+            label = 'application-label: unknown APK.'
+
         m = re.findall('^application-label:(.*)$', label)
         appname = m[0][1:-1]
+        print(appname)
 
         Config.app_name = appname
 
@@ -482,8 +488,6 @@ def official():
 
             init()
             while attempts <= 3:
-                # signal.alarm(400)
-                # try:
                 retvalue = main(appname, apk_packname)
                 if retvalue == APP_STATE.FAILTOSTART:
                     logger.info("Fail to start application using monkey.")
@@ -504,11 +508,6 @@ def official():
                 elif retvalue == APP_STATE.TIMEOUT:
                     logger.info("Timeout. Restarting...")
                 attempts += 1
-
-                # except Exception:
-                #     logger.info("Timeout. Stop application.")
-                # finally:
-                #     signal.alarm(0)
 
             logger.info('Force stopping ' + apk_packname + ' to end test for the APK')
             subprocess.Popen(
