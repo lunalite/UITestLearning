@@ -62,6 +62,15 @@ Unable to test certain APKs like those of other languages, or those like 'Power 
 Or some which there are no clickables(flash games) Or those that require login and internet like Absolute EMR and AccuManager .
 
 ## Updates
+### 30 October 2017
+* Added enum states for app crashes
+
+### 28 October 2017
+* Fixed issue regarding horizontal panes
+
+### 27 October 2017
+* Added timeout function of 400 seconds for overall testing 
+
 ### 26 October 2017
 * Discovered several issues related to why UIautomator stops. They are:
 1) crashes

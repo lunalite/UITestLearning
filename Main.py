@@ -9,6 +9,8 @@ import time
 import os
 import sys
 
+import uiautomator
+
 from Mongo import Mongo
 from uiautomator import Device
 
@@ -29,6 +31,7 @@ import Utility
 from Clickable import Clickable
 from Data import Data
 from DataActivity import DataActivity
+from enum import Enum
 
 mongo = Mongo()
 
@@ -41,6 +44,7 @@ scores = {}
 visited = {}
 parent_map = {}
 zero_counter = 0
+no_clickable_btns_counter = 0
 
 
 def signal_handler(signum, frame):
@@ -48,6 +52,17 @@ def signal_handler(signum, frame):
 
 
 signal.signal(signal.SIGALRM, signal_handler)
+
+
+class APP_STATE(Enum):
+    KEYBOARDINT = -1
+    FAILTOSTART = -2
+    KEYERROR = -3
+    INDEXERROR = -4
+    CRASHED = -5
+    DEADLOCK = -6
+    TIMEOUT = -7
+    UNK = -10
 
 
 def init():
@@ -68,7 +83,7 @@ def init():
 def click_button(new_click_els, pack_name, app_name):
     # Have to use packageName since there might be buttons leading to popups,
     # which can continue exploding into more activity if not limited.
-    global d, clickables, parent_map, visited, scores, mask, zero_counter
+    global d, clickables, parent_map, visited, scores, mask, zero_counter, no_clickable_btns_counter
     old_state = Utility.get_state(d, pack_name)
 
     click_els = d(clickable='true', packageName=pack_name) if new_click_els is None else new_click_els
@@ -88,7 +103,25 @@ def click_button(new_click_els, pack_name, app_name):
             raise Exception('No buttons to click')
 
     logger.info('Length of the parent_map currently: ' + str(len(parent_map)))
+
+    # If no buttons clickable
+    # Or zero_counter == 5
     if btn_result == -1 or zero_counter == 5:
+
+        if no_clickable_btns_counter >= 3:
+            return None, None, APP_STATE.DEADLOCK
+
+        try:
+        # Check if more states available when swiping it
+        # For the case of apps where there's horizontal motion with 4 panes usually.
+            for i in range(5):
+                d(scrollable=True).fling.horiz.forward()
+        except uiautomator.JsonRPCError:
+            logger.info("Cant' scroll horizontal.")
+        new_state = Utility.get_state(d, pack_name)
+        if new_state != old_state:
+            return None, new_state, 1
+
         d.press('back')
 
         # Issue with clicking back button prematurely
@@ -96,7 +129,7 @@ def click_button(new_click_els, pack_name, app_name):
             subprocess.Popen(
                 [android_home + '/platform-tools/adb', '-s', device_name, 'shell', 'monkey', '-p', pack_name, '5'],
                 stdout=subprocess.DEVNULL, stderr=subprocess.STDOUT)
-        return None, Utility.get_state(d, pack_name)
+        return None, Utility.get_state(d, pack_name), 1
     else:
         try:
             if click_els[btn_result].exists:
@@ -167,14 +200,14 @@ def click_button(new_click_els, pack_name, app_name):
                     visited[old_state][btn_result][1] += 1
                     visited[old_state][btn_result][0] = (score_increment / visited[old_state][btn_result][1])
                     clickables[old_state][btn_result].score = score_increment
-                    return new_click_els, new_state
+                    return new_click_els, new_state, 1
                 else:
                     # No change in state so give it a score of 0 since it doesn't affect anything
                     # TODO: possibly increase abstraction so that change in state is determined by change in text too.
                     clickables[old_state][btn_result].next_transition_state = old_state
                     visited[old_state][btn_result][1] += 1
                     visited[old_state][btn_result][0] = (0 / visited[old_state][btn_result][1])
-                    return click_els, new_state
+                    return click_els, new_state, 1
             else:
                 raise Exception('Warning, no such buttons available in click_button()')
         except IndexError:
@@ -187,10 +220,11 @@ def click_button(new_click_els, pack_name, app_name):
 
 
 def make_decision(click_els, _scores_arr):
-    global zero_counter
+    global zero_counter, no_clickable_btns_counter
     if len(click_els) == 0:
         logger.info('No clickable buttons available. Returning -1.')
         zero_counter = 0
+        no_clickable_btns_counter += 1
         return -1
     elif len(click_els) == 1:
         logger.info('One clickable button available. Returning 0.')
@@ -230,7 +264,7 @@ def main(app_name, pack_name):
         stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     startmsg = msg.communicate()[0].decode('utf-8')
     if len(re.findall('No activities found to run', startmsg)) > 0:
-        return -2
+        return APP_STATE.FAILTOSTART
 
     learning_data = Data(_appname=app_name,
                          _packname=pack_name,
@@ -254,12 +288,25 @@ def main(app_name, pack_name):
 
             # Prepare for the situation of when pressing back button doesn't work
             elif nextstate == initstate:
+                localc = 0
                 while True:
                     tryclick_btns = d(clickable='true')
                     random.choice(tryclick_btns).click.wait()
                     nextstate = Utility.get_state(d, pack_name)
+
+                    # Check if app has crashed. If it is, restart
+                    crashapp = d(clickable='true', packageName='android')
+                    for i in crashapp:
+                        print(i.info)
+                        if i.info['resourceName'] == 'android:id/aerr_restart'\
+                                or i.info['resourceName'] == 'android:id/aerr_close':
+                            return APP_STATE.CRASHED, nextstate
+
+                    if localc > 2:
+                        return APP_STATE.UNK, nextstate
                     if nextstate != initstate:
                         return -1, nextstate
+                    localc += 1
 
         da = DataActivity(local_state, Utility.get_activity_name(d, pack_name, device_name), app_name, [])
         activities[local_state] = da
@@ -295,20 +342,28 @@ def main(app_name, pack_name):
         Utility.dump_log(d, pack_name, local_state)
         return 1, local_state
 
-    rec(old_state)
+
+
+    recvalue, new_state = rec(old_state)
+    if recvalue == APP_STATE.CRASHED:
+        return APP_STATE.CRASHED
+
     new_click_els = None
     counter = 0
+    no_clickable_btns_counter = 0
 
     while True:
+        signal.alarm(10)
         try:
+
             edit_btns = d(clickable='true', packageName=pack_name)
             for i in edit_btns:
-                if i.text == '':
-                    i.set_text(Utility.get_text())
+                # if i.text == '':
+                i.set_text(Utility.get_text())
             if d(scrollable='true').exists:
                 r = random.uniform(0, Config.scroll_probability[2])
                 if r < Config.scroll_probability[0]:
-                    new_click_els, new_state = click_button(new_click_els, pack_name, app_name)
+                    new_click_els, new_state, state_info = click_button(new_click_els, pack_name, app_name)
                 else:
                     logger.info('Scrolling...')
                     if r < Config.scroll_probability[1]:
@@ -319,14 +374,22 @@ def main(app_name, pack_name):
                     new_state = Utility.get_state(d, pack_name)
                     new_click_els = d(clickable='true', packageName=pack_name)
             else:
-                new_click_els, new_state = click_button(new_click_els, pack_name, app_name)
+                new_click_els, new_state, state_info = click_button(new_click_els, pack_name, app_name)
 
             logger.info('Number of iterations: ' + str(counter))
+
+            if state_info == APP_STATE.CRASHED:
+                return APP_STATE.CRASHED
+            elif state_info == APP_STATE.DEADLOCK:
+                return APP_STATE.DEADLOCK
+
             if new_state != old_state and new_state not in scores:
                 recvalue = -1
                 while recvalue == -1:
                     recvalue, new_state = rec(new_state)
                     if new_state in scores:
+                        recvalue = 1
+                    if recvalue == APP_STATE.UNK:
                         recvalue = 1
 
             if counter % 10 == 0:
@@ -341,24 +404,24 @@ def main(app_name, pack_name):
             logger.info('@@@@@@@@@@@@@@@=============================')
             logger.info('KeyboardInterrupt...')
             Utility.store_data(learning_data, activities, clickables, mongo)
-            return -1
+            return APP_STATE.KEYBOARDINT
         except KeyError:
             Utility.dump_log(d, pack_name, Utility.get_state(d, pack_name))
             logger.info('@@@@@@@@@@@@@@@=============================')
             logger.info('Crash')
             Utility.store_data(learning_data, activities, clickables, mongo)
-            return -3
+            return APP_STATE.KEYERROR
         except IndexError:
             logger.info('@@@@@@@@@@@@@@@=============================')
             logger.info('IndexError...')
             Utility.store_data(learning_data, activities, clickables, mongo)
-            return -1
-            # except Exception:
-            #     logger.info('@@@@@@@@@@@@@@@=============================')
-            #     logger.info("No idea what exception...")
-            #     Utility.store_data(learning_data, activities, clickables, mongo)
-            #     return -1
-
+            return APP_STATE.INDEXERROR
+        except Exception:
+            logger.info('@@@@@@@@@@@@@@@=============================')
+            logger.info('Timeout...')
+            signal.alarm(0)
+            Utility.store_data(learning_data, activities, clickables, mongo)
+            return APP_STATE.TIMEOUT
 
 def official():
     dir = Config.apkdir
@@ -406,7 +469,7 @@ def official():
                 logger.info("Installed success: " + apk_packname + ' APK.')
                 pass
             if len(re.findall('INSTALL_FAILED_ALREADY_EXISTS', installmsg)) > 0:
-                logger.info("Already exist: " + apk_packname + ' APK.')
+                logger.info("Already exists: " + apk_packname + ' APK.')
                 pass
             elif len(re.findall('INSTALL_FAILED_NO_MATCHING_ABIS', installmsg)) > 0:
                 logger.info('No Matching ABIs: ' + apk_packname + ' APK.')
@@ -419,21 +482,33 @@ def official():
 
             init()
             while attempts <= 3:
-                signal.alarm(400)
-                try:
-                    retvalue = main(appname, apk_packname)
-                    if retvalue == -2:
-                        logger.info("Fail to start application using monkey.")
-                        file.write('|' + apk_packname + '|' + 'Failed to start application using monkey.' '\n')
-                        break
-                    elif retvalue == -3:
-                        logger.info("Fail to start application using monkey.")
-                        file.write('|' + apk_packname + '|' + 'Crashed - KeyError' '\n')
-                    attempts += 1
-                except Exception:
-                    logger.info("Timeout. Stop application.")
-                finally:
-                    signal.alarm(0)
+                # signal.alarm(400)
+                # try:
+                retvalue = main(appname, apk_packname)
+                if retvalue == APP_STATE.FAILTOSTART:
+                    logger.info("Fail to start application using monkey.")
+                    file.write('|' + apk_packname + '|' + 'Failed to start application using monkey.' '\n')
+                    break
+                elif retvalue == APP_STATE.KEYERROR:
+                    logger.info("Keyerror crash.")
+                    file.write('|' + apk_packname + '|' + 'Crashed - KeyError' '\n')
+                elif retvalue == APP_STATE.INDEXERROR:
+                    logger.info("Indexerror crash.")
+                    file.write('|' + apk_packname + '|' + 'Crashed - IndexError' '\n')
+                elif retvalue == APP_STATE.CRASHED:
+                    logger.info("App crashed")
+                    file.write('|' + apk_packname + '|' + 'Crashed - UnknownError' '\n')
+                    break
+                elif retvalue == APP_STATE.DEADLOCK:
+                    logger.info("Dead lock. Restarting...")
+                elif retvalue == APP_STATE.TIMEOUT:
+                    logger.info("Timeout. Restarting...")
+                attempts += 1
+
+                # except Exception:
+                #     logger.info("Timeout. Stop application.")
+                # finally:
+                #     signal.alarm(0)
 
             logger.info('Force stopping ' + apk_packname + ' to end test for the APK')
             subprocess.Popen(
