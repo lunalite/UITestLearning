@@ -123,6 +123,7 @@ def click_button(new_click_els, pack_name, app_name):
                 d(scrollable=True).fling.horiz.forward()
         except uiautomator.JsonRPCError:
             logger.info("Can't scroll horizontal.")
+        finally:
             new_state = Utility.get_state(d, pack_name)
             if new_state != old_state:
                 return None, new_state, 1
@@ -166,7 +167,6 @@ def click_button(new_click_els, pack_name, app_name):
                         logger.info(Utility.get_state(d, pack_name))
                         new_parent = Utility.create_child_to_parent(dump=d.dump(compressed=False))
                         Utility.merge_dicts(parent_map[old_state], new_parent)
-                        logger.info(len(parent_map[old_state]))
                         _parent = Utility.get_parent_with_key(click_btn_key, parent_map[old_state])
                         if _parent != -1:
                             sibs = [Utility.xml_btn_to_key(sib) for sib in
@@ -356,10 +356,10 @@ def main(app_name, pack_name):
 
     new_click_els = None
     counter = 0
-    # no_clickable_btns_counter = 0
+    no_clickable_btns_counter = 0
 
     while True:
-        signal.alarm(30)
+        # signal.alarm(30)
         try:
 
             edit_btns = d(clickable='true', packageName=pack_name)
@@ -389,7 +389,7 @@ def main(app_name, pack_name):
             elif state_info == APP_STATE.DEADLOCK:
                 return APP_STATE.DEADLOCK
 
-            if new_state != old_state and new_state not in scores:
+            if new_state != old_state and (new_state not in scores or new_state not in visited):
                 recvalue = -1
                 while recvalue == -1:
                     recvalue, new_state = rec(new_state)
@@ -506,7 +506,7 @@ def official():
 
             init()
             while attempts <= 3:
-                signal.alarm(30)
+                # signal.alarm(30)
                 try:
                     retvalue = main(appname, apk_packname)
                     if retvalue == APP_STATE.FAILTOSTART:
@@ -560,7 +560,6 @@ try:
     apklist = sys.argv[2]
     d = Device(device_name)
     official()
-
 
 except Exception as e:
     logging.exception("message")
