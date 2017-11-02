@@ -103,6 +103,7 @@ def click_button(new_click_els, pack_name, app_name):
             break
         else:
             logger.info('trying to make decision and find btn to click again.')
+            counter += 1
         if counter >= 50:
             raise Exception('No buttons to click')
 

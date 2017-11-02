@@ -73,6 +73,7 @@ Or some which there are no clickables(flash games) Or those that require login a
 * Fixed issue regarding repeated horizontal scrolls
 * Reduction of rerolling random click button tries
 * Changed state_info for scrolling decision from None to APP_STATE.SCROLLING
+* Fixed bug of not adding increment to counter when trying to get another random btn to click
 
 ### 30 October 2017
 * Added enum states for app crashes
