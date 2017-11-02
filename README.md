@@ -65,10 +65,15 @@ Or some which there are no clickables(flash games) Or those that require login a
 * at.alladin.rmbt.android_20214.apk - no clickable buttons
 
 ## Updates
+### 2 November 2017
+* Taken care of socket timeout error. Restart the entire APK if socket timed out.
+
+
 ### 30 October 2017
 * Added enum states for app crashes
 * Fixed issue with APK that does not have androidmanifest.xml
 * Added timeout for inactivity and for clicking of a single button
+* Solved issue with local variable 'state_info' referenced before assignment
 
 ### 28 October 2017
 * Fixed issue regarding horizontal panes

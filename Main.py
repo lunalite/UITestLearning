@@ -3,6 +3,7 @@ import logging
 import random
 import re
 import signal
+import socket
 import string
 import subprocess
 import time
@@ -61,7 +62,8 @@ class APP_STATE(Enum):
     INDEXERROR = -4
     CRASHED = -5
     DEADLOCK = -6
-    TIMEOUT = -7
+    TIMEOUT = -70
+    SOCKTIMEOUTERROR = -71
     JSONRPCERROR = -8
     UNK = -10
 
@@ -118,7 +120,7 @@ def click_button(new_click_els, pack_name, app_name):
             for i in range(5):
                 d(scrollable=True).fling.horiz.forward()
         except uiautomator.JsonRPCError:
-            logger.info("Cant' scroll horizontal.")
+            logger.info("Can't scroll horizontal.")
         new_state = Utility.get_state(d, pack_name)
         if new_state != old_state:
             return None, new_state, 1
@@ -272,6 +274,7 @@ def main(app_name, pack_name):
                          _data_activity=[])
 
     # To ensure that loading page and everything is done before starting testing
+    logger.info('Wait 10 seconds for loading of APK.')
     time.sleep(10)
 
     old_state = Utility.get_state(d, pack_name)
@@ -343,13 +346,15 @@ def main(app_name, pack_name):
         Utility.dump_log(d, pack_name, local_state)
         return 1, local_state
 
+    logger.info('Adding new activity.')
     recvalue, new_state = rec(old_state)
+    logger.info('Activity has recvalue of '+ str(recvalue))
     if recvalue == APP_STATE.CRASHED:
         return APP_STATE.CRASHED
 
     new_click_els = None
     counter = 0
-    no_clickable_btns_counter = 0
+    # no_clickable_btns_counter = 0
 
     while True:
         signal.alarm(30)
@@ -371,11 +376,12 @@ def main(app_name, pack_name):
 
                     new_state = Utility.get_state(d, pack_name)
                     new_click_els = d(clickable='true', packageName=pack_name)
+                    state_info = None
             else:
                 new_click_els, new_state, state_info = click_button(new_click_els, pack_name, app_name)
 
             logger.info('Number of iterations: ' + str(counter))
-
+            logger.info('state_info is ' + str(state_info))
             if state_info == APP_STATE.CRASHED:
                 return APP_STATE.CRASHED
             elif state_info == APP_STATE.DEADLOCK:
@@ -424,6 +430,11 @@ def main(app_name, pack_name):
             logger.info('JSONRPCError...')
             Utility.store_data(learning_data, activities, clickables, mongo)
             return APP_STATE.JSONRPCERROR
+        except socket.timeout:
+            logger.info('@@@@@@@@@@@@@@@=============================')
+            logger.info('Socket timeout error...')
+            # Utility.store_data(learning_data, activities, clickables, mongo)
+            return APP_STATE.SOCKTIMEOUTERROR
         finally:
             signal.alarm(0)
 
@@ -516,6 +527,8 @@ def official():
                         logger.info("Timeout. Restarting...")
                     elif retvalue == APP_STATE.JSONRPCERROR:
                         logger.info("JSONRPCError. Restarting...")
+                    elif retvalue == APP_STATE.SOCKTIMEOUTERROR:
+                        logger.info("Socket timeout. Restarting...")
                 except TimeoutError:
                     logger.info("Timeout of 30 seconds from nothing happening. Restarting... ")
                 finally:
