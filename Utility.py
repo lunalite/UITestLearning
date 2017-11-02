@@ -208,4 +208,4 @@ def dump_log(d, packname, state):
         os.makedirs(directory)
 
     d.screenshot(directory + state + '.png')
-    d.dump(directory + state + '.xml', compressed=False)
+    d.dump(directory + state + '-FULL.xml', compressed=False)
