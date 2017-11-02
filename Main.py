@@ -121,18 +121,18 @@ def click_button(new_click_els, pack_name, app_name):
                 d(scrollable=True).fling.horiz.forward()
         except uiautomator.JsonRPCError:
             logger.info("Can't scroll horizontal.")
-        new_state = Utility.get_state(d, pack_name)
-        if new_state != old_state:
-            return None, new_state, 1
+            new_state = Utility.get_state(d, pack_name)
+            if new_state != old_state:
+                return None, new_state, 1
 
-        d.press('back')
+            d.press('back')
 
-        # Issue with clicking back button prematurely
-        if Utility.get_package_name(d) == 'com.google.android.apps.nexuslauncher':
-            subprocess.Popen(
-                [android_home + '/platform-tools/adb', '-s', device_name, 'shell', 'monkey', '-p', pack_name, '5'],
-                stdout=subprocess.DEVNULL, stderr=subprocess.STDOUT)
-        return None, Utility.get_state(d, pack_name), 1
+            # Issue with clicking back button prematurely
+            if Utility.get_package_name(d) == 'com.google.android.apps.nexuslauncher':
+                subprocess.Popen(
+                    [android_home + '/platform-tools/adb', '-s', device_name, 'shell', 'monkey', '-p', pack_name, '5'],
+                    stdout=subprocess.DEVNULL, stderr=subprocess.STDOUT)
+            return None, Utility.get_state(d, pack_name), 1
     else:
         try:
             if click_els[btn_result].exists:
@@ -558,6 +558,7 @@ try:
     apklist = sys.argv[2]
     d = Device(device_name)
     official()
+
 
 except Exception as e:
     logging.exception("message")

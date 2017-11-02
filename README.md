@@ -67,7 +67,7 @@ Or some which there are no clickables(flash games) Or those that require login a
 ## Updates
 ### 2 November 2017
 * Taken care of socket timeout error. Restart the entire APK if socket timed out.
-
+* Fixed issue regarding repeated horizontal scrolls
 
 ### 30 October 2017
 * Added enum states for app crashes
