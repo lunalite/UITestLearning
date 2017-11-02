@@ -64,10 +64,15 @@ Or some which there are no clickables(flash games) Or those that require login a
 ## Examples of such APKs
 * at.alladin.rmbt.android_20214.apk - no clickable buttons
 
+-- Will be using system-images;android-25;google_apis;armeabi-v7a
+-- and system-images;android-26;google_apis;x86
+
 ## Updates
 ### 2 November 2017
 * Taken care of socket timeout error. Restart the entire APK if socket timed out.
 * Fixed issue regarding repeated horizontal scrolls
+* Reduction of rerolling random click button tries
+* Changed state_info for scrolling decision from None to APP_STATE.SCROLLING
 
 ### 30 October 2017
 * Added enum states for app crashes

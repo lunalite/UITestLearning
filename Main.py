@@ -56,6 +56,7 @@ signal.signal(signal.SIGALRM, signal_handler)
 
 
 class APP_STATE(Enum):
+    SCROLLING = 11
     KEYBOARDINT = -1
     FAILTOSTART = -2
     KEYERROR = -3
@@ -102,7 +103,7 @@ def click_button(new_click_els, pack_name, app_name):
             break
         else:
             logger.info('trying to make decision and find btn to click again.')
-        if counter >= 200:
+        if counter >= 50:
             raise Exception('No buttons to click')
 
     logger.info('Length of the parent_map currently: ' + str(len(parent_map)))
@@ -376,7 +377,7 @@ def main(app_name, pack_name):
 
                     new_state = Utility.get_state(d, pack_name)
                     new_click_els = d(clickable='true', packageName=pack_name)
-                    state_info = None
+                    state_info = APP_STATE.SCROLLING
             else:
                 new_click_els, new_state, state_info = click_button(new_click_els, pack_name, app_name)
 
