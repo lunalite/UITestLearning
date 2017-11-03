@@ -66,7 +66,9 @@ class APP_STATE(Enum):
     TIMEOUT = -70
     SOCKTIMEOUTERROR = -71
     JSONRPCERROR = -8
+    FAILTOCLICK = -9
     UNK = -10
+
 
 
 def init():
@@ -105,7 +107,7 @@ def click_button(new_click_els, pack_name, app_name):
             logger.info('trying to make decision and find btn to click again.')
             counter += 1
         if counter >= 50:
-            raise Exception('No buttons to click')
+            return None, None, APP_STATE.FAILTOCLICK
 
     logger.info('Length of the parent_map currently: ' + str(len(parent_map)))
 
@@ -388,6 +390,8 @@ def main(app_name, pack_name):
                 return APP_STATE.CRASHED
             elif state_info == APP_STATE.DEADLOCK:
                 return APP_STATE.DEADLOCK
+            elif state_info == APP_STATE.FAILTOCLICK:
+                return APP_STATE.FAILTOCLICK
 
             if new_state != old_state and (new_state not in scores or new_state not in visited):
                 recvalue = -1
@@ -525,6 +529,8 @@ def official():
                         break
                     elif retvalue == APP_STATE.DEADLOCK:
                         logger.info("Dead lock. Restarting...")
+                    elif retvalue == APP_STATE.FAILTOCLICK:
+                        logger.info("Fail to click. Restarting...")
                     elif retvalue == APP_STATE.TIMEOUT:
                         logger.info("Timeout. Restarting...")
                     elif retvalue == APP_STATE.JSONRPCERROR:

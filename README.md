@@ -68,6 +68,9 @@ Or some which there are no clickables(flash games) Or those that require login a
 -- and system-images;android-26;google_apis;x86
 
 ## Updates
+### 3 November 2017
+* Added catch error for fail to click
+
 ### 2 November 2017
 * Taken care of socket timeout error. Restart the entire APK if socket timed out.
 * Fixed issue regarding repeated horizontal scrolls
