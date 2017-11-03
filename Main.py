@@ -424,7 +424,7 @@ def main(app_name, pack_name):
         except IndexError:
             logger.info('@@@@@@@@@@@@@@@=============================')
             logger.info('IndexError...')
-            Utility.store_data(learning_data, activities, clickables, mongo)
+            # Utility.store_data(learning_data, activities, clickables, mongo)
             return APP_STATE.INDEXERROR
         except TimeoutError:
             logger.info('@@@@@@@@@@@@@@@=============================')
