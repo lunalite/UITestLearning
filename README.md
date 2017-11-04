@@ -68,6 +68,9 @@ Or some which there are no clickables(flash games) Or those that require login a
 -- and system-images;android-26;google_apis;x86
 
 ## Updates
+### 4 November 2017
+* Socket timeout issue persists. Changed TimeoutError back to BaseException, added signal alarm at btn_to_info method and set it to 5 seconds. 
+
 ### 3 November 2017
 * Added catch error for fail to click
 

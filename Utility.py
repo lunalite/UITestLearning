@@ -5,6 +5,7 @@ import operator
 import os
 import random
 import re
+import signal
 import string
 import subprocess
 import xml.etree.ElementTree as ET
@@ -120,10 +121,14 @@ def get_bounds_from_key(key):
 
 
 def btn_to_key(btn):
-    info = btn.info
-    cd = '' if info['contentDescription'] is None else str(info['contentDescription'])
-    key = '{' + info['className'].split('.')[-1] + '}-{' + cd + '}-{' + convert_bounds(btn) + '}'
-    return key
+    signal.alarm(5)
+    try:
+        info = btn.info
+        cd = '' if info['contentDescription'] is None else str(info['contentDescription'])
+        key = '{' + info['className'].split('.')[-1] + '}-{' + cd + '}-{' + convert_bounds(btn) + '}'
+        return key
+    finally:
+        signal.alarm(0)
 
 
 def xml_btn_to_key(xml_btn):

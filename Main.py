@@ -49,7 +49,9 @@ no_clickable_btns_counter = 0
 
 
 def signal_handler(signum, frame):
-    raise TimeoutError("Timed out!")
+    logger.info("timeout call...")
+    raise Exception('timeout.')
+    # raise TimeoutError("Timed out!")
 
 
 signal.signal(signal.SIGALRM, signal_handler)
@@ -68,7 +70,6 @@ class APP_STATE(Enum):
     JSONRPCERROR = -8
     FAILTOCLICK = -9
     UNK = -10
-
 
 
 def init():
@@ -352,7 +353,7 @@ def main(app_name, pack_name):
 
     logger.info('Adding new activity.')
     recvalue, new_state = rec(old_state)
-    logger.info('Activity has recvalue of '+ str(recvalue))
+    logger.info('Activity has recvalue of ' + str(recvalue))
     if recvalue == APP_STATE.CRASHED:
         return APP_STATE.CRASHED
 
@@ -361,7 +362,7 @@ def main(app_name, pack_name):
     no_clickable_btns_counter = 0
 
     while True:
-        # signal.alarm(30)
+        signal.alarm(30)
         try:
 
             edit_btns = d(clickable='true', packageName=pack_name)
@@ -467,7 +468,7 @@ def official():
         ''' Get the application name from badge. '''
         try:
             ps = subprocess.Popen([android_home + 'build-tools/26.0.1/aapt', 'dump', 'badging', dir + i],
-                              stdout=subprocess.PIPE)
+                                  stdout=subprocess.PIPE)
             output = subprocess.check_output(('grep', 'application-label:'), stdin=ps.stdout)
             label = output.decode('utf-8')
         except subprocess.CalledProcessError:
@@ -510,7 +511,7 @@ def official():
 
             init()
             while attempts <= 3:
-                # signal.alarm(30)
+                signal.alarm(30)
                 try:
                     retvalue = main(appname, apk_packname)
                     if retvalue == APP_STATE.FAILTOSTART:
@@ -537,8 +538,11 @@ def official():
                         logger.info("JSONRPCError. Restarting...")
                     elif retvalue == APP_STATE.SOCKTIMEOUTERROR:
                         logger.info("Socket timeout. Restarting...")
-                except TimeoutError:
-                    logger.info("Timeout of 30 seconds from nothing happening. Restarting... ")
+                except BaseException as e:
+                    if re.match('timeout', str(e), re.IGNORECASE):
+                        logger.info("Timeout from nothing happening. Restarting... ")
+                    else:
+                        logger.info("Unknown exception.")
                 finally:
                     signal.alarm(0)
                     attempts += 1
