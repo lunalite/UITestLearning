@@ -14,7 +14,7 @@ import uiautomator
 
 from Mongo import Mongo
 from uiautomator import Device
-
+from datetime import datetime
 from Config import Config
 
 log_location = Config.log_location
@@ -408,7 +408,7 @@ def main(app_name, pack_name):
                 Utility.store_data(learning_data, activities, clickables, mongo)
 
             counter += 1
-            if counter >= 60:
+            if counter >= 120:
                 return 1
 
         except KeyboardInterrupt:
@@ -459,6 +459,8 @@ def official():
         os.makedirs(info_location)
     file = codecs.open(info_location + '/information-' + timestr + '.txt', 'w', 'utf-8')
 
+    no_apks_tested = 0
+    start_time = datetime.now()
     for i in apks_to_test:
         english = True
         attempts = 0
@@ -559,17 +561,32 @@ def official():
             logger.info('Uninstalled ' + apk_packname)
             logger.info('@@@@@@@@@@@ End ' + apk_packname + ' APK @@@@@@@@@@@')
 
+        no_apks_tested += 1
+        if no_apks_tested % 5 == 0:
+            logger.info('Total apks tested: {}'.format(no_apks_tested))
+            logger.info('Restarting emulator...')
+            Utility.stop_emulator(device_name)
+            time.sleep(10)
+            Utility.start_emulator(avdname, device_name)
+            new_time = datetime.now()
+            logger.info('Time elapsed: ' + str(new_time - start_time))
+
 
 try:
     """
     device_name e.g. emulator-5554
     apklist e.g. directory-to-apk-x
-    e.g. python3 Main.py emulator-5554
+    avdname e.g, avd0
+    e.g. python3 Main.py emulator-5554 ../apk/apk-0 avd0
     """
     device_name = sys.argv[1]
     apklist = sys.argv[2]
+    avdname = sys.argv[3]
     d = Device(device_name)
+
+    Utility.start_emulator(avdname, device_name)
     official()
+
 
 except Exception as e:
     logging.exception("message")

@@ -10,6 +10,8 @@ import string
 import subprocess
 import xml.etree.ElementTree as ET
 
+import time
+
 from Clickable import Clickable
 from Config import Config
 from Data import Data
@@ -214,3 +216,28 @@ def dump_log(d, packname, state):
 
     d.screenshot(directory + state + '.png')
     d.dump(directory + state + '-FULL.xml', compressed=False)
+
+
+def start_emulator(avdnum, emuname):
+    android_home = Config.android_home
+    subprocess.Popen(
+        [android_home + 'emulator/emulator', '-avd', avdnum, '-no-audio', '-no-window', '-skin', '480x800'],
+        stderr=subprocess.DEVNULL)
+    time.sleep(5)
+    while True:
+        try:
+            bootanim = subprocess.check_output(
+                [android_home + 'platform-tools/adb', '-s', emuname, 'shell', 'getprop', 'init.svc.bootanim'])
+            if bootanim == b'stopped\n':
+                return 1
+        except:
+            print('not done yet')
+        finally:
+            time.sleep(1)
+
+
+def stop_emulator(emuname):
+    android_home = Config.android_home
+    subprocess.Popen([android_home + 'platform-tools/adb', '-s', emuname, 'emu', 'kill'])
+    time.sleep(1)
+    subprocess.Popen([android_home + 'platform-tools/adb', 'devices'], stdout=subprocess.PIPE)

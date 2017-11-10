@@ -8,35 +8,6 @@ import os
 
 
 class Config:
-    # apk_selection = \
-    #     ['Accounts Lite 2.0',
-    #      'Java Programming',
-    #      'Aadhaar Info',
-    #      'ABC 123 for Kids Child Toddler',
-    #      'Time Converter',
-    #      'A League Live',
-    #      'D-Day with Pictures',
-    #      'OBDLink',
-    #      'Mega Tic Tac Toe',
-    #      'Show Me Wales',
-    #      'Macroscop'
-    #      'Bible Trivia Quiz Game',
-    #      'Kolumbus Sanntid',
-    #      'The speech the President of the United States',
-    #      'FOViewer Deluxe Free',
-    #      'Geo-Wiki Pictures',
-    #      'Minesweeper',
-    #      'AddressToGPS',
-    #      'Acastus',
-    #      'Calculator',
-    #      'Camp 2015',
-    #      'A Photo Map',
-    #      'AutomateIt',
-    #      'Agroid',
-    #      'Bacteriologaa',
-    #      'Dining Table Ideas',
-    #      'Pats Schedule',
-    #      'Chrome']
 
     """========================================
     Change variables below to suit your settings

@@ -68,6 +68,10 @@ Or some which there are no clickables(flash games) Or those that require login a
 -- and system-images;android-26;google_apis;x86
 
 ## Updates
+
+### 10 November 2017
+* Added functionalities to restart emulator after 5 counts of app testing. 
+
 ### 4 November 2017
 * Socket timeout issue persists. Changed TimeoutError back to BaseException, added signal alarm at btn_to_info method and set it to 5 seconds. 
 
