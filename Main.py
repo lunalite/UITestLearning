@@ -584,7 +584,7 @@ try:
     d = Device(device_name)
 
     Utility.start_emulator(avdname, device_name)
-    # official()
+    official()
 
 
 except Exception as e:
