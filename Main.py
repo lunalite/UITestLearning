@@ -449,7 +449,6 @@ def main(app_name, pack_name):
 def official():
     dir = Config.apkdir
     android_home = Config.android_home
-    x = subprocess.check_output(['ls', dir])
     with open(apklist, 'r') as f:
         apks_to_test = [line.rstrip() for line in f]
     timestr = time.strftime("%Y%m%d%H%M%S")
@@ -585,7 +584,7 @@ try:
     d = Device(device_name)
 
     Utility.start_emulator(avdname, device_name)
-    official()
+    # official()
 
 
 except Exception as e:

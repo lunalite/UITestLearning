@@ -220,20 +220,27 @@ def dump_log(d, packname, state):
 
 def start_emulator(avdnum, emuname):
     android_home = Config.android_home
-    subprocess.Popen(
-        [android_home + 'emulator/emulator', '-avd', avdnum, '-no-audio', '-no-window', '-skin', '480x800'],
-        stderr=subprocess.DEVNULL)
-    time.sleep(5)
+    # subprocess.Popen(
+    #     [android_home + 'emulator/emulator', '-avd', avdnum, '-no-audio', '-no-window', '-skin', '480x800'],
+    #     stderr=subprocess.DEVNULL)
+    # time.sleep(5)
     while True:
-        try:
-            bootanim = subprocess.check_output(
-                [android_home + 'platform-tools/adb', '-s', emuname, 'shell', 'getprop', 'init.svc.bootanim'])
-            if bootanim == b'stopped\n':
-                return 1
-        except:
-            print('not done yet')
-        finally:
-            time.sleep(1)
+        msg = subprocess.Popen(
+            [android_home + 'platform-tools/adb', '-s', emuname, 'shell', 'getprop', 'init.svc.bootanim'], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        bootmsg = msg.communicate()
+        if bootmsg[0] == b'stopped\n':
+            print('y')
+            return 1
+        elif len(re.findall('not found', bootmsg[1].decode('utf-8'))) >= 1:
+            print('nf')
+            subprocess.Popen(
+                [android_home + 'emulator/emulator', '-avd', avdnum, '-no-audio', '-no-window', '-skin', '480x800'],
+                stderr=subprocess.DEVNULL)
+            time.sleep(5)
+        else:
+            logger.info('Waiting for emulator to start...')
+            logger.info(bootmsg)
+        time.sleep(3)
 
 
 def stop_emulator(emuname):
