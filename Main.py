@@ -107,7 +107,7 @@ def click_button(new_click_els, pack_name, app_name):
         else:
             logger.info('trying to make decision and find btn to click again.')
             counter += 1
-        if counter >= 50:
+        if counter >= 120:
             return None, None, APP_STATE.FAILTOCLICK
 
     logger.info('Length of the parent_map currently: ' + str(len(parent_map)))
@@ -561,7 +561,7 @@ def official():
             logger.info('@@@@@@@@@@@ End ' + apk_packname + ' APK @@@@@@@@@@@')
 
         no_apks_tested += 1
-        if no_apks_tested % 5 == 0:
+        if no_apks_tested % 50 == 0:
             logger.info('Total apks tested: {}'.format(no_apks_tested))
             logger.info('Restarting emulator...')
             Utility.stop_emulator(device_name)

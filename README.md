@@ -68,6 +68,9 @@ Or some which there are no clickables(flash games) Or those that require login a
 -- and system-images;android-26;google_apis;x86
 
 ## Updates
+### 15 November 2017
+* emulator is restarted after 50 counts instead.
+* Started data parsing of JSON format from mongodump
 
 ### 10 November 2017
 * Added functionalities to restart emulator after 5 counts of app testing. 

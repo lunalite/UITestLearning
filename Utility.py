@@ -226,10 +226,13 @@ def start_emulator(avdnum, emuname):
             stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         bootmsg = msg.communicate()
         if bootmsg[0] == b'stopped\n':
+            time.sleep(3)
+            subprocess.Popen([android_home+'platform-tools/adb', '-s', emuname, 'shell', 'rm', '-r', '/mnt/sdcard/*'])
+            logger.info("deleted adb mnt sdcared")
             return 1
         elif len(re.findall('not found', bootmsg[1].decode('utf-8'))) >= 1:
             subprocess.Popen(
-                [android_home + 'emulator/emulator', '-avd', avdnum, '-no-audio', '-no-window', '-skin', '480x800',
+                [android_home + 'emulator/emulator', '-avd', avdnum, '-skin', '480x800',
                  '-port', emuname[-4:]],
                 stderr=subprocess.DEVNULL)
             time.sleep(5)
