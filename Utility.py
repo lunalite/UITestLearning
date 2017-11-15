@@ -21,6 +21,7 @@ logger = logging.getLogger(__name__)
 
 
 def store_data(data, activities, clickables, mongo):
+    signal.alarm(0)
     for state, activity in activities.items():
         if state not in data.data_activity:
             data.data_activity.append(activity.state)
@@ -228,7 +229,6 @@ def start_emulator(avdnum, emuname):
         if bootmsg[0] == b'stopped\n':
             time.sleep(3)
             subprocess.Popen([android_home+'platform-tools/adb', '-s', emuname, 'shell', 'rm', '-r', '/mnt/sdcard/*'])
-            logger.info("deleted adb mnt sdcared")
             return 1
         elif len(re.findall('not found', bootmsg[1].decode('utf-8'))) >= 1:
             subprocess.Popen(
@@ -238,10 +238,9 @@ def start_emulator(avdnum, emuname):
             time.sleep(5)
         else:
             logger.info('Waiting for emulator to start...')
+            time.sleep(3)
 
 
 def stop_emulator(emuname):
     android_home = Config.android_home
     subprocess.Popen([android_home + 'platform-tools/adb', '-s', emuname, 'emu', 'kill'])
-    time.sleep(1)
-    subprocess.Popen([android_home + 'platform-tools/adb', 'devices'], stdout=subprocess.PIPE)
