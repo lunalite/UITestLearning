@@ -232,14 +232,12 @@ def start_emulator(avdnum, emuname):
             return 1
         elif len(re.findall('not found', bootmsg[1].decode('utf-8'))) >= 1:
             subprocess.Popen(
-                [android_home + 'emulator/emulator', '-avd', avdnum, '-skin', '480x800',
+                [android_home + 'emulator/emulator', '-avd', avdnum, '-wipe-data', '-skin', '480x800',
                  '-port', emuname[-4:]],
                 stderr=subprocess.DEVNULL)
             time.sleep(5)
         else:
             logger.info('Waiting for emulator to start...')
-            logger.info(bootmsg)
-        time.sleep(3)
 
 
 def stop_emulator(emuname):

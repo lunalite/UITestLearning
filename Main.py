@@ -362,7 +362,7 @@ def main(app_name, pack_name):
     no_clickable_btns_counter = 0
 
     while True:
-        signal.alarm(30)
+        signal.alarm(60)
         try:
 
             edit_btns = d(clickable='true', packageName=pack_name)
@@ -512,7 +512,7 @@ def official():
 
             init()
             while attempts <= 3:
-                signal.alarm(30)
+                signal.alarm(60)
                 try:
                     retvalue = main(appname, apk_packname)
                     if retvalue == APP_STATE.FAILTOSTART:
