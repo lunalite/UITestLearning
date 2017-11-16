@@ -116,7 +116,7 @@ def click_button(new_click_els, pack_name, app_name):
     # Or zero_counter == 5
     if btn_result == -1 or zero_counter == 5:
 
-        if no_clickable_btns_counter >= 3:
+        if no_clickable_btns_counter >= 5:
             return None, None, APP_STATE.DEADLOCK
 
         try:
@@ -371,10 +371,9 @@ def main(app_name, pack_name):
 
     new_click_els = None
     counter = 0
-    no_clickable_btns_counter = 0
 
     while True:
-        # signal.alarm(60)
+        signal.alarm(60)
         try:
 
             edit_btns = d(clickable='true', packageName=pack_name)
@@ -459,6 +458,8 @@ def main(app_name, pack_name):
 
 
 def official():
+    global no_clickable_btns_counter
+
     dir = Config.apkdir
     android_home = Config.android_home
     with open(apklist, 'r') as f:
@@ -522,8 +523,9 @@ def official():
             logger.info('\nDoing a UI testing on application ' + appname + '.')
 
             init()
+            no_clickable_btns_counter = 0
             while attempts <= 3:
-                # signal.alarm(60)
+                signal.alarm(60)
                 try:
                     retvalue = main(appname, apk_packname)
                     if retvalue == APP_STATE.FAILTOSTART:
