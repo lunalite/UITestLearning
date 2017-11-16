@@ -61,24 +61,25 @@ def get_state(device, pn):
         for element in root.iter('node'):
             bit_rep += element.get('index')
             btn_rep += str(dict_of_widget[element.attrib['class']])
-            # TODO: Add the widgetType for lower abstraction
 
         return bit_rep, btn_rep
 
-    def check_text_box():
-        xml = device.dump(compressed=True)
-        root = ET.fromstring(xml.encode('utf-8'))
-        keytxt = ''
-        for element in root.iter('node'):
-            keytxt += element.get('index')
-        return keytxt
+    # def check_text_box():
+    #     xml = device.dump(compressed=True)
+    #     root = ET.fromstring(xml.encode('utf-8'))
+    #     keytxt = ''
+    #     for element in root.iter('node'):
+    #         keytxt += element.get('index')
+    #     return keytxt
 
     # Assumes that there is a consecutive index from 0 to 32 within dump itself
-    a = '01234567891011121314151617181920212223242526272829303132'
+    # TODO: what if there is a number box or other types? Not checking for those...
+    # a = '01234567891011121314151617181920212223242526272829303132'
 
     try:
-        if a in check_text_box():
-            device.press.back()
+        # if a in check_text_box():
+        #     device.press.back()
+        #     time.sleep(1)
 
         final_rep = get_bit_rep(pn)
         key = final_rep[0] + final_rep[1]
@@ -124,11 +125,24 @@ def get_bounds_from_key(key):
 
 
 def btn_to_key(btn):
+    """deprecated. Use btn_info_to_key() instead"""
     signal.alarm(5)
     try:
         info = btn.info
         cd = '' if info['contentDescription'] is None else str(info['contentDescription'])
         key = '{' + info['className'].split('.')[-1] + '}-{' + cd + '}-{' + convert_bounds(btn) + '}'
+        return key
+    finally:
+        signal.alarm(0)
+
+
+def btn_info_to_key(btn_info):
+    signal.alarm(5)
+    try:
+        info = btn_info
+        cd = '' if info['contentDescription'] is None else str(info['contentDescription'])
+        key = '{' + info['className'].split('.')[-1] + '}-{' + cd + '}-{' + convert_bounds_with_node_info(
+            info['bounds']) + '}'
         return key
     finally:
         signal.alarm(0)
@@ -142,6 +156,14 @@ def xml_btn_to_key(xml_btn):
     cd = '' if info['content-desc'] is None else str(info['content-desc'])
     key = '{' + info['class'].split('.')[-1] + '}-{' + cd + '}-{' + info['bounds'] + '}'
     return key
+
+
+def convert_bounds_with_node_info(node):
+    sbound = ''
+    bounds = node
+    sbound += '[' + str(bounds['left']) + ',' + str(bounds['top']) + '][' + str(bounds['right']) + ',' + str(
+        bounds['bottom']) + ']'
+    return sbound
 
 
 def convert_bounds(node):
@@ -228,17 +250,17 @@ def start_emulator(avdnum, emuname):
         bootmsg = msg.communicate()
         if bootmsg[0] == b'stopped\n':
             time.sleep(3)
-            subprocess.Popen([android_home+'platform-tools/adb', '-s', emuname, 'shell', 'rm', '-r', '/mnt/sdcard/*'])
+            subprocess.Popen([android_home + 'platform-tools/adb', '-s', emuname, 'shell', 'rm', '-r', '/mnt/sdcard/*'])
             return 1
         elif len(re.findall('not found', bootmsg[1].decode('utf-8'))) >= 1:
             subprocess.Popen(
-                [android_home + 'emulator/emulator', '-avd', avdnum, '-wipe-data', '-skin', '480x800', '-no-audio', '-no-window'
-                 '-port', emuname[-4:]],
+                [android_home + 'emulator/emulator', '-avd', avdnum, '-wipe-data', '-skin', '480x800', '-port',
+                 emuname[-4:]],
                 stderr=subprocess.DEVNULL)
-            time.sleep(5)
+            time.sleep(10)
         else:
             logger.info('Waiting for emulator to start...')
-            time.sleep(3)
+            time.sleep(5)
 
 
 def stop_emulator(emuname):

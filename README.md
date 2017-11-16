@@ -1,3 +1,13 @@
+1. give buttons leading to other application with a unique transition state
+3. store text into attribute
+
+4. check distribution at different ranges so different text gives different scores. Is there such an example or not?
+ why it will give such high score? Or why text will give low score.
+5. normalization of the number scores based on the APKs. Use highest score for the clickable in the APK and normalize them to 0-1.
+ making the apks comparable across.
+6. A clicks go B, clicks go A. Find the text of the button over at B s.t. it will move back to A.
+7. find the buttons that will cause the state to return to its original state, but without having any text within it. 
+
 # UI Testing - Reinforcement Learning
 
 Project is on-going
@@ -23,41 +33,6 @@ It is up to the user whether he wants to create a `virtualenv` for the project o
 
 Do remember to add into environment `PATH` the folders within android sdk such as `$ANDROID_HOME/platform-tools`, `$ANDROID_HOME/tools` and `$ANDROID_HOME/tools/bin`.
 
-## Data collection
-Apps are made to run until they finished or they crashed. Data is stored into mongodb via pymongo. The following are apps which have been tested on:
-
-No|Appname|packagename|Acitivty count | Clickable count
----|---|---|---|---
-1|Calculator|com.android.calculator2|10|190
-2|AdressToGPS|me.danielbarnett.addresstogps|1|6
-3|Acastus|me.dbarnett.acastus|8|29
-4|Camp 2015|nerd.tuxmobil.fahrplan.camp|14|92
-5|A Photo Map|de.k3b.android.androFotoFinder|31|358
-6|AutomateIt|AutomateIt.mainPackage|27|274
-7|Agroid|B4A.Agroid_software|16|78
-8|Bacteriología|BacteriologiaFree.Doctor|5|44
-9|Dining Table Ideas|con.dinta.app1|25|65
-10|Pats Schedule|DrWebsterApps.New.England.Patriots.Trivia|12|63
-11|Minesweeper|Draziw.Button.Mines|1|231
-12|Geo-Wiki Pictures|GeoWikiMobile.GeoWikiMobile|11|77
-13|FOViewer Deluxe Free|JVC.FOViewerDX|32|593
-14|The speech the President of the United States|Js.Usa_Uspa|3|21
-15|Kolumbus Sanntid|Kolumbus.Sanntid.Android|22|172
-16|Bible Trivia Quiz Game|DrWebsterApps.BibleTriviaGame|10|85
-17|Macroscop|-|Unable to get info
-18|Show Me Wales|NVG.ShowMeWales|7|32
-19|Mega Tic Tac Toe|NoamStudios.Games.MegaTicTacToeFree|5|36
-20|OBDLink|OCTech.Mobile.Applications.OBDLink|10|49
-21|D-Day with Pictures|View.CountDownToSpecialDay.Admob|15|107
-22|A League Live|a.league.live|31|251
-23|Time Converter|abcom.com.timeconverter|16|123
-24|ABC 123 for Kids Child Toddler|abc123.kids.toddlers|6|25
-25|Aadhaar Info|aadhaar.driving.voterid.passport|15|53
-26|Java Programming|ab.java.programming|52|553
-27|Accounts Lite 2.0|accountslite.n2tech.namespace|25|239
-Total| | |416|3865
-
-
 Unable to test certain APKs like those of other languages, or those like 'Power Me Off' since it might shut down the entire emulator.
 Or some which there are no clickables(flash games) Or those that require login and internet like Absolute EMR and AccuManager.
 
@@ -68,6 +43,11 @@ Or some which there are no clickables(flash games) Or those that require login a
 -- and system-images;android-26;google_apis;x86
 
 ## Updates
+### 16 November 2017
+* added storing of data for text. The method of getting state remains unchanged.
+* Stopped closing the android keyboard for it is causing a different state everytime and is non-deterministic.
+* added discriminator for buttons leading to outside the apk  
+
 ### 15 November 2017
 * emulator is restarted after 50 counts instead.
 * Started data parsing of JSON format from mongodump

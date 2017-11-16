@@ -107,7 +107,7 @@ def click_button(new_click_els, pack_name, app_name):
         else:
             logger.info('trying to make decision and find btn to click again.')
             counter += 1
-        if counter >= 120:
+        if counter >= 30:
             return None, None, APP_STATE.FAILTOCLICK
 
     logger.info('Length of the parent_map currently: ' + str(len(parent_map)))
@@ -130,7 +130,6 @@ def click_button(new_click_els, pack_name, app_name):
             new_state = Utility.get_state(d, pack_name)
             if new_state != old_state:
                 return None, new_state, 1
-
             d.press('back')
 
             # Issue with clicking back button prematurely
@@ -142,8 +141,10 @@ def click_button(new_click_els, pack_name, app_name):
     else:
         try:
             if click_els[btn_result].exists:
-                click_btn_key = Utility.btn_to_key(click_els[btn_result])
-                click_btn_class = click_els[btn_result].info['className']
+                click_btn_info = click_els[btn_result].info
+                click_btn_key = Utility.btn_info_to_key(click_btn_info)
+                click_btn_text = click_btn_info['text']
+                click_btn_class = click_btn_info['className']
                 click_btn = click_els[btn_result]
 
                 # Check if the key of button to be clicked is equal to the key of button stored in clickables
@@ -161,10 +162,6 @@ def click_button(new_click_els, pack_name, app_name):
                             found = True
                         ind += 1
                     if not found:
-                        logger.info('button to be found: ' + click_btn_key)
-                        logger.info(clickables[old_state][btn_result].name)
-                        logger.info(clickables[old_state][btn_result].name == click_btn_key)
-
                         # If no such clickable is found, we append the clickable into the list
                         logger.info(old_state)
                         logger.info(Utility.get_state(d, pack_name))
@@ -179,7 +176,9 @@ def click_button(new_click_els, pack_name, app_name):
                         else:
                             sibs = None
                             children = None
-                        clickables[old_state].append(Clickable(name=click_btn_key,
+
+                        clickables[old_state].append(Clickable(_name=click_btn_key,
+                                                               _text=click_btn_text,
                                                                _parent_activity_state=old_state,
                                                                _parent_app_name=app_name,
                                                                _parent=Utility.xml_btn_to_key(_parent),
@@ -199,9 +198,11 @@ def click_button(new_click_els, pack_name, app_name):
                             break
 
                 new_state = Utility.get_state(d, pack_name)
+                newstate_pn_bool = Utility.get_package_name(d) == pack_name
 
                 if new_state != old_state:
-                    clickables[old_state][btn_result].next_transition_state = new_state
+                    clickables[old_state][
+                        btn_result].next_transition_state = new_state if newstate_pn_bool else 'OUTOFAPK'
                     new_click_els = d(clickable='true', packageName=pack_name)
                     score_increment = len(new_click_els)
                     scores[old_state][btn_result] = score_increment
@@ -211,8 +212,8 @@ def click_button(new_click_els, pack_name, app_name):
                     return new_click_els, new_state, 1
                 else:
                     # No change in state so give it a score of 0 since it doesn't affect anything
-                    # TODO: possibly increase abstraction so that change in state is determined by change in text too.
-                    clickables[old_state][btn_result].next_transition_state = old_state
+                    clickables[old_state][
+                        btn_result].next_transition_state = old_state if newstate_pn_bool else 'OUTOFAPK'
                     visited[old_state][btn_result][1] += 1
                     visited[old_state][btn_result][0] = (0 / visited[old_state][btn_result][1])
                     return click_els, new_state, 1
@@ -286,6 +287,7 @@ def main(app_name, pack_name):
 
     def rec(local_state):
         global parent_map
+
         if Utility.get_package_name(d) == 'com.google.android.apps.nexuslauncher':
             return -2, local_state
         elif Utility.get_package_name(d) != pack_name:
@@ -306,7 +308,6 @@ def main(app_name, pack_name):
                     # Check if app has crashed. If it is, restart
                     crashapp = d(clickable='true', packageName='android')
                     for i in crashapp:
-                        print(i.info)
                         if i.info['resourceName'] == 'android:id/aerr_restart' \
                                 or i.info['resourceName'] == 'android:id/aerr_close':
                             return APP_STATE.CRASHED, nextstate
@@ -317,7 +318,10 @@ def main(app_name, pack_name):
                         return -1, nextstate
                     localc += 1
 
-        da = DataActivity(local_state, Utility.get_activity_name(d, pack_name, device_name), app_name, [])
+        da = DataActivity(_state=local_state,
+                          _name=Utility.get_activity_name(d, pack_name, device_name),
+                          _parent_app=app_name,
+                          _clickables=[])
         activities[local_state] = da
         click_els = d(clickable='true', packageName=pack_name)
         parent_map[local_state] = Utility.create_child_to_parent(dump=d.dump(compressed=False))
@@ -325,18 +329,26 @@ def main(app_name, pack_name):
         arch = []
         ars = []
         arv = []
+
         for btn in click_els:
-            arch.append(Utility.btn_to_key(btn))
+            try:
+                btn_info = btn.info
+            except Exception:
+                print('catching it here.')
+            arch.append((Utility.btn_info_to_key(btn_info), btn_info['text']))
         click_hash[local_state] = arch
+
         for btn in click_hash[local_state]:
-            _parent = Utility.get_parent_with_key(btn, parent_map[local_state])
+            _parent = Utility.get_parent_with_key(btn[0], parent_map[local_state])
             if _parent != -1:
                 sibs = Utility.get_siblings(_parent)
                 children = Utility.get_children(_parent)
             else:
                 sibs = None
                 children = None
-            ar.append(Clickable(name=btn,
+
+            ar.append(Clickable(_name=btn[0],
+                                _text=btn[1],
                                 _parent_activity_state=local_state,
                                 _parent_app_name=app_name,
                                 _parent=Utility.xml_btn_to_key(_parent),
@@ -362,10 +374,11 @@ def main(app_name, pack_name):
     no_clickable_btns_counter = 0
 
     while True:
-        signal.alarm(60)
+        # signal.alarm(60)
         try:
 
             edit_btns = d(clickable='true', packageName=pack_name)
+            # Improve this shit
             for i in edit_btns:
                 i.set_text(Utility.get_text())
             if d(scrollable='true').exists:
@@ -403,7 +416,7 @@ def main(app_name, pack_name):
                     if recvalue == APP_STATE.UNK:
                         recvalue = 1
 
-            if counter % 10 == 0:
+            if counter % 30 == 0:
                 logger.info('Saving data to database...')
                 Utility.store_data(learning_data, activities, clickables, mongo)
 
@@ -425,7 +438,7 @@ def main(app_name, pack_name):
         except IndexError:
             logger.info('@@@@@@@@@@@@@@@=============================')
             logger.info('IndexError...')
-            # Utility.store_data(learning_data, activities, clickables, mongo)
+            Utility.store_data(learning_data, activities, clickables, mongo)
             return APP_STATE.INDEXERROR
         except TimeoutError:
             logger.info('@@@@@@@@@@@@@@@=============================')
@@ -440,7 +453,6 @@ def main(app_name, pack_name):
         except socket.timeout:
             logger.info('@@@@@@@@@@@@@@@=============================')
             logger.info('Socket timeout error...')
-            # Utility.store_data(learning_data, activities, clickables, mongo)
             return APP_STATE.SOCKTIMEOUTERROR
         finally:
             signal.alarm(0)
@@ -478,7 +490,6 @@ def official():
 
         m = re.findall('^application-label:(.*)$', label)
         appname = m[0][1:-1]
-        print(appname)
 
         Config.app_name = appname
 
@@ -512,7 +523,7 @@ def official():
 
             init()
             while attempts <= 3:
-                signal.alarm(60)
+                # signal.alarm(60)
                 try:
                     retvalue = main(appname, apk_packname)
                     if retvalue == APP_STATE.FAILTOSTART:
@@ -545,10 +556,15 @@ def official():
                     if re.match('timeout', str(e), re.IGNORECASE):
                         logger.info("Timeout from nothing happening. Restarting... ")
                     else:
-                        logger.info("Unknown exception.")
+                        logger.info("Unknown exception." + str(e))
+                        raise Exception(e)
                 finally:
                     signal.alarm(0)
                     attempts += 1
+                    logger.info('==========================================')
+                    logger.info('Time elapsed: ' + str(new_time - start_time))
+                    logger.info('Last APK tested is: {}'.format(apk_packname))
+                    logger.info('==========================================')
 
             logger.info('Force stopping ' + apk_packname + ' to end test for the APK')
             subprocess.Popen(
@@ -585,10 +601,8 @@ try:
     avdname = sys.argv[3]
     d = Device(device_name)
 
-    print(d.dump(compressed=False))
-    # Utility.start_emulator(avdname, device_name)
-    # official()
-
+    Utility.start_emulator(avdname, device_name)
+    official()
 
 except Exception as e:
     logging.exception("message")
