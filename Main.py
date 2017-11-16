@@ -562,6 +562,7 @@ def official():
                     signal.alarm(0)
                     attempts += 1
                     logger.info('==========================================')
+                    new_time = datetime.now()
                     logger.info('Time elapsed: ' + str(new_time - start_time))
                     logger.info('Last APK tested is: {}'.format(apk_packname))
                     logger.info('==========================================')
