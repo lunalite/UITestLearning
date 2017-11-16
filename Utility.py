@@ -253,10 +253,14 @@ def start_emulator(avdnum, emuname):
             subprocess.Popen([android_home + 'platform-tools/adb', '-s', emuname, 'shell', 'rm', '-r', '/mnt/sdcard/*'])
             return 1
         elif len(re.findall('not found', bootmsg[1].decode('utf-8'))) >= 1:
-            subprocess.Popen(
-                [android_home + 'emulator/emulator', '-avd', avdnum, '-wipe-data', '-skin', '480x800', '-port',
-                 emuname[-4:]],
-                stderr=subprocess.DEVNULL)
+            if Config.current_user == 'hkoh006':
+                subprocess.Popen(
+                    [android_home + 'emulator/emulator', '-avd', avdnum, '-wipe-data', '-skin', '480x800', '-port',
+                     emuname[-4:]], stderr=subprocess.DEVNULL)
+            elif Config.current_user == 'root':
+                subprocess.Popen(
+                    [android_home + 'emulator/emulator', '-avd', avdnum, '-wipe-data', '-skin', '480x800', '-no-audio',
+                     '-no-window', '-port', emuname[-4:]], stderr=subprocess.DEVNULL)
             time.sleep(10)
         else:
             logger.info('Waiting for emulator to start...')
