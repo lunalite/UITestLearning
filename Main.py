@@ -331,10 +331,7 @@ def main(app_name, pack_name):
         arv = []
 
         for btn in click_els:
-            try:
-                btn_info = btn.info
-            except Exception:
-                print('catching it here.')
+            btn_info = btn.info
             arch.append((Utility.btn_info_to_key(btn_info), btn_info['text']))
         click_hash[local_state] = arch
 
