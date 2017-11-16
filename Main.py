@@ -539,6 +539,8 @@ def official():
                         logger.info("JSONRPCError. Restarting...")
                     elif retvalue == APP_STATE.SOCKTIMEOUTERROR:
                         logger.info("Socket timeout. Restarting...")
+                    elif retvalue == APP_STATE.KEYBOARDINT:
+                        logger.info("keyboard interrupt. Restarting...")
                 except BaseException as e:
                     if re.match('timeout', str(e), re.IGNORECASE):
                         logger.info("Timeout from nothing happening. Restarting... ")
@@ -583,8 +585,9 @@ try:
     avdname = sys.argv[3]
     d = Device(device_name)
 
-    Utility.start_emulator(avdname, device_name)
-    official()
+    print(d.dump(compressed=False))
+    # Utility.start_emulator(avdname, device_name)
+    # official()
 
 
 except Exception as e:
