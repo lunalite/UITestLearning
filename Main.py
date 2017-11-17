@@ -114,8 +114,10 @@ def click_button(new_click_els, pack_name, app_name):
 
     # If no buttons clickable
     # Or zero_counter == 5
-    if btn_result == -1 or zero_counter == 5:
+    print('zero_counter is {}'.format(zero_counter))
+    if btn_result == -1 or zero_counter >= 5:
 
+        print('no clickable1 : {}'.format(no_clickable_btns_counter))
         if no_clickable_btns_counter >= 5:
             return None, None, APP_STATE.DEADLOCK
 
@@ -233,6 +235,7 @@ def make_decision(click_els, _scores_arr):
     if len(click_els) == 0:
         logger.info('No clickable buttons available. Returning -1.')
         zero_counter = 0
+        print('no clickable2 : {}'.format(no_clickable_btns_counter))
         no_clickable_btns_counter += 1
         return -1
     elif len(click_els) == 1:
@@ -414,7 +417,8 @@ def main(app_name, pack_name):
 
             if counter % 30 == 0:
                 logger.info('Saving data to database...')
-                Utility.store_data(learning_data, activities, clickables, mongo)
+                store_suc = Utility.store_data(learning_data, activities, clickables, mongo)
+                logger.info('Data saved to database: {}'.format(store_suc))
 
             counter += 1
             if counter >= 120:
@@ -423,28 +427,33 @@ def main(app_name, pack_name):
         except KeyboardInterrupt:
             logger.info('@@@@@@@@@@@@@@@=============================')
             logger.info('KeyboardInterrupt...')
-            Utility.store_data(learning_data, activities, clickables, mongo)
+            store_suc = Utility.store_data(learning_data, activities, clickables, mongo)
+            logger.info('Data saved to database: {}'.format(store_suc))
             return APP_STATE.KEYBOARDINT
         except KeyError:
             Utility.dump_log(d, pack_name, Utility.get_state(d, pack_name))
             logger.info('@@@@@@@@@@@@@@@=============================')
             logger.info('Crash')
-            Utility.store_data(learning_data, activities, clickables, mongo)
+            store_suc = Utility.store_data(learning_data, activities, clickables, mongo)
+            logger.info('Data saved to database: {}'.format(store_suc))
             return APP_STATE.KEYERROR
         except IndexError:
             logger.info('@@@@@@@@@@@@@@@=============================')
             logger.info('IndexError...')
-            Utility.store_data(learning_data, activities, clickables, mongo)
+            store_suc = Utility.store_data(learning_data, activities, clickables, mongo)
+            logger.info('Data saved to database: {}'.format(store_suc))
             return APP_STATE.INDEXERROR
         except TimeoutError:
             logger.info('@@@@@@@@@@@@@@@=============================')
             logger.info('Timeout...')
-            Utility.store_data(learning_data, activities, clickables, mongo)
+            store_suc = Utility.store_data(learning_data, activities, clickables, mongo)
+            logger.info('Data saved to database: {}'.format(store_suc))
             return APP_STATE.TIMEOUT
         except uiautomator.JsonRPCError:
             logger.info('@@@@@@@@@@@@@@@=============================')
             logger.info('JSONRPCError...')
-            Utility.store_data(learning_data, activities, clickables, mongo)
+            store_suc = Utility.store_data(learning_data, activities, clickables, mongo)
+            logger.info('Data saved to database: {}'.format(store_suc))
             return APP_STATE.JSONRPCERROR
         except socket.timeout:
             logger.info('@@@@@@@@@@@@@@@=============================')

@@ -41,6 +41,7 @@ def store_data(data, activities, clickables, mongo):
                 {"name": clickable.name, "parent_activity_state": state, "parent_app_name": Config.app_name},
                 Clickable.encode_data(clickable),
                 upsert=True)
+    return 1
 
 
 def load_data(mongo):
