@@ -565,7 +565,7 @@ def official():
                         logger.info("Timeout from nothing happening. Restarting... ")
                     else:
                         logger.info("Unknown exception." + str(e))
-                        raise Exception(e)
+                        #raise Exception(e)
                 finally:
                     signal.alarm(0)
                     attempts += 1
