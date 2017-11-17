@@ -115,10 +115,12 @@ def click_button(new_click_els, pack_name, app_name):
     # If no buttons clickable
     # Or zero_counter == 5
     print('zero_counter is {}'.format(zero_counter))
-    if btn_result == -1 or zero_counter >= 5:
+    if btn_result == -1 or zero_counter >= 5 or no_clickable_btns_counter >= 5:
 
         print('no clickable1 : {}'.format(no_clickable_btns_counter))
         if no_clickable_btns_counter >= 5:
+            return None, None, APP_STATE.DEADLOCK
+        elif zero_counter >= 30:
             return None, None, APP_STATE.DEADLOCK
 
         try:
