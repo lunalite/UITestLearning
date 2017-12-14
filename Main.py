@@ -100,8 +100,10 @@ def click_button(new_click_els, pack_name, app_name):
         print(visited)
         print('errror')
     counter = 0
+    btn_result = make_decision(click_els, visited[old_state])
+
+    ''' Use this when making decision based on probability
     while True:
-        btn_result = make_decision(click_els, visited[old_state])
         if btn_result < len(click_els):
             break
         else:
@@ -109,12 +111,13 @@ def click_button(new_click_els, pack_name, app_name):
             counter += 1
         if counter >= 30:
             return None, None, APP_STATE.FAILTOCLICK
+    '''
 
     logger.info('Length of the parent_map currently: ' + str(len(parent_map)))
 
     # If no buttons clickable
     # Or zero_counter == 5
-    print('zero_counter is {}'.format(zero_counter))
+    # print('zero_counter is {}'.format(zero_counter))
     if btn_result == -1 or zero_counter >= 5 or no_clickable_btns_counter >= 5:
 
         print('no clickable1 : {}'.format(no_clickable_btns_counter))
@@ -211,7 +214,7 @@ def click_button(new_click_els, pack_name, app_name):
                     score_increment = len(new_click_els)
                     scores[old_state][btn_result] = score_increment
                     visited[old_state][btn_result][1] += 1
-                    visited[old_state][btn_result][0] = (score_increment / visited[old_state][btn_result][1])
+                    visited[old_state][btn_result][0] = (score_increment / (2 * visited[old_state][btn_result][1]))
                     clickables[old_state][btn_result].score = score_increment
                     return new_click_els, new_state, 1
                 else:
@@ -245,6 +248,8 @@ def make_decision(click_els, _scores_arr):
         zero_counter += 1
         return 0
     else:
+        # TODO: Old implementation below with scoring
+        '''
         total_score = sum([x[0] for x in _scores_arr])
         if total_score < 0.5 * len(_scores_arr):
             return -1
@@ -264,6 +269,10 @@ def make_decision(click_els, _scores_arr):
             index += 1
         zero_counter = 0
         return -1
+        '''
+
+        # TODO: Change to totally random
+        return random.choice(click_els)
 
 
 def main(app_name, pack_name):
@@ -423,7 +432,7 @@ def main(app_name, pack_name):
                 logger.info('Data saved to database: {}'.format(store_suc))
 
             counter += 1
-            if counter >= 120:
+            if counter >= 300:
                 return 1
 
         except KeyboardInterrupt:
@@ -567,7 +576,7 @@ def official():
                         logger.info("Timeout from nothing happening. Restarting... ")
                     else:
                         logger.info("Unknown exception." + str(e))
-                        #raise Exception(e)
+                        # raise Exception(e)
                 finally:
                     signal.alarm(0)
                     attempts += 1
