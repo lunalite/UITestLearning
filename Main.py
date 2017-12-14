@@ -45,6 +45,7 @@ scores = {}
 visited = {}
 parent_map = {}
 zero_counter = 0
+horizontal_counter = 0
 no_clickable_btns_counter = 0
 
 
@@ -85,12 +86,13 @@ def init():
     visited.clear()
     parent_map.clear()
     zero_counter = 0
+    horizontal_counter = 0
 
 
 def click_button(new_click_els, pack_name, app_name):
     # Have to use packageName since there might be buttons leading to popups,
     # which can continue exploding into more activity if not limited.
-    global d, clickables, parent_map, visited, scores, mask, zero_counter, no_clickable_btns_counter
+    global d, clickables, parent_map, visited, scores, mask, zero_counter, no_clickable_btns_counter, horizontal_counter
     old_state = Utility.get_state(d, pack_name)
 
     click_els = d(clickable='true', packageName=pack_name) if new_click_els is None else new_click_els
@@ -133,6 +135,9 @@ def click_button(new_click_els, pack_name, app_name):
                 d(scrollable=True).fling.horiz.forward()
         except uiautomator.JsonRPCError:
             logger.info("Can't scroll horizontal.")
+            horizontal_counter += 1
+            if horizontal_counter >= 5:
+                raise Exception('Tried scrolling horizontal 5 times but fail so stop.')
         finally:
             new_state = Utility.get_state(d, pack_name)
             if new_state != old_state:
