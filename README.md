@@ -43,6 +43,16 @@ Or some which there are no clickables(flash games) Or those that require login a
 -- and system-images;android-26;google_apis;x86
 
 ## Updates
+### 14 December 2017
+* Using totally random decision of clicking buttons for exploration
+* Increased the iterations to make deeper exploration
+
+### 13 December 2017
+* Realized there's a lot of None in next_transition_state. Might have to retweak the code a bit 
+
+### 11 December 2017
+* Tweaked the parseJson.py for text.
+
 ### 16 November 2017
 * added storing of data for text. The method of getting state remains unchanged.
 * Stopped closing the android keyboard for it is causing a different state everytime and is non-deterministic.
