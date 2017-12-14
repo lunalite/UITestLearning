@@ -272,7 +272,7 @@ def make_decision(click_els, _scores_arr):
         '''
 
         # TODO: Change to totally random
-        return random.choice(click_els)
+        return int(random.uniform(len(click_els)))
 
 
 def main(app_name, pack_name):
