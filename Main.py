@@ -135,7 +135,7 @@ def click_button(new_click_els, pack_name, app_name):
             # For the case of apps where there's horizontal motion with 4 panes usually.
             for i in range(5):
                 d(scrollable=True).fling.horiz.forward()
-                sequence.append((old_state, 'FLING HORIZONTAL'))
+                sequence.append((old_state, 'FLING HORIZONTAL', ''))
         except uiautomator.JsonRPCError:
             logger.info("Can't scroll horizontal.")
             sequence.pop()
@@ -147,7 +147,7 @@ def click_button(new_click_els, pack_name, app_name):
             if new_state != old_state:
                 return None, new_state, 1
             d.press('back')
-            sequence.append((old_state, 'BACK'))
+            sequence.append((old_state, 'BACK', ''))
 
             # Issue with clicking back button prematurely
             if Utility.get_package_name(d) == 'com.google.android.apps.nexuslauncher':
@@ -167,7 +167,7 @@ def click_button(new_click_els, pack_name, app_name):
                 # Check if the key of button to be clicked is equal to the key of button stored in clickables
                 if click_btn_key == clickables[old_state][btn_result].name:
                     click_btn.click.wait()
-                    sequence.append((old_state, click_btn_key))
+                    sequence.append((old_state, click_btn_key, click_btn_text))
                 # Search through list to see if the button is of another number
                 else:
                     ind = 0
@@ -175,7 +175,7 @@ def click_button(new_click_els, pack_name, app_name):
                     for i in clickables[old_state]:
                         if click_btn_key == i.name:
                             click_btn.click.wait()
-                            sequence.append((old_state, click_btn_key))
+                            sequence.append((old_state, click_btn_key, click_btn_text))
                             btn_result = ind
                             found = True
                         ind += 1
@@ -318,7 +318,7 @@ def main(app_name, pack_name):
         elif Utility.get_package_name(d) != pack_name:
             initstate = Utility.get_state(d, pack_name)
             d.press('back')
-            sequence.append(('OUTOFAPK', 'BACK'))
+            sequence.append(('OUTOFAPK', 'BACK', ''))
             nextstate = Utility.get_state(d, pack_name)
             if nextstate != initstate:
                 return -1, nextstate
@@ -330,7 +330,7 @@ def main(app_name, pack_name):
                     tryclick_btns = d(clickable='true')
                     rand_btn = random.choice(tryclick_btns)
                     rand_btn.click.wait()
-                    sequence.append((initstate, 'RAND_BUTTON'))
+                    sequence.append((initstate, 'RAND_BUTTON', ''))
                     nextstate = Utility.get_state(d, pack_name)
 
                     # Check if app has crashed. If it is, restart
@@ -379,7 +379,7 @@ def main(app_name, pack_name):
                                 _parent=Utility.xml_btn_to_key(_parent),
                                 _siblings=[Utility.xml_btn_to_key(sib) for sib in sibs or []],
                                 _children=[Utility.xml_btn_to_key(child) for child in children or []]))
-            ars.append(1)
+            ars.append(-1)
             arv.append([1, 0])
 
         clickables[local_state] = ar
@@ -411,10 +411,10 @@ def main(app_name, pack_name):
                     logger.info('Scrolling...')
                     if r < Config.scroll_probability[1]:
                         d(scrollable='true').fling()
-                        sequence.append((old_state, 'SCROLL DOWN'))
+                        sequence.append((old_state, 'SCROLL DOWN', ''))
                     elif r < Config.scroll_probability[2]:
                         d(scrollable='true').fling.backward()
-                        sequence.append((old_state, 'SCROLL UP'))
+                        sequence.append((old_state, 'SCROLL UP', ''))
 
                     new_state = Utility.get_state(d, pack_name)
                     new_click_els = d(clickable='true', packageName=pack_name)
@@ -447,7 +447,7 @@ def main(app_name, pack_name):
                 with open(log_location + pack_name + '/seqq-' + pack_name + '.txt', 'a') as f:
                     while sequence:
                         i = sequence.pop()
-                        f.write('{}\t{}\n'.format(i[0], i[1]))
+                        f.write('{}\t{}\t{}\n'.format(i[0], i[1], i[2]))
             counter += 1
             if counter >= 300:
                 return 1
@@ -457,7 +457,6 @@ def main(app_name, pack_name):
             logger.info('KeyboardInterrupt...')
             store_suc = Utility.store_data(learning_data, activities, clickables, mongo)
             logger.info('Data saved to database: {}'.format(store_suc))
-            sequence.append((old_state, 'KEYBOARD_INT'))
             return APP_STATE.KEYBOARDINT
         except KeyError:
             Utility.dump_log(d, pack_name, Utility.get_state(d, pack_name))
@@ -465,40 +464,35 @@ def main(app_name, pack_name):
             logger.info('Crash')
             store_suc = Utility.store_data(learning_data, activities, clickables, mongo)
             logger.info('Data saved to database: {}'.format(store_suc))
-            sequence.append((old_state, 'KEY_ERROR'))
             return APP_STATE.KEYERROR
         except IndexError:
             logger.info('@@@@@@@@@@@@@@@=============================')
             logger.info('IndexError...')
             store_suc = Utility.store_data(learning_data, activities, clickables, mongo)
             logger.info('Data saved to database: {}'.format(store_suc))
-            sequence.append((old_state, 'INDEX_ERROR'))
             return APP_STATE.INDEXERROR
         except TimeoutError:
             logger.info('@@@@@@@@@@@@@@@=============================')
             logger.info('Timeout...')
             store_suc = Utility.store_data(learning_data, activities, clickables, mongo)
             logger.info('Data saved to database: {}'.format(store_suc))
-            sequence.append((old_state, 'TIMEOUT'))
             return APP_STATE.TIMEOUT
         except uiautomator.JsonRPCError:
             logger.info('@@@@@@@@@@@@@@@=============================')
             logger.info('JSONRPCError...')
             store_suc = Utility.store_data(learning_data, activities, clickables, mongo)
             logger.info('Data saved to database: {}'.format(store_suc))
-            sequence.append((old_state, 'UIAUTOMATOR.JSONRPC_ERROR'))
             return APP_STATE.JSONRPCERROR
         except socket.timeout:
             logger.info('@@@@@@@@@@@@@@@=============================')
             logger.info('Socket timeout error...')
-            sequence.append((old_state, 'SOCK_TIMEOUT'))
             return APP_STATE.SOCKTIMEOUTERROR
         finally:
             signal.alarm(0)
             with open(log_location + pack_name + '/seqq-' + pack_name + '.txt', 'a') as f:
                 while sequence:
                     i = sequence.pop()
-                    f.write('{}\t{}\n'.format(i[0], i[1]))
+                    f.write('{}\t{}\t{}\n'.format(i[0], i[1], i[2]))
 
 
 def official():

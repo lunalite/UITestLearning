@@ -47,6 +47,7 @@ Or some which there are no clickables(flash games) Or those that require login a
 * Changed data collection method, include sequential 
 * Initialize score to -1 instead of 1 since we are not using score for exploration
 * Using dataset6 now for database
+* Changed to dataset7 b/c of mistake in appending 1/-1 to initial score
 
 ### 14 December 2017
 * Using totally random decision of clicking buttons for exploration
