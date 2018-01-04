@@ -47,6 +47,7 @@ parent_map = {}
 zero_counter = 0
 horizontal_counter = 0
 no_clickable_btns_counter = 0
+sequence = []
 
 
 def signal_handler(signum, frame):
@@ -78,7 +79,7 @@ def init():
     Initializing all global variables back to its original state after every testing is done on APK
     :return:
     """
-    global clickables, scores, visited, parent_map, activities, click_hash, zero_counter
+    global clickables, scores, visited, parent_map, activities, click_hash, zero_counter, sequence
     activities.clear()
     clickables.clear()
     click_hash.clear()
@@ -87,12 +88,13 @@ def init():
     parent_map.clear()
     zero_counter = 0
     horizontal_counter = 0
+    sequence = []
 
 
 def click_button(new_click_els, pack_name, app_name):
     # Have to use packageName since there might be buttons leading to popups,
     # which can continue exploding into more activity if not limited.
-    global d, clickables, parent_map, visited, scores, mask, zero_counter, no_clickable_btns_counter, horizontal_counter
+    global d, clickables, parent_map, visited, scores, mask, zero_counter, no_clickable_btns_counter, horizontal_counter, sequence
     old_state = Utility.get_state(d, pack_name)
 
     click_els = d(clickable='true', packageName=pack_name) if new_click_els is None else new_click_els
@@ -133,6 +135,7 @@ def click_button(new_click_els, pack_name, app_name):
             # For the case of apps where there's horizontal motion with 4 panes usually.
             for i in range(5):
                 d(scrollable=True).fling.horiz.forward()
+                sequence.append((old_state, 'FLING HORIZONTAL'))
         except uiautomator.JsonRPCError:
             logger.info("Can't scroll horizontal.")
             horizontal_counter += 1
@@ -143,6 +146,7 @@ def click_button(new_click_els, pack_name, app_name):
             if new_state != old_state:
                 return None, new_state, 1
             d.press('back')
+            sequence.append((old_state, 'BACK'))
 
             # Issue with clicking back button prematurely
             if Utility.get_package_name(d) == 'com.google.android.apps.nexuslauncher':
@@ -162,7 +166,7 @@ def click_button(new_click_els, pack_name, app_name):
                 # Check if the key of button to be clicked is equal to the key of button stored in clickables
                 if click_btn_key == clickables[old_state][btn_result].name:
                     click_btn.click.wait()
-
+                    sequence.append((old_state, click_btn_key))
                 # Search through list to see if the button is of another number
                 else:
                     ind = 0
@@ -170,6 +174,7 @@ def click_button(new_click_els, pack_name, app_name):
                     for i in clickables[old_state]:
                         if click_btn_key == i.name:
                             click_btn.click.wait()
+                            sequence.append((old_state, click_btn_key))
                             btn_result = ind
                             found = True
                         ind += 1
@@ -197,7 +202,7 @@ def click_button(new_click_els, pack_name, app_name):
                                                                _siblings=sibs,
                                                                _children=children))
                         visited[old_state].append([1, 0])
-                        scores[old_state].append(1)
+                        scores[old_state].append(-1)
 
                 # If the button that is clicked is EditText or TextView, it might cause autocomplete tab to appear
                 # We have to add this to close the tab that appears.
@@ -277,11 +282,11 @@ def make_decision(click_els, _scores_arr):
         '''
 
         # TODO: Change to totally random
-        return int(random.uniform(0,len(click_els)))
+        return int(random.uniform(0, len(click_els)))
 
 
 def main(app_name, pack_name):
-    global clickables, scores, visited, parent_map, activities
+    global clickables, scores, visited, parent_map, activities, sequence
     d.press('home')
 
     logger.info('Force stopping ' + pack_name + ' to reset states')
@@ -312,6 +317,7 @@ def main(app_name, pack_name):
         elif Utility.get_package_name(d) != pack_name:
             initstate = Utility.get_state(d, pack_name)
             d.press('back')
+            sequence.append((initstate, 'BACK'))
             nextstate = Utility.get_state(d, pack_name)
             if nextstate != initstate:
                 return -1, nextstate
@@ -321,7 +327,9 @@ def main(app_name, pack_name):
                 localc = 0
                 while True:
                     tryclick_btns = d(clickable='true')
-                    random.choice(tryclick_btns).click.wait()
+                    rand_btn = random.choice(tryclick_btns)
+                    rand_btn.click.wait()
+                    sequence.append((initstate, 'RAND_BUTTON'))
                     nextstate = Utility.get_state(d, pack_name)
 
                     # Check if app has crashed. If it is, restart
@@ -391,9 +399,7 @@ def main(app_name, pack_name):
     while True:
         signal.alarm(60)
         try:
-
             edit_btns = d(clickable='true', packageName=pack_name)
-            # Improve this shit
             for i in edit_btns:
                 i.set_text(Utility.get_text())
             if d(scrollable='true').exists:
@@ -404,8 +410,10 @@ def main(app_name, pack_name):
                     logger.info('Scrolling...')
                     if r < Config.scroll_probability[1]:
                         d(scrollable='true').fling()
+                        sequence.append((old_state, 'SCROLL DOWN'))
                     elif r < Config.scroll_probability[2]:
                         d(scrollable='true').fling.backward()
+                        sequence.append((old_state, 'SCROLL UP'))
 
                     new_state = Utility.get_state(d, pack_name)
                     new_click_els = d(clickable='true', packageName=pack_name)
@@ -435,7 +443,10 @@ def main(app_name, pack_name):
                 logger.info('Saving data to database...')
                 store_suc = Utility.store_data(learning_data, activities, clickables, mongo)
                 logger.info('Data saved to database: {}'.format(store_suc))
-
+                with open(log_location + pack_name + '/seqq-' + pack_name + '.txt', 'a') as f:
+                    while sequence:
+                        i = sequence.pop()
+                        f.write('{}\t{}\n'.format(i[0], i[1]))
             counter += 1
             if counter >= 300:
                 return 1
@@ -445,6 +456,7 @@ def main(app_name, pack_name):
             logger.info('KeyboardInterrupt...')
             store_suc = Utility.store_data(learning_data, activities, clickables, mongo)
             logger.info('Data saved to database: {}'.format(store_suc))
+            sequence.append((old_state, 'KEYBOARD_INT'))
             return APP_STATE.KEYBOARDINT
         except KeyError:
             Utility.dump_log(d, pack_name, Utility.get_state(d, pack_name))
@@ -452,31 +464,40 @@ def main(app_name, pack_name):
             logger.info('Crash')
             store_suc = Utility.store_data(learning_data, activities, clickables, mongo)
             logger.info('Data saved to database: {}'.format(store_suc))
+            sequence.append((old_state, 'KEY_ERROR'))
             return APP_STATE.KEYERROR
         except IndexError:
             logger.info('@@@@@@@@@@@@@@@=============================')
             logger.info('IndexError...')
             store_suc = Utility.store_data(learning_data, activities, clickables, mongo)
             logger.info('Data saved to database: {}'.format(store_suc))
+            sequence.append((old_state, 'INDEX_ERROR'))
             return APP_STATE.INDEXERROR
         except TimeoutError:
             logger.info('@@@@@@@@@@@@@@@=============================')
             logger.info('Timeout...')
             store_suc = Utility.store_data(learning_data, activities, clickables, mongo)
             logger.info('Data saved to database: {}'.format(store_suc))
+            sequence.append((old_state, 'TIMEOUT'))
             return APP_STATE.TIMEOUT
         except uiautomator.JsonRPCError:
             logger.info('@@@@@@@@@@@@@@@=============================')
             logger.info('JSONRPCError...')
             store_suc = Utility.store_data(learning_data, activities, clickables, mongo)
             logger.info('Data saved to database: {}'.format(store_suc))
+            sequence.append((old_state, 'UIAUTOMATOR.JSONRPC_ERROR'))
             return APP_STATE.JSONRPCERROR
         except socket.timeout:
             logger.info('@@@@@@@@@@@@@@@=============================')
             logger.info('Socket timeout error...')
+            sequence.append((old_state, 'SOCK_TIMEOUT'))
             return APP_STATE.SOCKTIMEOUTERROR
         finally:
             signal.alarm(0)
+            with open(log_location + pack_name + '/seqq-' + pack_name + '.txt', 'a') as f:
+                while sequence:
+                    i = sequence.pop()
+                    f.write('{}\t{}\n'.format(i[0], i[1]))
 
 
 def official():
@@ -545,6 +566,10 @@ def official():
             logger.info('\nDoing a UI testing on application ' + appname + '.')
 
             init()
+            if not os.path.exists(log_location + apk_packname):
+                os.makedirs(log_location + apk_packname)
+            with open(log_location + apk_packname + '/seqq-' + apk_packname + '.txt', 'a') as f:
+                f.write('=== BEGIN OF SEQUENCE ===\n')
             no_clickable_btns_counter = 0
             while attempts <= 3:
                 signal.alarm(60)
@@ -587,10 +612,16 @@ def official():
                     attempts += 1
                     logger.info('==========================================')
                     new_time = datetime.now()
+                    logger.info('Current time is ' + str(new_time))
                     logger.info('Time elapsed: ' + str(new_time - start_time))
                     logger.info('Last APK tested is: {}'.format(apk_packname))
                     logger.info('==========================================')
 
+            with open(log_location + apk_packname + '/seqq-' + apk_packname + '.txt', 'a') as f:
+                while sequence:
+                    i = sequence.pop()
+                    f.write('{}\t{}\n'.format(i[0], i[1]))
+                f.write('=== END OF SEQUENCE\n')
             logger.info('Force stopping ' + apk_packname + ' to end test for the APK')
             subprocess.Popen(
                 [android_home + 'platform-tools/adb', '-s', device_name, 'shell', 'am', 'force-stop', apk_packname])
@@ -610,8 +641,13 @@ def official():
             Utility.stop_emulator(device_name)
             time.sleep(10)
             Utility.start_emulator(avdname, device_name)
+
+            logger.info('==========================================')
             new_time = datetime.now()
+            logger.info('Current time is ' + str(new_time))
             logger.info('Time elapsed: ' + str(new_time - start_time))
+            logger.info('Last APK tested is: {}'.format(apk_packname))
+            logger.info('==========================================')
 
 
 try:

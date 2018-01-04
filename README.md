@@ -43,6 +43,11 @@ Or some which there are no clickables(flash games) Or those that require login a
 -- and system-images;android-26;google_apis;x86
 
 ## Updates
+### 4 January 2018
+* Changed data collection method, include sequential 
+* Initialize score to -1 instead of 1 since we are not using score for exploration
+* Using dataset6 now for database
+
 ### 14 December 2017
 * Using totally random decision of clicking buttons for exploration
 * Increased the iterations to make deeper exploration
