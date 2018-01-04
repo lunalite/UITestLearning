@@ -138,6 +138,7 @@ def click_button(new_click_els, pack_name, app_name):
                 sequence.append((old_state, 'FLING HORIZONTAL'))
         except uiautomator.JsonRPCError:
             logger.info("Can't scroll horizontal.")
+            sequence.pop()
             horizontal_counter += 1
             if horizontal_counter >= 5:
                 raise Exception('Tried scrolling horizontal 5 times but fail so stop.')
@@ -317,7 +318,7 @@ def main(app_name, pack_name):
         elif Utility.get_package_name(d) != pack_name:
             initstate = Utility.get_state(d, pack_name)
             d.press('back')
-            sequence.append((initstate, 'BACK'))
+            sequence.append(('OUTOFAPK', 'BACK'))
             nextstate = Utility.get_state(d, pack_name)
             if nextstate != initstate:
                 return -1, nextstate
@@ -616,6 +617,11 @@ def official():
                     logger.info('Time elapsed: ' + str(new_time - start_time))
                     logger.info('Last APK tested is: {}'.format(apk_packname))
                     logger.info('==========================================')
+                    with open(log_location + apk_packname + '/seqq-' + apk_packname + '.txt', 'a') as f:
+                        while sequence:
+                            i = sequence.pop()
+                            f.write('{}\t{}\n'.format(i[0], i[1]))
+                        f.write('=== END ATTEMPT {} ===\n'.format(attempts))
 
             with open(log_location + apk_packname + '/seqq-' + apk_packname + '.txt', 'a') as f:
                 while sequence:
