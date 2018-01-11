@@ -64,61 +64,72 @@ def split_to_pd(feature):
     transitiondict = {}
 
     # """ For finding previous and next transition states in the case of double NST """
-    for line in lines:
-        obj_loaded = json.loads(line)
-        # if obj_loaded['parent_activity_state'] == 'pha.viz.a0002.alephbetkatakana-552e78c3fba262d55722d2c7cd37d5c8':
-        # if obj_loaded['next_transition_state'] == 'pha.viz.a0002.alephbetkatakana-86c421435a854b15b264d5d34e226b68':
-        if obj_loaded['text'] == '3':
-            if obj_loaded['parent_activity_state'] != obj_loaded['next_transition_state']:
-                print(obj_loaded)
-    #
-    # if feature == FEATURE.DNST:
-    #     for line in tqdm(lines):
-    #         obj_loaded = json.loads(line)
-    #         if obj_loaded['next_transition_state'] is not None:
-    #             if obj_loaded['next_transition_state'] != 'OUTOFAPK':
-    #                 if obj_loaded['next_transition_state'] not in activitydict:
-    #                     activitydict[obj_loaded['next_transition_state']] = set()
-    #                 activitydict[obj_loaded['next_transition_state']].add(obj_loaded['parent_activity_state'])
-    #
-    #
-    #     for k, v in activitydict.items():
-    #         print(k, v)
-    #         print(len(v))
-    #         if len(v) == 1:
-    #             transitiondict[k] = activitydict[k].pop()
-    #
-    # count = 0
     # for line in lines:
     #     obj_loaded = json.loads(line)
-    #     if feature == FEATURE.NST:
-    #         if obj_loaded['next_transition_state'] is not None and != 'OUTOFAPK:
-    #             if obj_loaded['parent_activity_state'] == obj_loaded['next_transition_state']:
-    #                 ndata.append(obj_loaded)
-    #             else:
-    #                 pdata.append(obj_loaded)
-    #     elif feature == FEATURE.DNST:
-    #         if obj_loaded['next_transition_state'] is not None and != 'OUTOFAPK:
-    #             elif obj_loaded['parent_activity_state'] == obj_loaded['next_transition_state']:
-    #                 ndata.append(obj_loaded)
-    #             elif obj_loaded['parent_activity_state'] in transitiondict:
-    #                 if transitiondict[obj_loaded['parent_activity_state']] == obj_loaded['next_transition_state']:
-    #                     ndata.append(obj_loaded)
-    #                 else:
-    #                     pdata.append(obj_loaded)
-    #             else:
-    #                 pdata.append(obj_loaded)
+    #     # if obj_loaded['parent_activity_state'] == 'pha.viz.a0002.alephbetkatakana-552e78c3fba262d55722d2c7cd37d5c8':
+    #     # if obj_loaded['next_transition_state'] == 'pha.viz.a0002.alephbetkatakana-86c421435a854b15b264d5d34e226b68':
+    #     if obj_loaded['text'] == '3':
+    #         if obj_loaded['parent_activity_state'] != obj_loaded['next_transition_state']:
+    #             print(obj_loaded)
     #
-    # print('Negative data amount: {}'.format(len(ndata)))
-    # print('Positive data amount: {}'.format(len(pdata)))
-    # min_amt = min(len(ndata), len(pdata))
-    # with open('./ndata.txt', 'w') as f:
-    #     for i in range(min_amt):
-    #         f.write(json.dumps(ndata[i]) + '\n')
-    #
-    # with open('./pdata.txt', 'w') as f:
-    #     for i in range(min_amt):
-    #         f.write(json.dumps(pdata[i]) + '\n')
+    if feature == FEATURE.DNST:
+        for line in tqdm(lines):
+            obj_loaded = json.loads(line)
+            # We must exclude cases where NST is none and NST is OUTOFAPK
+            # Adding to activitydict a matching between next state with the current state
+            # This is done so that we have a dict which we can use to find the previous state
+            if obj_loaded['next_transition_state'] is not None and obj_loaded['next_transition_state'] != 'OUTOFAPK':
+                if obj_loaded['next_transition_state'] not in activitydict:
+                    activitydict[obj_loaded['next_transition_state']] = set()
+                activitydict[obj_loaded['next_transition_state']].add(obj_loaded['parent_activity_state'])
+
+        # Excluding cases where there are multiple possibilities of previous states
+        for k, v in activitydict.items():
+            print(k, v)
+            print(len(v))
+            if len(v) == 1:
+                transitiondict[k] = activitydict[k].pop()
+
+    for line in lines:
+        obj_loaded = json.loads(line)
+
+        if feature == FEATURE.NST:
+            # We exclude cases of NST being none and NST being OUTOFAPK
+            # FEATURE.NST checks if the current state is different from the next state
+            # If they are different, means positive data set. Otherwise, negative
+            if obj_loaded['next_transition_state'] is not None and obj_loaded['next_transition_state'] != 'OUTOFAPK':
+                if obj_loaded['parent_activity_state'] == obj_loaded['next_transition_state']:
+                    ndata.append(obj_loaded)
+                else:
+                    pdata.append(obj_loaded)
+
+        elif feature == FEATURE.DNST:
+            # We exclude cases of NST being none and NST being OUTOFAPK
+            # FEATURE.DNST includes checking of previous to the next state
+            # There are still situations of where the
+            if obj_loaded['next_transition_state'] is not None and obj_loaded['next_transition_state'] != 'OUTOFAPK':
+                if obj_loaded['parent_activity_state'] == obj_loaded['next_transition_state']:
+                    ndata.append(obj_loaded)
+                elif obj_loaded['parent_activity_state'] in transitiondict:
+                    # transitiondict[obj_loaded['parent_activity_state']] will give the previous state
+                    # Checks if previous state is equivalent to the next state
+                    if transitiondict[obj_loaded['parent_activity_state']] == obj_loaded['next_transition_state']:
+                        ndata.append(obj_loaded)
+                    else:
+                        pdata.append(obj_loaded)
+                else:
+                    pdata.append(obj_loaded)
+
+    print('Negative data amount: {}'.format(len(ndata)))
+    print('Positive data amount: {}'.format(len(pdata)))
+    min_amt = min(len(ndata), len(pdata))
+    with open('./ndata.txt', 'w') as f:
+        for i in range(min_amt):
+            f.write(json.dumps(ndata[i]) + '\n')
+
+    with open('./pdata.txt', 'w') as f:
+        for i in range(min_amt):
+            f.write(json.dumps(pdata[i]) + '\n')
 
 
 def get_info_on_text_pd():

@@ -1,8 +1,8 @@
 .idea/**
 .DS_Store
-data/**
 *.pyc
 log/**
 information*
 *.txt
 dataparsing/*.json
+*.json

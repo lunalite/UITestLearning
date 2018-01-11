@@ -43,6 +43,9 @@ Or some which there are no clickables(flash games) Or those that require login a
 -- and system-images;android-26;google_apis;x86
 
 ## Updates
+### 11 January 2018
+* Edited parsing method for double NST and single NST
+
 ### 4 January 2018
 * Changed data collection method, include sequential 
 * Initialize score to -1 instead of 1 since we are not using score for exploration
