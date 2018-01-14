@@ -35,13 +35,13 @@ class Config:
     log_location = './log/'
 
     # base storage location for screenshots
-    screen_location = './screen/'
+    screen_location = './data/screen/'
 
     # base storage location for xml files
-    xml_location = './xml/'
+    xml_location = './data/xml/'
 
     # base storage location for seqquence
-    seqq_location = './seqq/'
+    seqq_location = './data/seqq/'
 
     # Information location storing number of activities/clickables stored
     info_location = './log/info'
