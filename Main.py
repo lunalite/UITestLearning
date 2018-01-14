@@ -444,7 +444,7 @@ def main(app_name, pack_name):
                 logger.info('Saving data to database...')
                 store_suc = Utility.store_data(learning_data, activities, clickables, mongo)
                 logger.info('Data saved to database: {}'.format(store_suc))
-                with open(log_location + pack_name + '/seqq-' + pack_name + '.txt', 'a') as f:
+                with open(Config.seqq_location + pack_name + '/seqq-' + pack_name + '.txt', 'a') as f:
                     while sequence:
                         i = sequence.pop()
                         f.write('{}\t{}\t{}\n'.format(i[0], i[1], i[2]))
@@ -459,7 +459,6 @@ def main(app_name, pack_name):
             logger.info('Data saved to database: {}'.format(store_suc))
             return APP_STATE.KEYBOARDINT
         except KeyError:
-            Utility.dump_log(d, pack_name, Utility.get_state(d, pack_name))
             logger.info('@@@@@@@@@@@@@@@=============================')
             logger.info('Crash')
             store_suc = Utility.store_data(learning_data, activities, clickables, mongo)
@@ -489,7 +488,8 @@ def main(app_name, pack_name):
             return APP_STATE.SOCKTIMEOUTERROR
         finally:
             signal.alarm(0)
-            with open(log_location + pack_name + '/seqq-' + pack_name + '.txt', 'a') as f:
+            Utility.dump_log(d, pack_name, Utility.get_state(d, pack_name))
+            with open(Config.seqq_location + pack_name + '/seqq-' + pack_name + '.txt', 'a') as f:
                 while sequence:
                     i = sequence.pop()
                     f.write('{}\t{}\t{}\n'.format(i[0], i[1], i[2]))
@@ -563,7 +563,7 @@ def official():
             init()
             if not os.path.exists(log_location + apk_packname):
                 os.makedirs(log_location + apk_packname)
-            with open(log_location + apk_packname + '/seqq-' + apk_packname + '.txt', 'a') as f:
+            with open(Config.seqq_location + apk_packname + '/seqq-' + apk_packname + '.txt', 'a') as f:
                 f.write('=== BEGIN OF SEQUENCE ===\n')
             no_clickable_btns_counter = 0
             while attempts <= 3:
@@ -611,13 +611,13 @@ def official():
                     logger.info('Time elapsed: ' + str(new_time - start_time))
                     logger.info('Last APK tested is: {}'.format(apk_packname))
                     logger.info('==========================================')
-                    with open(log_location + apk_packname + '/seqq-' + apk_packname + '.txt', 'a') as f:
+                    with open(Config.seqq_location + apk_packname + '/seqq-' + apk_packname + '.txt', 'a') as f:
                         while sequence:
                             i = sequence.pop()
                             f.write('{}\t{}\n'.format(i[0], i[1]))
                         f.write('=== END ATTEMPT {} ===\n'.format(attempts))
 
-            with open(log_location + apk_packname + '/seqq-' + apk_packname + '.txt', 'a') as f:
+            with open(Config.seqq_location+ apk_packname + '/seqq-' + apk_packname + '.txt', 'a') as f:
                 while sequence:
                     i = sequence.pop()
                     f.write('{}\t{}\n'.format(i[0], i[1]))

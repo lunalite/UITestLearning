@@ -233,13 +233,20 @@ def merge_dicts(d1, d2):
 
 
 def dump_log(d, packname, state):
-    location = Config.log_location
-    directory = location + packname + '/'
-    if not os.path.exists(directory):
-        os.makedirs(directory)
+    screen_directory = Config.screen_location + packname + '/'
+    xml_directory = Config.xml_location + packname + '/'
 
-    d.screenshot(directory + state + '.png')
-    d.dump(directory + state + '-FULL.xml', compressed=False)
+    if not os.path.exists(screen_directory):
+        os.makedirs(screen_directory)
+    else:
+        if not os.path.isfile(screen_directory + state + '.png'):
+            d.screenshot(screen_directory + state + '.png')
+
+    if not os.path.exists(xml_directory):
+        os.makedirs(xml_directory)
+    else:
+        if not os.path.isfile(xml_directory + state + '.png'):
+            d.dump(xml_directory + state + '-FULL.xml', compressed=False)
 
 
 def start_emulator(avdnum, emuname):

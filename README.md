@@ -1,3 +1,15 @@
+############
+Positional representation
+like back button most likely on the top left
+submit button at bottom right/bottom left
+We can transform them into numbers like 1,2,4,5,6,
+taking center of button as placement
+
+
+
+
+
+
 1. give buttons leading to other application with a unique transition state
 3. store text into attribute
 
@@ -42,7 +54,24 @@ Or some which there are no clickables(flash games) Or those that require login a
 -- Will be using system-images;android-25;google_apis;armeabi-v7a
 -- and system-images;android-26;google_apis;x86
 
+### Possible models to use
+* RNN
+* fasttext (highest f1 rates ~0.72)
+* wide and deep (unable to do so)
+* CNN?
+
 ## Updates
+### 14 January 2018
+* Changed directory for screenshot files
+* Changed directory for seqq files
+* Changed to database 8
+* Check if screenshot/dump is present, if present, dont re-dump again
+
+### 12 January 2018
+* Added in a RELAXED version for DNST
+* Added in categoristic addition of feature
+* Added script for finding max F1 in fasttext classification
+
 ### 11 January 2018
 * Edited parsing method for double NST and single NST
 

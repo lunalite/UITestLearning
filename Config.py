@@ -31,8 +31,17 @@ class Config:
     # not flinging, fling up, fling down
     scroll_probability = [0.8, 0.9, 1.0]
 
-    # base storage location for logs like XML and screenshots
+    # base storage location for log files
     log_location = './log/'
+
+    # base storage location for screenshots
+    screen_location = './screen/'
+
+    # base storage location for xml files
+    xml_location = './xml/'
+
+    # base storage location for seqquence
+    seqq_location = './seqq/'
 
     # Information location storing number of activities/clickables stored
     info_location = './log/info'

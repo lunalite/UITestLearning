@@ -1,18 +1,15 @@
 import codecs
+import collections
 import json
 import operator
 import random
-import re
 import string
-import collections
-import sys
 from enum import Enum
 
 from tqdm import *
-from pathlib import Path
 
 
-def pre_process(fileno):
+def pre_process(fileno, datafile):
     with codecs.open(datafile, "r", 'utf-8') as f:
         datainput = [x.strip() for x in tqdm(f)]
     text_list = []
@@ -72,7 +69,9 @@ def split_to_pd(feature):
     #         if obj_loaded['parent_activity_state'] != obj_loaded['next_transition_state']:
     #             print(obj_loaded)
     #
-    if feature == FEATURE.DNST:
+
+    """ Pre-processing work """
+    if feature == FEATURE.DNST or FEATURE.DNST_RELAXED:
         for line in tqdm(lines):
             obj_loaded = json.loads(line)
             # We must exclude cases where NST is none and NST is OUTOFAPK
@@ -85,43 +84,58 @@ def split_to_pd(feature):
 
         # Excluding cases where there are multiple possibilities of previous states
         for k, v in activitydict.items():
-            print(k, v)
-            print(len(v))
-            if len(v) == 1:
-                transitiondict[k] = activitydict[k].pop()
+            if feature == FEATURE.DNST_RELAXED:
+                transitiondict[k] = set(activitydict[k])
+            elif feature == FEATURE.DNST:
+                if len(v) == 1:
+                    transitiondict[k] = activitydict[k].pop()
+                else:
+                    pass
 
+    # for k,v in transitiondict.items():
+    #     print(k,v)
+    #     break
+    """ Actual implementation """
     for line in lines:
         obj_loaded = json.loads(line)
 
-        if feature == FEATURE.NST:
-            # We exclude cases of NST being none and NST being OUTOFAPK
-            # FEATURE.NST checks if the current state is different from the next state
-            # If they are different, means positive data set. Otherwise, negative
-            if obj_loaded['next_transition_state'] is not None and obj_loaded['next_transition_state'] != 'OUTOFAPK':
+        # We exclude cases of NST being none and NST being OUTOFAPK
+        if obj_loaded['next_transition_state'] is not None and obj_loaded['next_transition_state'] != 'OUTOFAPK':
+
+            if feature == FEATURE.NST:
+                # FEATURE.NST checks if the current state is different from the next state
+                # If they are different, means positive data set. Otherwise, negative
                 if obj_loaded['parent_activity_state'] == obj_loaded['next_transition_state']:
                     ndata.append(obj_loaded)
                 else:
                     pdata.append(obj_loaded)
 
-        elif feature == FEATURE.DNST:
-            # We exclude cases of NST being none and NST being OUTOFAPK
-            # FEATURE.DNST includes checking of previous to the next state
-            # There are still situations of where the
-            if obj_loaded['next_transition_state'] is not None and obj_loaded['next_transition_state'] != 'OUTOFAPK':
+            elif feature == FEATURE.DNST or FEATURE.DNST_RELAXED:
+                # FEATURE.DNST includes checking of previous to the next state
                 if obj_loaded['parent_activity_state'] == obj_loaded['next_transition_state']:
                     ndata.append(obj_loaded)
                 elif obj_loaded['parent_activity_state'] in transitiondict:
                     # transitiondict[obj_loaded['parent_activity_state']] will give the previous state
                     # Checks if previous state is equivalent to the next state
-                    if transitiondict[obj_loaded['parent_activity_state']] == obj_loaded['next_transition_state']:
-                        ndata.append(obj_loaded)
-                    else:
-                        pdata.append(obj_loaded)
+                    if feature == FEATURE.DNST:
+                        if transitiondict[obj_loaded['parent_activity_state']] == obj_loaded['next_transition_state']:
+                            ndata.append(obj_loaded)
+                        else:
+                            pdata.append(obj_loaded)
+                    elif feature == FEATURE.DNST_RELAXED:
+                        # RELAXED version of DNST checks if any of the previous state is equivalent to the next state
+                        if obj_loaded['next_transition_state'] in transitiondict[obj_loaded['parent_activity_state']]:
+                            ndata.append(obj_loaded)
+                        else:
+                            pdata.append(obj_loaded)
+
                 else:
                     pdata.append(obj_loaded)
 
+    print('Current feature: %s' % feature)
     print('Negative data amount: {}'.format(len(ndata)))
     print('Positive data amount: {}'.format(len(pdata)))
+    print('Total data amount: %s' % (len(ndata) + len(pdata)))
     min_amt = min(len(ndata), len(pdata))
     with open('./ndata.txt', 'w') as f:
         for i in range(min_amt):
@@ -220,41 +234,109 @@ def prep_data_for_fasttext():
         ndata[i] = '__label__n ' + jn['text'].lower()
 
     training_amt = int(len(ndata) * 9 / 10)
-    with open('./train.txt', 'w') as f:
+
+    random.shuffle(pdata)
+    random.shuffle(ndata)
+
+    with codecs.open('./train.txt', 'w', 'utf-8') as f:
         for i in range(training_amt):
             f.write(pdata[i] + '\n')
             f.write(ndata[i] + '\n')
 
-    with open('./test.txt', 'w') as f:
+    with codecs.open('./test.txt', 'w', 'utf-8') as f:
         try:
-            for i in range(training_amt, len(ndata) * 2):
+            for i in range(training_amt, len(ndata)):
                 f.write(pdata[i] + '\n')
                 f.write(ndata[i] + '\n')
         except Exception:
             pass
 
 
+def prep_data_for_wide_deep():
+    """
+    39,State-gov,77516,Bachelors,13,Never-married,Adm-clerical,Not-in-family,White,Male,2174,0,40,United-States,<=50K
+    50,Self-emp-not-inc,83311,Bachelors,13,Married-civ-spouse,Exec-managerial,Husband,White,Male,0,0,13,United-States,<=50K
+    """
+    n_dataset_list = []
+    p_dataset_list = []
+    categorydict = {}
+    with open('./cat.txt', 'r') as f:
+        categoryinput = [x.strip() for x in tqdm(f)]
+
+    for i in categoryinput:
+        isp = i.split('\t')
+        categorydict[isp[0]] = isp[1]
+
+    with open('./ndata.txt', 'r') as f:
+        ndata = [x.strip() for x in tqdm(f)]
+
+    for i in ndata:
+        obj_loaded = json.loads(i)
+        app_class = obj_loaded['parent_activity_state'].split('-')[0]
+        app_category = categorydict[app_class]
+        btn_text = obj_loaded['text']
+        btn_class = obj_loaded['name'].split('-')[0][1:-1]
+        btn_description = obj_loaded['name'].split('-')[1][1:-1]
+        btn_location = obj_loaded['name'].split('-')[2][1:-1]
+        n_dataset_list.append((app_class, app_category, btn_text, btn_class, btn_description, btn_location, 'NEGATIVE'))
+        print(btn_description)
+
+    with open('./pdata.txt', 'r') as f:
+        pdata = [x.strip() for x in tqdm(f)]
+
+    for i in pdata:
+        obj_loaded = json.loads(i)
+        app_class = obj_loaded['parent_activity_state'].split('-')[0]
+        app_category = categorydict[app_class]
+        btn_text = obj_loaded['text']
+        btn_class = obj_loaded['name'].split('-')[0][1:-1]
+        btn_description = obj_loaded['name'].split('-')[1][1:-1]
+        btn_location = obj_loaded['name'].split('-')[2][1:-1]
+        p_dataset_list.append((app_class, app_category, btn_text, btn_class, btn_description, btn_location, 'POSITIVE'))
+
+    training_amt = int(len(ndata) * 9 / 10)
+
+    random.shuffle(p_dataset_list)
+    random.shuffle(n_dataset_list)
+
+    with codecs.open('./wnd-train.txt', 'w', 'utf-8') as f:
+        f.write('appclass,category,btntext,btnclass,btndescription,btnlocation')
+        for i in range(training_amt):
+            f.write(','.join(x.lower() for x in p_dataset_list[i]) + '\n')
+            f.write(','.join(x.lower() for x in n_dataset_list[i]) + '\n')
+
+    with codecs.open('./wnd-test.txt', 'w', 'utf-8') as f:
+        for i in range(training_amt, len(n_dataset_list)):
+            f.write(','.join(x.lower() for x in p_dataset_list[i]) + '\n')
+            f.write(','.join(x.lower() for x in n_dataset_list[i]) + '\n')
+
+
+def extract_and_combine_files(no_of_data):
+    for i in range(1, no_of_data):
+        datafile = datadir + str(i) + '.json'
+        pre_process(i, datafile)
+    combine_dataformatted(no_of_data)
+
+
 class FEATURE(Enum):
     NST = 1  # next_state_transition equal to current state or not
     DNST = 2  # Twice of next_state_transition if equal to current state or not
-    SCORE = 3  # Classifying by score. If 0, negative. Otherwise, positive
+    DNST_RELAXED = 3  # Twice of next_state_transition if equal to current state or not
 
 
-datafile = '/Users/hkoh006/Desktop/data/clickable'
+datadir = '/Users/hkoh006/Desktop/UITestLearning/data/clickable'
+nodata = 7
 
 """ Pre-processing the original data.json to remove any non-english sets of data, as well as null texts dataset """
-# for i in range(1, 5):
-#     datafile = '/Users/hkoh006/Desktop/data/clickable' + str(i) + '.json'
-#     pre_process(i)
-# combine_dataformatted(5)
-
+# extract_and_combine_files(nodata)
 
 """ splitting dataset to positive and negative data """
-# split_to_pd(FEATURE.NST)
-split_to_pd(FEATURE.DNST)
-# split_to_pd(FEATURE.SCORE)
+split_to_pd(FEATURE.NST)
+# split_to_pd(FEATURE.DNST)
+# split_to_pd(FEATURE.DNST_RELAXED)
 # get_info_on_text_pd()
 # get_info_on_btn_distribution()
 
 """ Preparing data for fasttext training and classification """
-# prep_data_for_fasttext()
+prep_data_for_fasttext()
+# prep_data_for_wide_deep()

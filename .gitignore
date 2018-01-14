@@ -6,3 +6,6 @@ information*
 *.txt
 dataparsing/*.json
 *.json
+*.csv
+*.bin
+*.vec
