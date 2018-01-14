@@ -541,6 +541,9 @@ def official():
                 break
 
         if english:
+            if not os.path.exists(Config.seqq_location + apk_packname):
+                os.makedirs(Config.seqq_location + apk_packname)
+
             ''' Start installation of the APK '''
             x = subprocess.Popen([android_home + 'platform-tools/adb', '-s', device_name, 'install', dir + i],
                                  stdout=subprocess.PIPE, stderr=subprocess.PIPE)
