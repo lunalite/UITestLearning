@@ -61,6 +61,9 @@ Or some which there are no clickables(flash games) Or those that require login a
 * CNN?
 
 ## Updates
+### 17 January 2018
+* Added method to prepare sequence data for forming of word embeddings
+
 ### 16 January 2018
 * Prep data for wide and deep model
 
