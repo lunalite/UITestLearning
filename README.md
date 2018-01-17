@@ -1,12 +1,12 @@
 ############
-Positional representation
+categorical: Positional representation
 like back button most likely on the top left
 submit button at bottom right/bottom left
 We can transform them into numbers like 1,2,4,5,6,
 taking center of button as placement
-
-
-
+continuous: text
+continuous: sequence
+categorical: btnclass
 
 
 
@@ -61,6 +61,9 @@ Or some which there are no clickables(flash games) Or those that require login a
 * CNN?
 
 ## Updates
+### 16 January 2018
+* Prep data for wide and deep model
+
 ### 14 January 2018
 * Changed directory for screenshot files
 * Changed directory for seqq files

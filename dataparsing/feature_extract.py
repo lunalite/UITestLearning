@@ -6,24 +6,24 @@ import re
 
 from tqdm import tqdm
 
-# with codecs.open('../data/PlayStore_Full_2016_01_NoDescription_CSV.csv', "r", 'utf-8') as f:
-#     datainput = [x.strip() for x in tqdm(f)]
-#
-# name_cat = []
-# for i in datainput:
-#     try:
-#         iarr = i.split(';')
-#         name = re.findall('id=(.+)', iarr[1])
-#         name_cat.append((name[0], iarr[7]))
-#     except:
-#         print(i)
-#
-# with open('./cat.txt', 'w') as f:
-#     for i in name_cat:
-#         f.write('{}\t{}\n'.format(i[0], i[1]))
-
-with open('./cat.txt', 'r') as f:
+with codecs.open('../data/PlayStore_Full_2016_01_NoDescription_CSV.csv', "r", 'utf-8') as f:
     datainput = [x.strip() for x in tqdm(f)]
 
+name_cat = []
 for i in datainput:
-    print(i.split('\t'))
+    try:
+        iarr = i.split(';')
+        name = re.findall('id=(.+)', iarr[1])
+        name_cat.append((name[0], iarr[7]))
+    except:
+        print(i)
+
+with open('./cat.txt', 'w') as f:
+    for i in name_cat:
+        f.write('{}\t{}\n'.format(i[0], i[1]))
+
+# with open('./cat.txt', 'r') as f:
+#     datainput = [x.strip() for x in tqdm(f)]
+#
+# for i in datainput:
+#     print(i.split('\t'))

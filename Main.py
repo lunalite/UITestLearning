@@ -564,8 +564,8 @@ def official():
             logger.info('\nDoing a UI testing on application ' + appname + '.')
 
             init()
-            if not os.path.exists(log_location + apk_packname):
-                os.makedirs(log_location + apk_packname)
+            if not os.path.exists(seqq_location + apk_packname):
+                os.makedirs(seqq_location + apk_packname)
             with open(Config.seqq_location + apk_packname + '/seqq-' + apk_packname + '.txt', 'a') as f:
                 f.write('=== BEGIN OF SEQUENCE ===\n')
             no_clickable_btns_counter = 0

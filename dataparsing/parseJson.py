@@ -3,6 +3,7 @@ import collections
 import json
 import operator
 import random
+import re
 import string
 from enum import Enum
 
@@ -273,12 +274,13 @@ def prep_data_for_wide_deep():
     for i in ndata:
         obj_loaded = json.loads(i)
         app_class = obj_loaded['parent_activity_state'].split('-')[0]
-        app_category = categorydict[app_class]
+        category = categorydict[app_class]
         btn_text = obj_loaded['text']
-        btn_class = obj_loaded['name'].split('-')[0][1:-1]
-        btn_description = obj_loaded['name'].split('-')[1][1:-1]
-        btn_location = obj_loaded['name'].split('-')[2][1:-1]
-        n_dataset_list.append((app_class, app_category, btn_text, btn_class, btn_description, btn_location, 'NEGATIVE'))
+        m = re.findall('{(.*?)}', obj_loaded['name'])
+        btn_class = m[0]
+        btn_description = m[1]
+        # btn_location = m[2]
+        n_dataset_list.append((category, btn_class, 'negative'))
         print(btn_description)
 
     with open('./pdata.txt', 'r') as f:
@@ -287,12 +289,13 @@ def prep_data_for_wide_deep():
     for i in pdata:
         obj_loaded = json.loads(i)
         app_class = obj_loaded['parent_activity_state'].split('-')[0]
-        app_category = categorydict[app_class]
+        category = categorydict[app_class]
         btn_text = obj_loaded['text']
-        btn_class = obj_loaded['name'].split('-')[0][1:-1]
-        btn_description = obj_loaded['name'].split('-')[1][1:-1]
-        btn_location = obj_loaded['name'].split('-')[2][1:-1]
-        p_dataset_list.append((app_class, app_category, btn_text, btn_class, btn_description, btn_location, 'POSITIVE'))
+        m = re.findall('{(.*?)}', obj_loaded['name'])
+        btn_class = m[0]
+        btn_description = m[1]
+        # btn_location = m[2]
+        p_dataset_list.append((category, btn_class, 'positive'))
 
     training_amt = int(len(ndata) * 9 / 10)
 
@@ -331,12 +334,12 @@ nodata = 7
 # extract_and_combine_files(nodata)
 
 """ splitting dataset to positive and negative data """
-split_to_pd(FEATURE.NST)
+# split_to_pd(FEATURE.NST)
 # split_to_pd(FEATURE.DNST)
 # split_to_pd(FEATURE.DNST_RELAXED)
 # get_info_on_text_pd()
 # get_info_on_btn_distribution()
 
 """ Preparing data for fasttext training and classification """
-prep_data_for_fasttext()
-# prep_data_for_wide_deep()
+# prep_data_for_fasttext()
+prep_data_for_wide_deep()
