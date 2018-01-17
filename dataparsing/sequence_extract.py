@@ -1,3 +1,4 @@
+import codecs
 from os import listdir
 from os.path import isfile, join
 
@@ -10,7 +11,7 @@ sequence_list = []
 onlyfiles = [f for f in listdir(directory) if isfile(join(directory, f))]
 for file in onlyfiles:
     if file.endswith('.txt'):
-        with open(join(directory, file), 'r') as f:
+        with codecs.open(join(directory, file), 'r', 'utf-8') as f:
             lines = [x.strip() for x in f.readlines()]
 
         start = False
@@ -38,6 +39,10 @@ for file in onlyfiles:
             if re.search('=== BEGIN OF SEQUENCE ===', line):
                 start = True
 
-with open('./sequence_combination.txt', 'w') as f:
+with codecs.open('./sequence_combination.txt', 'w', 'utf-8') as f:
     for i in sequence_list:
-        f.write(i)
+        if type(i) is list:
+            f.write('\t'.join(i))
+        else:
+            f.write(i)
+        f.write('\n')
