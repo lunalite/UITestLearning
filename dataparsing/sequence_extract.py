@@ -42,7 +42,7 @@ for file in onlyfiles:
 with codecs.open('./sequence_combination.txt', 'w', 'utf-8') as f:
     for i in sequence_list:
         if type(i) is list:
-            f.write('\t'.join(i))
+            f.write('\t'.join(i)[1:])
         else:
             f.write(i)
         f.write('\n')
