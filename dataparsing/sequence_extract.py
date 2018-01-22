@@ -29,7 +29,6 @@ for file in onlyfiles:
                     sequence_list[-1][-2] = sequence_list[-1][-2] + ' ' + line
                     continue
                 lsplit = line.split('\t')
-                print(lsplit)
                 if len(lsplit) == 2:
                     lsplit.append('')
                 if sequence_list:
