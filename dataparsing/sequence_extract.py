@@ -15,8 +15,6 @@ for file in onlyfiles:
             lines = [x.strip() for x in f.readlines()]
 
         start = False
-        end = False
-
         for line in lines:
             if re.search('=== END OF SEQUENCE', line):
                 sequence_list.append('===END')
@@ -26,7 +24,7 @@ for file in onlyfiles:
                     sequence_list.append('===CLOSE')
                     continue
                 if not re.search('\t', line):
-                    sequence_list[-1][-2] = sequence_list[-1][-2] + ' ' + line
+                    sequence_list[-1][-2] = sequence_list[-1][-2] + '\n' + line
                     continue
                 lsplit = line.split('\t')
                 if len(lsplit) == 2:
