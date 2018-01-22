@@ -25,7 +25,11 @@ for file in onlyfiles:
                 if re.search('=== END ATTEMPT', line):
                     sequence_list.append('===CLOSE')
                     continue
+                if not re.search('\t', line):
+                    sequence_list[-1][-2] = sequence_list[-1][-2] + ' ' + line
+                    continue
                 lsplit = line.split('\t')
+                print(lsplit)
                 if len(lsplit) == 2:
                     lsplit.append('')
                 if sequence_list:
@@ -33,16 +37,15 @@ for file in onlyfiles:
                         lsplit.append('negative')
                     else:
                         lsplit.append('positive')
-                else:
-                    lsplit.append('positive')
                 sequence_list.append(lsplit)
             if re.search('=== BEGIN OF SEQUENCE ===', line):
+                sequence_list.append('===START')
                 start = True
 
 with codecs.open('./sequence_combination.txt', 'w', 'utf-8') as f:
     for i in sequence_list:
         if type(i) is list:
-            f.write('\t'.join(i)[1:])
+            f.write('\t'.join(i[1:]))
         else:
             f.write(i)
         f.write('\n')

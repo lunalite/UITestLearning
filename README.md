@@ -1,3 +1,8 @@
+#######
+Image size for positional attributes
+start from RNN, or sentiment analysis bit by bit
+start from wide model linear regression
+
 ############
 categorical: Positional representation
 like back button most likely on the top left
@@ -61,6 +66,9 @@ Or some which there are no clickables(flash games) Or those that require login a
 * CNN?
 
 ## Updates
+### 22 January 2018
+* Minor changes to sequence_extract.py 
+
 ### 17 January 2018
 * Added method to prepare sequence data for forming of word embeddings
 

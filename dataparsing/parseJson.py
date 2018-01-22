@@ -276,42 +276,43 @@ def prep_data_for_wide_deep():
         app_class = obj_loaded['parent_activity_state'].split('-')[0]
         category = categorydict[app_class]
         btn_text = obj_loaded['text']
+        print(btn_text)
         m = re.findall('{(.*?)}', obj_loaded['name'])
         btn_class = m[0]
         btn_description = m[1]
         # btn_location = m[2]
         n_dataset_list.append((category, btn_class, 'negative'))
         print(btn_description)
-
-    with open('./pdata.txt', 'r') as f:
-        pdata = [x.strip() for x in tqdm(f)]
-
-    for i in pdata:
-        obj_loaded = json.loads(i)
-        app_class = obj_loaded['parent_activity_state'].split('-')[0]
-        category = categorydict[app_class]
-        btn_text = obj_loaded['text']
-        m = re.findall('{(.*?)}', obj_loaded['name'])
-        btn_class = m[0]
-        btn_description = m[1]
-        # btn_location = m[2]
-        p_dataset_list.append((category, btn_class, 'positive'))
-
-    training_amt = int(len(ndata) * 9 / 10)
-
-    random.shuffle(p_dataset_list)
-    random.shuffle(n_dataset_list)
-
-    with codecs.open('./wnd-train.txt', 'w', 'utf-8') as f:
-        f.write('appclass,category,btntext,btnclass,btndescription,btnlocation')
-        for i in range(training_amt):
-            f.write(','.join(x.lower() for x in p_dataset_list[i]) + '\n')
-            f.write(','.join(x.lower() for x in n_dataset_list[i]) + '\n')
-
-    with codecs.open('./wnd-test.txt', 'w', 'utf-8') as f:
-        for i in range(training_amt, len(n_dataset_list)):
-            f.write(','.join(x.lower() for x in p_dataset_list[i]) + '\n')
-            f.write(','.join(x.lower() for x in n_dataset_list[i]) + '\n')
+    #
+    # with open('./pdata.txt', 'r') as f:
+    #     pdata = [x.strip() for x in tqdm(f)]
+    #
+    # for i in pdata:
+    #     obj_loaded = json.loads(i)
+    #     app_class = obj_loaded['parent_activity_state'].split('-')[0]
+    #     category = categorydict[app_class]
+    #     btn_text = obj_loaded['text']
+    #     m = re.findall('{(.*?)}', obj_loaded['name'])
+    #     btn_class = m[0]
+    #     btn_description = m[1]
+    #     # btn_location = m[2]
+    #     p_dataset_list.append((category, btn_class, 'positive'))
+    #
+    # training_amt = int(len(ndata) * 9 / 10)
+    #
+    # random.shuffle(p_dataset_list)
+    # random.shuffle(n_dataset_list)
+    #
+    # with codecs.open('./wnd-train.txt', 'w', 'utf-8') as f:
+    #     f.write('appclass,category,btntext,btnclass,btndescription,btnlocation')
+    #     for i in range(training_amt):
+    #         f.write(','.join(x.lower() for x in p_dataset_list[i]) + '\n')
+    #         f.write(','.join(x.lower() for x in n_dataset_list[i]) + '\n')
+    #
+    # with codecs.open('./wnd-test.txt', 'w', 'utf-8') as f:
+    #     for i in range(training_amt, len(n_dataset_list)):
+    #         f.write(','.join(x.lower() for x in p_dataset_list[i]) + '\n')
+    #         f.write(','.join(x.lower() for x in n_dataset_list[i]) + '\n')
 
 
 def extract_and_combine_files(no_of_data):
