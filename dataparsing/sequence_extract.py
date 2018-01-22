@@ -20,7 +20,9 @@ for file in onlyfiles:
                 sequence_list.append('===END')
                 start = False
             if start:
-                if re.search('=== END ATTEMPT', line):
+                if re.search('=== BEGIN OF SEQUENCE ===', line):
+                    continue
+                elif re.search('=== END ATTEMPT', line):
                     sequence_list.append('===CLOSE')
                     continue
                 if not re.search('\t', line):
