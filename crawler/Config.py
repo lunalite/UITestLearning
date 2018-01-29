@@ -18,33 +18,33 @@ class Config:
     device_name = ''
 
     # Selecting the data where data is being stored at.
-    data_store_location = './data/'
+    data_store_location = '../data/'
 
     # Set the MongoDB settings
     mongoHost = 'localhost'
     mongoPort = 27017
 
     # Set the name for widget to number representation
-    classwidgetdict = './classWidget.txt'
+    classwidgetdict = '../data/classWidget.txt'
 
     # Probability of flinging the screen if scrollable is found
     # not flinging, fling up, fling down
     scroll_probability = [0.8, 0.9, 1.0]
 
     # base storage location for log files
-    log_location = './log/'
+    log_location = '../log/'
 
     # base storage location for screenshots
-    screen_location = './data/screen/'
+    screen_location = '../data/screen/'
 
     # base storage location for xml files
-    xml_location = './data/xml/'
+    xml_location = '../data/xml/'
 
     # base storage location for seqquence
-    seqq_location = './data/seqq/'
+    seqq_location = '../data/seqq/'
 
     # Information location storing number of activities/clickables stored
-    info_location = './log/info'
+    info_location = '../log/info'
 
     # Directory where APKs are stored in for enumerating through them
     current_user = getpass.getuser()

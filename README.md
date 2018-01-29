@@ -1,3 +1,11 @@
+###
+split into individual word for RNN training
+4 gram 5 grma
+parameters like n-grams, and if each sequence should be taken as text or each word as a text
+set a max text length for the sequence 
+use 
+check if the speed is too fast or not
+
 #######
 Image size for positional attributes
 start from RNN, or sentiment analysis bit by bit
@@ -66,6 +74,12 @@ Or some which there are no clickables(flash games) Or those that require login a
 * CNN?
 
 ## Updates
+### 29 January 2018
+* Reorganized the directory into respective packages.
+
+### 24 January 2018
+* Used Gensim to create word embedding of the dataset 
+
 ### 22 January 2018
 * Minor changes to sequence_extract.py 
 

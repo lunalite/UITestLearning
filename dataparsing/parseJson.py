@@ -6,8 +6,8 @@ import random
 import re
 import string
 from enum import Enum
-
 from tqdm import *
+from crawler.Config import Config
 
 
 def pre_process(fileno, datafile):
@@ -29,7 +29,7 @@ def pre_process(fileno, datafile):
                 if not not_english:
                     text_list.append(curr_text.lower())
                     obj_list.append(json_obj)
-    with codecs.open('./dataformatted' + str(fileno) + '.json', 'w', 'utf-8') as f:
+    with codecs.open('../data/dataformatted' + str(fileno) + '.json', 'w', 'utf-8') as f:
         for i in obj_list:
             f.write('{}\n'.format(json.dumps(i)))
 
@@ -37,7 +37,7 @@ def pre_process(fileno, datafile):
 def combine_dataformatted(datano):
     datainput = {}
     for i in range(1, datano):
-        with codecs.open('./dataformatted' + str(i) + '.json', "r", 'utf-8') as f:
+        with codecs.open('../data/dataformatted' + str(i) + '.json', "r", 'utf-8') as f:
             datainput[i] = [x.strip() for x in tqdm(f)]
     text_list = []
     obj_list = []
@@ -46,13 +46,13 @@ def combine_dataformatted(datano):
             json_obj = json.loads(item)
             obj_list.append(json_obj)
 
-    with codecs.open('./dataformattedF.json', 'w', 'utf-8') as f:
+    with codecs.open('../data/dataformattedF.json', 'w', 'utf-8') as f:
         for i in obj_list:
             f.write('{}\n'.format(json.dumps(i)))
 
 
 def split_to_pd(feature):
-    with open('./dataformattedF.json', 'r') as f:
+    with open('../data/dataformattedF.json', 'r') as f:
         lines = [x.strip() for x in f.readlines()]
     obj_list = []
     next_ts_list = []
@@ -138,19 +138,19 @@ def split_to_pd(feature):
     print('Positive data amount: {}'.format(len(pdata)))
     print('Total data amount: %s' % (len(ndata) + len(pdata)))
     min_amt = min(len(ndata), len(pdata))
-    with open('./ndata.txt', 'w') as f:
+    with open('../data/ndata.txt', 'w') as f:
         for i in range(min_amt):
             f.write(json.dumps(ndata[i]) + '\n')
 
-    with open('./pdata.txt', 'w') as f:
+    with open('../data/pdata.txt', 'w') as f:
         for i in range(min_amt):
             f.write(json.dumps(pdata[i]) + '\n')
 
 
 def get_info_on_text_pd():
-    with open('./pdata.txt', 'r') as f:
+    with open('../data/pdata.txt', 'r') as f:
         plines = [x.strip() for x in f.readlines()]
-    with open('./ndata.txt', 'r') as f:
+    with open('../data/ndata.txt', 'r') as f:
         nlines = [x.strip() for x in f.readlines()]
     obj_list = []
     next_ts_list = []
@@ -169,7 +169,7 @@ def get_info_on_text_pd():
     ncount = collections.Counter(ndata)
     pcount = collections.Counter(pdata)
 
-    with open('./ndatatext.txt', 'w') as f:
+    with open('../data/ndatatext.txt', 'w') as f:
         f.write('count\t|norm\t|text\n')
         f.write('==========================\n')
         for i in ncount.most_common():
@@ -177,7 +177,7 @@ def get_info_on_text_pd():
 
     print('Written to ndatatext.txt')
 
-    with open('./pdatatext.txt', 'w') as f:
+    with open('../data/pdatatext.txt', 'w') as f:
         f.write('count\t|norm\t|text\n')
         f.write('==========================\n')
         for i in pcount.most_common():
@@ -187,7 +187,7 @@ def get_info_on_text_pd():
 
 
 def get_info_on_btn_distribution():
-    with open('./pdata.txt', 'r') as f:
+    with open('../data/pdata.txt', 'r') as f:
         lines = [x.strip() for x in f.readlines()]
     obj_list = []
     pdata = []
@@ -209,7 +209,7 @@ def get_info_on_btn_distribution():
         pscoredictavg[k] = sum(pscoredict[k]) / len(pscoredict[k])
 
     sorted_pscoredictavg = sorted(pscoredictavg.items(), key=operator.itemgetter(1), reverse=True)
-    with open('./pscoreavg.txt', 'w') as f:
+    with open('../datapscoreavg.txt', 'w') as f:
         f.write('avg_s\t\t|len_arr\t|text\n')
         f.write('==========================\n')
         for v in sorted_pscoredictavg:
@@ -220,14 +220,14 @@ def get_info_on_btn_distribution():
 
 
 def prep_data_for_fasttext():
-    with open('./pdata.txt', 'r') as f:
+    with open('../data/pdata.txt', 'r') as f:
         pdata = [x.strip() for x in f.readlines()]
 
     for i in range(len(pdata)):
         jp = json.loads(pdata[i])
         pdata[i] = '__label__p ' + jp['text'].lower()
 
-    with open('./ndata.txt', 'r') as f:
+    with open('../data/ndata.txt', 'r') as f:
         ndata = [x.strip() for x in f.readlines()]
 
     for i in range(len(ndata)):
@@ -239,18 +239,26 @@ def prep_data_for_fasttext():
     random.shuffle(pdata)
     random.shuffle(ndata)
 
-    with codecs.open('./train.txt', 'w', 'utf-8') as f:
+    with codecs.open('../data/fastTextTrain.txt', 'w', 'utf-8') as f:
         for i in range(training_amt):
             f.write(pdata[i] + '\n')
             f.write(ndata[i] + '\n')
 
-    with codecs.open('./test.txt', 'w', 'utf-8') as f:
+    with codecs.open('../data/fastTextTest.txt', 'w', 'utf-8') as f:
         try:
             for i in range(training_amt, len(ndata)):
                 f.write(pdata[i] + '\n')
                 f.write(ndata[i] + '\n')
         except Exception:
             pass
+
+
+def convert_position_into_number(position, appstate):
+    print(position)
+    print(appstate)
+    print(Config.screen_location)
+    # with open(Config.screen_location, 'r') as f:
+
 
 
 def prep_data_for_wide_deep():
@@ -261,14 +269,14 @@ def prep_data_for_wide_deep():
     n_dataset_list = []
     p_dataset_list = []
     categorydict = {}
-    with open('./cat.txt', 'r') as f:
+    with open('../data/category.txt', 'r') as f:
         categoryinput = [x.strip() for x in tqdm(f)]
 
     for i in categoryinput:
         isp = i.split('\t')
         categorydict[isp[0]] = isp[1]
 
-    with open('./ndata.txt', 'r') as f:
+    with open('../data/ndata.txt', 'r') as f:
         ndata = [x.strip() for x in tqdm(f)]
 
     for i in ndata:
@@ -276,15 +284,15 @@ def prep_data_for_wide_deep():
         app_class = obj_loaded['parent_activity_state'].split('-')[0]
         category = categorydict[app_class]
         btn_text = obj_loaded['text']
-        print(btn_text)
         m = re.findall('{(.*?)}', obj_loaded['name'])
         btn_class = m[0]
         btn_description = m[1]
-        # btn_location = m[2]
+        btn_location = m[2]
+        convert_position_into_number(btn_location, obj_loaded['parent_activity_state'])
         n_dataset_list.append((category, btn_class, 'negative'))
-        print(btn_description)
-    #
-    # with open('./pdata.txt', 'r') as f:
+        break
+
+    # with open('../data/pdata.txt', 'r') as f:
     #     pdata = [x.strip() for x in tqdm(f)]
     #
     # for i in pdata:
@@ -303,13 +311,13 @@ def prep_data_for_wide_deep():
     # random.shuffle(p_dataset_list)
     # random.shuffle(n_dataset_list)
     #
-    # with codecs.open('./wnd-train.txt', 'w', 'utf-8') as f:
-    #     f.write('appclass,category,btntext,btnclass,btndescription,btnlocation')
+    # with codecs.open('../data/wnd-train.txt', 'w', 'utf-8') as f:
+    #     # f.write('appclass,category,btntext,btnclass,btndescription,btnlocation')
     #     for i in range(training_amt):
     #         f.write(','.join(x.lower() for x in p_dataset_list[i]) + '\n')
     #         f.write(','.join(x.lower() for x in n_dataset_list[i]) + '\n')
     #
-    # with codecs.open('./wnd-test.txt', 'w', 'utf-8') as f:
+    # with codecs.open('../data/wnd-test.txt', 'w', 'utf-8') as f:
     #     for i in range(training_amt, len(n_dataset_list)):
     #         f.write(','.join(x.lower() for x in p_dataset_list[i]) + '\n')
     #         f.write(','.join(x.lower() for x in n_dataset_list[i]) + '\n')

@@ -12,10 +12,10 @@ import sys
 
 import uiautomator
 
-from Mongo import Mongo
+from crawler.Mongo import Mongo
 from uiautomator import Device
 from datetime import datetime
-from Config import Config
+from crawler.Config import Config
 
 log_location = Config.log_location
 if not os.path.exists(log_location):
@@ -28,10 +28,10 @@ logging.info('================Begin logging==================')
 now = time.strftime("%c")
 logger.info(now)
 
-import Utility
-from Clickable import Clickable
-from Data import Data
-from DataActivity import DataActivity
+from crawler import Utility
+from crawler.Clickable import Clickable
+from crawler.Data import Data
+from crawler.DataActivity import DataActivity
 from enum import Enum
 
 mongo = Mongo()
@@ -620,7 +620,7 @@ def official():
                             f.write('{}\t{}\n'.format(i[0], i[1]))
                         f.write('=== END ATTEMPT {} ===\n'.format(attempts))
 
-            with open(Config.seqq_location+ apk_packname + '/seqq-' + apk_packname + '.txt', 'a') as f:
+            with open(Config.seqq_location + apk_packname + '/seqq-' + apk_packname + '.txt', 'a') as f:
                 while sequence:
                     i = sequence.pop()
                     f.write('{}\t{}\n'.format(i[0], i[1]))

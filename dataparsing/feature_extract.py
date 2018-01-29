@@ -10,20 +10,18 @@ with codecs.open('../data/PlayStore_Full_2016_01_NoDescription_CSV.csv', "r", 'u
     datainput = [x.strip() for x in tqdm(f)]
 
 name_cat = []
+possible_cat = set()
 for i in datainput:
     try:
         iarr = i.split(';')
         name = re.findall('id=(.+)', iarr[1])
         name_cat.append((name[0], iarr[7]))
+        # possible_cat.add(iarr[7])
     except:
         print(i)
 
-with open('./cat.txt', 'w') as f:
+with open('../data/category.txt', 'w') as f:
     for i in name_cat:
         f.write('{}\t{}\n'.format(i[0], i[1]))
 
-# with open('./cat.txt', 'r') as f:
-#     datainput = [x.strip() for x in tqdm(f)]
-#
-# for i in datainput:
-#     print(i.split('\t'))
+# print(possible_cat)

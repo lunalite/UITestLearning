@@ -12,10 +12,10 @@ import xml.etree.ElementTree as ET
 
 import time
 
-from Clickable import Clickable
-from Config import Config
-from Data import Data
-from DataActivity import DataActivity
+from crawler.Clickable import Clickable
+from crawler.Config import Config
+from crawler.Data import Data
+from crawler.DataActivity import DataActivity
 
 logger = logging.getLogger(__name__)
 

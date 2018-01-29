@@ -9,3 +9,6 @@ dataparsing/*.json
 *.csv
 *.bin
 *.vec
+*.npy
+learning/tensorboard/
+learning/models/
