@@ -17,5 +17,5 @@ for f in result:
 
 with open('./img_dimension_extract.txt', 'w') as f:
     for dim in dimension_list:
-        f.write('%s\t%d\t%d' % (dim[0], dim[1], dim[2]))
+        f.write('%s\t%s\t%s' % (dim[0], dim[1], dim[2]))
         f.write('\n')
