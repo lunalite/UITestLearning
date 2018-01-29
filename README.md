@@ -77,6 +77,8 @@ Or some which there are no clickables(flash games) Or those that require login a
 ### 29 January 2018
 * Reorganized the directory into respective packages.
 * Added a ./run.sh file to make things simpler
+* dataset11
+* added img dimension extract file
 
 ### 24 January 2018
 * Used Gensim to create word embedding of the dataset 

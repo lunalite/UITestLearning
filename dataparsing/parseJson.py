@@ -6,8 +6,11 @@ import random
 import re
 import string
 from enum import Enum
+from os import listdir
+from os.path import isfile, join
 from tqdm import *
 from crawler.Config import Config
+from PIL import Image
 
 
 def pre_process(fileno, datafile):
@@ -52,6 +55,7 @@ def combine_dataformatted(datano):
 
 
 def split_to_pd(feature):
+    print('Spltting data...')
     with open('../data/dataformattedF.json', 'r') as f:
         lines = [x.strip() for x in f.readlines()]
     obj_list = []
@@ -253,12 +257,13 @@ def prep_data_for_fasttext():
             pass
 
 
-def convert_position_into_number(position, appstate):
+def convert_position_into_number(position, packname, appstate):
     print(position)
-    print(appstate)
-    print(Config.screen_location)
-    # with open(Config.screen_location, 'r') as f:
-
+    # imgname = Config.screen_location + packname + appstate + '.png'
+    # im = Image.open(imgname)
+    # width, height = im.size
+    width = 480
+    height = 800
 
 
 def prep_data_for_wide_deep():
@@ -281,14 +286,14 @@ def prep_data_for_wide_deep():
 
     for i in ndata:
         obj_loaded = json.loads(i)
-        app_class = obj_loaded['parent_activity_state'].split('-')[0]
-        category = categorydict[app_class]
+        packname = obj_loaded['parent_activity_state'].split('-')[0]
+        category = categorydict[packname]
         btn_text = obj_loaded['text']
         m = re.findall('{(.*?)}', obj_loaded['name'])
         btn_class = m[0]
         btn_description = m[1]
         btn_location = m[2]
-        convert_position_into_number(btn_location, obj_loaded['parent_activity_state'])
+        convert_position_into_number(btn_location, packname, obj_loaded['parent_activity_state'])
         n_dataset_list.append((category, btn_class, 'negative'))
         break
 
@@ -297,8 +302,8 @@ def prep_data_for_wide_deep():
     #
     # for i in pdata:
     #     obj_loaded = json.loads(i)
-    #     app_class = obj_loaded['parent_activity_state'].split('-')[0]
-    #     category = categorydict[app_class]
+    #     packname = obj_loaded['parent_activity_state'].split('-')[0]
+    #     category = categorydict[packname]
     #     btn_text = obj_loaded['text']
     #     m = re.findall('{(.*?)}', obj_loaded['name'])
     #     btn_class = m[0]
@@ -324,6 +329,12 @@ def prep_data_for_wide_deep():
 
 
 def extract_and_combine_files(no_of_data):
+    onlyfiles = [f for f in listdir(clickabledir) if isfile(join(clickabledir, f))]
+    nodata = 0
+    for i in onlyfiles:
+        if re.match('^clickable\d+\.json$', i) is not None:
+            nodata += 1
+    print('Extracting and combining %d files...' % nodata)
     for i in range(1, no_of_data):
         datafile = datadir + str(i) + '.json'
         pre_process(i, datafile)
@@ -337,10 +348,10 @@ class FEATURE(Enum):
 
 
 datadir = '/Users/hkoh006/Desktop/UITestLearning/data/clickable'
-nodata = 7
+clickabledir = '/Users/hkoh006/Desktop/UITestLearning/data'
 
 """ Pre-processing the original data.json to remove any non-english sets of data, as well as null texts dataset """
-# extract_and_combine_files(nodata)
+# extract_and_combine_files()
 
 """ splitting dataset to positive and negative data """
 # split_to_pd(FEATURE.NST)
