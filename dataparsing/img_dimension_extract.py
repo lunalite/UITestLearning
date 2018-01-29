@@ -4,13 +4,18 @@ from PIL import Image
 from crawler.Config import Config
 
 result = [y for x in os.walk(Config.screen_location) for y in glob(os.path.join(x[0], '*.png'))]
-print(result)
-
 dimension_list = []
 
 for f in result:
-    with Image.open(f) as img:
-        width, height = img.size
-        dimension_list.append((f, width, height))
+    try:
+        with Image.open(f) as img:
+            width, height = img.size
+            dimension_list.append((f, width, height))
+    except Exception:
+        print(f)
+        dimension_list.append((f, 'err', 'err'))
 
-print(dimension_list)
+with open('./img_dimension_extract.txt', 'w') as f:
+    for dim in dimension_list:
+        f.write('%s\t%d\t%d' % (dim[0], dim[1], dim[2]))
+        f.write('\n')
