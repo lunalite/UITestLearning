@@ -12,4 +12,7 @@ emulatorNo=$((5554 + $1 * 2))
 if [ "$LOGNAME" = "hkoh006" ]
   then
     export PYTHONPATH=../; python3.6 Main.py emulator-5554 ../../APK2/apk-$1 avd1
+   else
+    export PYTHONPATH=../; python3.6 Main.py emulator-$emulatorNo ../../apk/apk-$1 avd$1
 fi
+
