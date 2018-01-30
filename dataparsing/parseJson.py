@@ -8,9 +8,12 @@ import string
 from enum import Enum
 from os import listdir
 from os.path import isfile, join
-from tqdm import *
-from crawler.Config import Config
+
+import math
 from PIL import Image
+from tqdm import *
+
+from crawler.Config import Config
 
 
 def pre_process(fileno, datafile):
@@ -19,19 +22,22 @@ def pre_process(fileno, datafile):
     text_list = []
     obj_list = []
     for i in tqdm(datainput):
-        json_obj = json.loads(i)
-        if 'text' in json_obj:
-            curr_text = json_obj['text']
-            if curr_text:
-                not_english = False
-                for scii in curr_text:
-                    if scii not in string.printable:
-                        not_english = True
-                        break
+        try:
+            json_obj = json.loads(i)
+            if 'text' in json_obj:
+                curr_text = json_obj['text']
+                if curr_text:
+                    not_english = False
+                    for scii in curr_text:
+                        if scii not in string.printable:
+                            not_english = True
+                            break
 
-                if not not_english:
-                    text_list.append(curr_text.lower())
-                    obj_list.append(json_obj)
+                    if not not_english:
+                        text_list.append(curr_text.lower())
+                        obj_list.append(json_obj)
+        except Exception:
+            print(i)
     with codecs.open('../data/dataformatted' + str(fileno) + '.json', 'w', 'utf-8') as f:
         for i in obj_list:
             f.write('{}\n'.format(json.dumps(i)))
@@ -257,15 +263,6 @@ def prep_data_for_fasttext():
             pass
 
 
-def convert_position_into_number(position, packname, appstate):
-    print(position)
-    # imgname = Config.screen_location + packname + appstate + '.png'
-    # im = Image.open(imgname)
-    # width, height = im.size
-    width = 480
-    height = 800
-
-
 def prep_data_for_wide_deep():
     """
     39,State-gov,77516,Bachelors,13,Never-married,Adm-clerical,Not-in-family,White,Male,2174,0,40,United-States,<=50K
@@ -284,6 +281,15 @@ def prep_data_for_wide_deep():
     with open('../data/ndata.txt', 'r') as f:
         ndata = [x.strip() for x in tqdm(f)]
 
+    with open('../data/img_dimension_extract.txt', 'r') as f:
+        imgdims = [x.strip() for x in f]
+
+    imgdict = {}
+
+    for i in imgdims:
+        isplit = i.split('\t')
+        imgdict[isplit[0].split('/')[4]] = (isplit[1], isplit[2])
+
     for i in ndata:
         obj_loaded = json.loads(i)
         packname = obj_loaded['parent_activity_state'].split('-')[0]
@@ -293,49 +299,66 @@ def prep_data_for_wide_deep():
         btn_class = m[0]
         btn_description = m[1]
         btn_location = m[2]
-        convert_position_into_number(btn_location, packname, obj_loaded['parent_activity_state'])
-        n_dataset_list.append((category, btn_class, 'negative'))
-        break
+        imgname = obj_loaded['parent_activity_state'] + '.png'
+        m = re.findall('\[(-?\d+),(-?\d+)\]', btn_location)
+        y = [sum(x) / len(x) for x in zip((int(z) for z in (m[0])), (int(zz) for zz in m[1]))]
+        positional_num = []
+        try:
+            for i in range(len(y)):
+                positional_num.append(math.ceil(y[i] / int(imgdict[imgname][i]) * 3))
+            btn_positional_representation = str(positional_num[0] + 3 * (positional_num[1] - 1))
+        except Exception:
+            btn_positional_representation = '-1'
+        n_dataset_list.append((category, btn_class, btn_positional_representation, 'negative'))
 
-    # with open('../data/pdata.txt', 'r') as f:
-    #     pdata = [x.strip() for x in tqdm(f)]
-    #
-    # for i in pdata:
-    #     obj_loaded = json.loads(i)
-    #     packname = obj_loaded['parent_activity_state'].split('-')[0]
-    #     category = categorydict[packname]
-    #     btn_text = obj_loaded['text']
-    #     m = re.findall('{(.*?)}', obj_loaded['name'])
-    #     btn_class = m[0]
-    #     btn_description = m[1]
-    #     # btn_location = m[2]
-    #     p_dataset_list.append((category, btn_class, 'positive'))
-    #
-    # training_amt = int(len(ndata) * 9 / 10)
-    #
-    # random.shuffle(p_dataset_list)
-    # random.shuffle(n_dataset_list)
-    #
-    # with codecs.open('../data/wnd-train.txt', 'w', 'utf-8') as f:
-    #     # f.write('appclass,category,btntext,btnclass,btndescription,btnlocation')
-    #     for i in range(training_amt):
-    #         f.write(','.join(x.lower() for x in p_dataset_list[i]) + '\n')
-    #         f.write(','.join(x.lower() for x in n_dataset_list[i]) + '\n')
-    #
-    # with codecs.open('../data/wnd-test.txt', 'w', 'utf-8') as f:
-    #     for i in range(training_amt, len(n_dataset_list)):
-    #         f.write(','.join(x.lower() for x in p_dataset_list[i]) + '\n')
-    #         f.write(','.join(x.lower() for x in n_dataset_list[i]) + '\n')
+    with open('../data/pdata.txt', 'r') as f:
+        pdata = [x.strip() for x in tqdm(f)]
+
+    for i in pdata:
+        obj_loaded = json.loads(i)
+        packname = obj_loaded['parent_activity_state'].split('-')[0]
+        category = categorydict[packname]
+        btn_text = obj_loaded['text']
+        m = re.findall('{(.*?)}', obj_loaded['name'])
+        btn_class = m[0]
+        btn_description = m[1]
+        imgname = obj_loaded['parent_activity_state'] + '.png'
+        m = re.findall('\[(\d+),(\d+)\]', btn_location)
+        y = [sum(x) / len(x) for x in zip((int(z) for z in (m[0])), (int(zz) for zz in m[1]))]
+        positional_num = []
+        try:
+            for i in range(len(y)):
+                positional_num.append(math.ceil(y[i] / int(imgdict[imgname][i]) * 3))
+            btn_positional_representation = str(positional_num[0] + 3 * (positional_num[1] - 1))
+        except Exception:
+            btn_positional_representation = '-1'
+        p_dataset_list.append((category, btn_class, btn_positional_representation, 'positive'))
+
+    training_amt = int(len(ndata) * 9 / 10)
+
+    random.shuffle(p_dataset_list)
+    random.shuffle(n_dataset_list)
+
+    with codecs.open('../data/wnd-train.txt', 'w', 'utf-8') as f:
+        for i in range(training_amt):
+            f.write(','.join(x.lower() for x in p_dataset_list[i]) + '\n')
+            f.write(','.join(x.lower() for x in n_dataset_list[i]) + '\n')
+
+    with codecs.open('../data/wnd-test.txt', 'w', 'utf-8') as f:
+        for i in range(training_amt, len(n_dataset_list)):
+            f.write(','.join(x.lower() for x in p_dataset_list[i]) + '\n')
+            f.write(','.join(x.lower() for x in n_dataset_list[i]) + '\n')
 
 
-def extract_and_combine_files(no_of_data):
+def extract_and_combine_files():
     onlyfiles = [f for f in listdir(clickabledir) if isfile(join(clickabledir, f))]
-    nodata = 0
+    no_of_data = 0
     for i in onlyfiles:
         if re.match('^clickable\d+\.json$', i) is not None:
-            nodata += 1
-    print('Extracting and combining %d files...' % nodata)
+            no_of_data += 1
+    print('Extracting and combining %d files...' % no_of_data)
     for i in range(1, no_of_data):
+        print('Extracting file %d' % i)
         datafile = datadir + str(i) + '.json'
         pre_process(i, datafile)
     combine_dataformatted(no_of_data)
