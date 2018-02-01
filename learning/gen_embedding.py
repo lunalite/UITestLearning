@@ -3,6 +3,7 @@ import re
 from itertools import chain
 
 import numpy as np
+import sys
 from gensim.models import Word2Vec
 from tqdm import *
 
@@ -20,16 +21,26 @@ name_diff_temp = ''
 multi_line = False
 multi_line_temp = ''
 wordList = set()
-
-"""Change value"""
-grams = 4
 treat_as_individual_word = False
-"""END Change value"""
+treat_all_null_as_invalid = False
+suffix = ''
 
-if treat_as_individual_word:
-    suffix = 'iw'
-else:
-    suffix = ''
+try:
+    grams = int(sys.argv[1])
+    if sys.argv[2] == '1':
+        print('y')
+        suffix = 'iw'
+        treat_as_individual_word = True
+    elif sys.argv[2] == '11':
+        suffix = 'iwin'
+        treat_as_individual_word = True
+        treat_all_null_as_invalid = True
+except IndexError:
+    print('Please enter arguments:')
+    print('argv[1] == n: n-gram.')
+    print('argv[2] == 1/0: Treating individual word or not.')
+    print('argv[2] == 11/01: Treat all null sequence as invalid.')
+    exit(1)
 
 
 def append_to_temp(tempstr, _templist, _labeltemplist):
@@ -42,6 +53,7 @@ def append_to_temp(tempstr, _templist, _labeltemplist):
 
 
 for line in tqdm(lines):
+
     if re.search('===START', line):
         if name_diff_line:
             name_diff_line, name_diff_temp = append_to_temp(name_diff_temp, templist, labeltemplist)
@@ -70,7 +82,7 @@ for line in tqdm(lines):
         continue
 
     if start:
-        if len(line.split('\t')) <= 2 or (line.split('\t')[2] != 'negative' or 'positive'):
+        if len(line.split('\t')) <= 2 or (line.split('\t')[2] != 'negative' and line.split('\t')[2] != 'positive'):
             '''In case the content description is long like {ImageView}-{Lorem ipsum dolor sit amet, consectetur 
             adipiscing elit. Mauris et magna ut erat elementum cursus in quis ipsum. Nam faucibus ultrices eros, 
             vel tempor leo semper sit amet. Duis magna quam, congue vitae interdum nec, condimentum ut lectus. Sed 
@@ -102,25 +114,53 @@ for line in tqdm(lines):
         elif multi_line:
             multi_line, multi_line_temp = append_to_temp(multi_line_temp, templist, labeltemplist)
         lsplit = line.split('\t')
+        if lsplit[0] == 'RAND_BUTTON':
+            templist.append('~!@#randbutton#@!~')
+        elif lsplit[0] == 'SCROLL UP':
+            templist.append('~!@#scrollup#@!~')
+        elif lsplit[0] == 'SCROLL DOWN':
+            templist.append('~!@#scrolldown#@!~')
+        elif lsplit[0] == 'BACK':
+            templist.append('~!@#back#@!~')
+        elif lsplit[0] == 'FLING HORIZONTAL':
+            templist.append('~!@#flinghoriz#@!~')
         templist.append(lsplit[1])
         labeltemplist.append(lsplit[2])
 
+i = 0
 if treat_as_individual_word:
-    for i in range(len(dataset)):
+    while i < len(dataset):
         tempdataset = []
+        if treat_all_null_as_invalid:
+            checkset = set(dataset[i])
+            if len(checkset) == 1:
+                pass
+                # print(checkset)
+            if len(checkset) == 1 and list(checkset)[0] == '':
+                print('YYYY')
+                i += 1
+                continue
+
         for x in range(len(dataset[i])):
             if dataset[i][x] == '':
                 tempdataset.append('~!@#null#@!~')
             else:
                 tempdataset.append(dataset[i][x].lower().split(' '))
         dataset[i] = tempdataset
+        i += 1
 else:
-    for i in range(len(dataset)):
+    while i < len(dataset):
+        if treat_all_null_as_invalid:
+            checkset = set(dataset[i])
+            if len(checkset) == 1 and list(checkset)[0] == '':
+                continue
+
         for x in range(len(dataset[i])):
             if dataset[i][x] == '':
                 dataset[i][x] = '~!@#null#@!~'
             else:
                 dataset[i][x] = dataset[i][x].lower()
+        i += 1
 
 newdata = []
 newlabel = []
@@ -129,8 +169,8 @@ for i in range(len(dataset)):
         for j in range(len(dataset[i]) - grams + 1):
             newdata.append(dataset[i][j:j + grams])
             newlabel.append(labeldataset[i][j + grams - 1])
-print(len(newdata))
-print(len(newlabel))
+print('Number of newdata: %d' % len(newdata))
+print('Number of newlabel: %d' % len(newlabel))
 
 with codecs.open('../data/dataseq-gram' + str(grams) + suffix + '.txt', 'w', 'utf-8') as f:
     for i in range(len(newdata)):
@@ -156,7 +196,7 @@ with codecs.open('../data/dataseq-gram' + str(grams) + suffix + '.txt', 'w', 'ut
 # print(wordList)
 
 # word embedding model
-flattened_dataset=[]
+flattened_dataset = []
 for sentence in dataset:
     tempdata = []
     for data in sentence:
@@ -167,6 +207,7 @@ for sentence in dataset:
             tempdata.append(data)
     flattened_dataset.append(tempdata)
 
+print('Training Word2Vec model with dimension 50.')
 model = Word2Vec(flattened_dataset, min_count=1, size=50)
 words = list(model.wv.vocab)
 model.save('../data/model' + str(grams) + suffix + '.bin')
@@ -178,3 +219,5 @@ for i in range(len(wordList)):
 
 np.save('../data/wordVector' + str(grams) + suffix, wordVector)
 np.save('../data/wordList' + str(grams) + suffix, np.array(wordList))
+
+print('\nCompleted generating word embedding for %d-gram with iw set to %s' % (grams, treat_as_individual_word))

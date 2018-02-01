@@ -18,7 +18,7 @@ for i in datainput:
         name_cat.append((name[0], iarr[7]))
         # possible_cat.add(iarr[7])
     except:
-        print(i)
+        print('error')
 
 with open('../data/category.txt', 'w') as f:
     for i in name_cat:

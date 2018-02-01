@@ -1,37 +1,17 @@
-from gensim.models import Word2Vec
-from random import randint
-from tqdm import *
-
-import tensorflow as tf
-import numpy as np
 import codecs
 import datetime
-import math
+import sys
+from random import randint
 
-"""Change value"""
-grams = 4
-treat_as_individual_word = False
-maxSeqLength = grams
-"""END Change value"""
-
-if treat_as_individual_word:
-    suffix = 'iw'
-else:
-    suffix = ''
-
-with codecs.open('../data/dataseq-gram' + str(grams) + suffix + '.txt', 'r', 'utf-8') as f:
-    lines = [x.strip('\n') for x in f.readlines()]
-
-model = Word2Vec.load('../data/model' + str(grams) + suffix + '.bin')
-wordList = np.load('../data/wordList' + str(grams) + suffix + '.npy')
-wordList = wordList.tolist()
-wordVector = np.load('../data/wordVector' + str(grams) + suffix + '.npy')
-labellist = []
-sequencelist = []
+import numpy as np
+from gensim.models import Word2Vec
+from tqdm import *
 
 
 def populate_seqlab():
-    for i in range(len(lines)):
+    print('\nPopulating sequence and label...')
+
+    for i in tqdm(range(len(lines))):
         lsplit = lines[i].split(':::')
         if len(lsplit) == 2:
             labellist.append(lsplit[0])
@@ -39,18 +19,18 @@ def populate_seqlab():
         else:
             sequencelist[-1] += '\n' + lines[i]
 
-    print(len(labellist))
-    print(len(sequencelist))
+    print('Length of labels: %s' % len(labellist))
+    print('Length of sequence: %s' % len(sequencelist))
     return len(labellist)
 
 
 def convert_to_ids():
     """ Converting of text into ids """
+    print('\nConverting wordList to ids...')
     wordCount = []
     for i in sequencelist:
         wordCount.append(len(i.split('\t')))
-    maxLength = math.ceil(sum(wordCount) / len(wordCount)) if treat_as_individual_word else grams
-    ids = np.zeros((number_of_data, maxLength), dtype='int32')
+    ids = np.zeros((number_of_data, maxSeqLength), dtype='int32')
     fileCounter = 0
     for i in tqdm(sequencelist):
         lsplit = i.split('\t')
@@ -61,25 +41,13 @@ def convert_to_ids():
             except Exception:
                 print(section)
             indexCounter += 1
-            if indexCounter >= maxLength:
+            if indexCounter >= maxSeqLength:
                 break
         fileCounter += 1
 
     print(ids)
-    np.save('../data/idsMatrix' + str(grams) + suffix, ids)
-
-
-""" Start of RNN """
-
-""" Perimeters """
-batchSize = 40
-# batchSize = 24
-lstmUnits = 64
-numClasses = 2
-iterations = 100000
-# iterations = 500000
-numDimensions = 50
-""" End Perimeters """
+    np.save(idsMatrixFile, ids)
+    print('\nConversion done. Saved to %s' % idsMatrixFile)
 
 
 def getTrainBatch(ids):
@@ -99,30 +67,47 @@ def getTrainBatch(ids):
     return arr, labels
 
 
-def getTestBatch(ids):
+def getTestBatch(ids, _i):
     labels = []
     arr = np.zeros([batchSize, maxSeqLength])
     i = 0
-    while i < batchSize:
-        num = randint(int(9 / 10 * number_of_data), number_of_data)
-        if labellist[num] == 'positive':
-            labels.append([1, 0])
-        elif labellist[num] == 'negative':
-            labels.append([0, 1])
-        else:
-            continue
-        arr[i] = ids[num - 1: num]
-        i += 1
-    return arr, labels
+    # while i < batchSize:
+    #     num = randint(int(9 / 10 * number_of_data), number_of_data)
+    #     if labellist[num] == 'positive':
+    #         labels.append([1, 0])
+    #     elif labellist[num] == 'negative':
+    #         labels.append([0, 1])
+    #     else:
+    #         continue
+    #     arr[i] = ids[num - 1: num]
+    #     i += 1
+    num = int(9 / 10 * number_of_data) + _i * batchSize
+    try:
+        while i < batchSize:
+            if labellist[num] == 'positive':
+                labels.append([1, 0])
+            elif labellist[num] == 'negative':
+                labels.append([0, 1])
+            else:
+                num += 1
+                continue
+            arr[i] = ids[num - 1: num]
+            i += 1
+            num += 1
+        return arr, labels
+    except IndexError:
+        return None, None
 
 
 def learn():
-    ids = np.load('../data/idsMatrix' + str(grams) + suffix + '.npy')
+    print('\nLearning...')
+    print('Loading from %s' % idsMatrixFile)
+    ids = np.load(idsMatrixFile)
 
     tf.reset_default_graph()
 
-    labels = tf.placeholder(tf.float32, [batchSize, numClasses])
-    input_data = tf.placeholder(tf.int32, [batchSize, maxSeqLength])
+    labels = tf.placeholder(tf.float32, [None, numClasses])
+    input_data = tf.placeholder(tf.int32, [None, maxSeqLength])
 
     data = tf.Variable(tf.zeros([batchSize, maxSeqLength, numDimensions]), dtype=tf.float32)
     data = tf.nn.embedding_lookup(wordVector, input_data)
@@ -153,7 +138,7 @@ def learn():
     logdir = "tensorboard/" + datetime.datetime.now().strftime("%Y%m%d-%H%M%S") + "/"
     writer = tf.summary.FileWriter(logdir, sess.graph)
 
-    for i in range(iterations):
+    for i in tqdm(range(iterations)):
         # Next Batch of reviews
         nextBatch, nextBatchLabels = getTrainBatch(ids)
         sess.run(optimizer, {input_data: nextBatch, labels: nextBatchLabels})
@@ -171,10 +156,12 @@ def learn():
 
 
 def test():
-    ids = np.load('../data/idsMatrix' + str(grams) + suffix + '.npy')
+    print('\nTesting....')
+    print('Loading from %s' % idsMatrixFile)
+    ids = np.load(idsMatrixFile)
 
-    labels = tf.placeholder(tf.float32, [batchSize, numClasses])
-    input_data = tf.placeholder(tf.int32, [batchSize, maxSeqLength])
+    labels = tf.placeholder(tf.float32, [None, numClasses])
+    input_data = tf.placeholder(tf.int32, [None, maxSeqLength])
 
     data = tf.Variable(tf.zeros([batchSize, maxSeqLength, numDimensions]), dtype=tf.float32)
     data = tf.nn.embedding_lookup(wordVector, input_data)
@@ -196,14 +183,70 @@ def test():
     saver = tf.train.Saver()
     saver.restore(sess, tf.train.latest_checkpoint('models'))
 
-    iterationsTest = 10
-    for i in range(iterationsTest):
-        nextBatch, nextBatchLabels = getTestBatch(ids)
-        print("Accuracy for this batch:", (sess.run(accuracy, {input_data: nextBatch, labels: nextBatchLabels})) * 100)
+    training_result = []
+    for i in tqdm(range(int(notestdata / batchSize))):
+        nextBatch, nextBatchLabels = getTestBatch(ids, i)
+        if nextBatch is None and nextBatchLabels is None:
+            break
+        result = sess.run(accuracy, feed_dict={input_data: nextBatch, labels: nextBatchLabels})
+        training_result.append(result)
+
+    final_acc = sum(training_result) / len(training_result)
+    print('Final accuracy: %f ' % final_acc)
+
+    with open('./testresult.txt', 'a') as f:
+        f.write('%d-grams with iw = %s: %f\n' % (grams, treat_as_individual_word, final_acc))
 
 
-number_of_data = populate_seqlab()
-convert_to_ids()
-# learn()
-# test()
+try:
+    if len(sys.argv) < 4:
+        raise IndexError
 
+    import tensorflow as tf
+
+    treat_as_individual_word = False
+    suffix = ''
+
+    grams = int(sys.argv[1])
+    if sys.argv[2] == '1':
+        treat_as_individual_word = True
+        suffix = 'iw'
+
+    maxSeqLength = grams * 3
+
+    with codecs.open('../data/dataseq-gram' + str(grams) + suffix + '.txt', 'r', 'utf-8') as f:
+        lines = [x.strip('\n') for x in f.readlines()]
+
+    model = Word2Vec.load('../data/model' + str(grams) + suffix + '.bin')
+    wordList = np.load('../data/wordList' + str(grams) + suffix + '.npy')
+    wordList = wordList.tolist()
+    wordVector = np.load('../data/wordVector' + str(grams) + suffix + '.npy')
+    labellist = []
+    sequencelist = []
+    idsMatrixFile = '../data/idsMatrix' + str(grams) + suffix + '.npy'
+
+    """ Parameters """
+    batchSize = 24
+    lstmUnits = 64
+    numClasses = 2
+    iterations = 100000
+    numDimensions = 50
+    """ End Parameters """
+
+    number_of_data = populate_seqlab()
+    notestdata = number_of_data - int(9 / 10 * number_of_data)
+
+    print(int(notestdata))
+    if 'c' in sys.argv[3]:
+        convert_to_ids()
+    if 'l' in sys.argv[3]:
+        learn()
+    elif 't' in sys.argv[3]:
+        test()
+except IndexError:
+    print('Please enter arguments:')
+    print('argv[1] == n: n-gram.')
+    print('argv[2] == 1/0: Treating individual word or not.')
+    print('argv[3] == c: convert to ids')
+    print('argv[3] == l: learn')
+    print('argv[3] == t: test')

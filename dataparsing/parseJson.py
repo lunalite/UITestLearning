@@ -1,5 +1,6 @@
 import codecs
 import collections
+import getpass
 import json
 import operator
 import random
@@ -10,6 +11,8 @@ from os import listdir
 from os.path import isfile, join
 
 import math
+
+import sys
 from PIL import Image
 from tqdm import *
 
@@ -38,7 +41,7 @@ def pre_process(fileno, datafile):
                         text_list.append(curr_text.lower())
                         obj_list.append(json_obj)
         except Exception:
-            print(i)
+            print('Error')
     with codecs.open('../data/serverdata/dataformatted' + str(fileno) + '.json', 'w', 'utf-8') as f:
         for i in obj_list:
             f.write('{}\n'.format(json.dumps(i)))
@@ -62,7 +65,7 @@ def combine_dataformatted(datano):
 
 
 def split_to_pd(feature):
-    print('Spltting data...')
+    print('Spltting data using %s.' % feature)
     with open('../data/serverdata/dataformattedF.json', 'r') as f:
         lines = [x.strip() for x in f.readlines()]
     obj_list = []
@@ -231,6 +234,8 @@ def get_info_on_btn_distribution():
 
 
 def prep_data_for_fasttext():
+    print('\nPreparing data for fast text model...')
+
     with open('../data/pdata.txt', 'r') as f:
         pdata = [x.strip() for x in f.readlines()]
 
@@ -250,12 +255,16 @@ def prep_data_for_fasttext():
     random.shuffle(pdata)
     random.shuffle(ndata)
 
-    with codecs.open('../data/fastTextTrain.txt', 'w', 'utf-8') as f:
+    fttraintxt = '../data/fastTextTrain.txt'
+    fttesttxt = '../data/fastTextTest.txt'
+    with codecs.open(fttraintxt, 'w', 'utf-8') as f:
         for i in range(training_amt):
             f.write(pdata[i] + '\n')
             f.write(ndata[i] + '\n')
 
-    with codecs.open('../data/fastTextTest.txt', 'w', 'utf-8') as f:
+    print('Written a total of %s amount of data into %s' % (training_amt * 2, fttraintxt))
+
+    with codecs.open(fttesttxt, 'w', 'utf-8') as f:
         try:
             for i in range(training_amt, len(ndata)):
                 f.write(pdata[i] + '\n')
@@ -263,23 +272,30 @@ def prep_data_for_fasttext():
         except Exception:
             pass
 
+    print('Written a total of %s amount of data into %s' % ((len(ndata) - training_amt) * 2, fttesttxt))
+
 
 def prep_data_for_wide():
+    print('\nPreparing data for wide model...')
     n_dataset_list = []
     p_dataset_list = []
     categorydict = {}
-    with open('../data/serverdata/category.txt', 'r') as f:
+    catfile = '../data/serverdata/category.txt'
+    imgdimextfile = '../data/serverdata/img_dimension_extract.txt'
+    ndatafile = '../data/ndata.txt'
+    pdatafile = '../data/pdata.txt'
+
+    print('\nParsing %s file.' % catfile)
+    with open(catfile, 'r') as f:
         categoryinput = [x.strip() for x in tqdm(f)]
 
     for i in categoryinput:
         isp = i.split('\t')
         categorydict[isp[0]] = isp[1]
 
-    with open('../data/ndata.txt', 'r') as f:
-        ndata = [x.strip() for x in tqdm(f)]
-
-    with open('../data/serverdata/img_dimension_extract.txt', 'r') as f:
-        imgdims = [x.strip() for x in f]
+    print('\nParsing %s file.' % imgdimextfile)
+    with open(imgdimextfile, 'r') as f:
+        imgdims = [x.strip() for x in tqdm(f)]
 
     imgdict = {}
 
@@ -287,7 +303,10 @@ def prep_data_for_wide():
         isplit = i.split('\t')
         imgdict[isplit[0].split('/')[4]] = (isplit[1], isplit[2])
 
-    btn_classs = set()
+    print('\nParsing %s file.' % ndatafile)
+    with open(ndatafile, 'r') as f:
+        ndata = [x.strip() for x in tqdm(f)]
+
     for i in ndata:
         obj_loaded = json.loads(i)
         packname = obj_loaded['parent_activity_state'].split('-')[0]
@@ -295,7 +314,6 @@ def prep_data_for_wide():
         btn_text = obj_loaded['text']
         m = re.findall('{(.*?)}', obj_loaded['name'])
         btn_class = m[0]
-        btn_classs.add(btn_class)
         btn_description = m[1]
         btn_location = m[2]
         imgname = obj_loaded['parent_activity_state'] + '.png'
@@ -310,7 +328,8 @@ def prep_data_for_wide():
             btn_positional_representation = '-1'
         n_dataset_list.append((category, btn_class, btn_positional_representation, 'negative'))
 
-    with open('../data/pdata.txt', 'r') as f:
+    print('\nParsing %s file.' % pdatafile)
+    with open(pdatafile, 'r') as f:
         pdata = [x.strip() for x in tqdm(f)]
 
     for i in pdata:
@@ -320,7 +339,6 @@ def prep_data_for_wide():
         btn_text = obj_loaded['text']
         m = re.findall('{(.*?)}', obj_loaded['name'])
         btn_class = m[0]
-        btn_classs.add(btn_class)
         btn_description = m[1]
         imgname = obj_loaded['parent_activity_state'] + '.png'
         m = re.findall('\[(\d+),(\d+)\]', btn_location)
@@ -335,19 +353,24 @@ def prep_data_for_wide():
         p_dataset_list.append((category, btn_class, btn_positional_representation, 'positive'))
 
     training_amt = int(len(ndata) * 9 / 10)
-
     random.shuffle(p_dataset_list)
     random.shuffle(n_dataset_list)
-    print(btn_classs)
-    with codecs.open('../data/wnd-train.txt', 'w', 'utf-8') as f:
+
+    wndtraintxt = '../data/wnd-train.txt'
+    wndtesttxt = '../data/wnd-test.txt'
+    with codecs.open(wndtraintxt, 'w', 'utf-8') as f:
         for i in range(training_amt):
             f.write(','.join(x.lower() for x in p_dataset_list[i]) + '\n')
             f.write(','.join(x.lower() for x in n_dataset_list[i]) + '\n')
 
-    with codecs.open('../data/wnd-test.txt', 'w', 'utf-8') as f:
+    print('Written a total of %s amount of data into %s' % (training_amt * 2, wndtraintxt))
+
+    with codecs.open(wndtesttxt, 'w', 'utf-8') as f:
         for i in range(training_amt, len(n_dataset_list)):
             f.write(','.join(x.lower() for x in p_dataset_list[i]) + '\n')
             f.write(','.join(x.lower() for x in n_dataset_list[i]) + '\n')
+
+    print('Written a total of %s amount of data into %s' % ((len(n_dataset_list) - training_amt) * 2, wndtraintxt))
 
 
 def extract_and_combine_files():
@@ -371,19 +394,39 @@ class FEATURE(Enum):
     DNST_RELAXED = 3  # Twice of next_state_transition if equal to current state or not
 
 
-datadir = '/Users/hkoh006/Desktop/UITestLearning/data/serverdata/clickable'
-clickabledir = '/Users/hkoh006/Desktop/UITestLearning/data/serverdata'
+current_user = getpass.getuser()
+if current_user == 'hkoh006':
+    datadir = '/Users/hkoh006/Desktop/UITestLearning/data/serverdata/clickable'
+    clickabledir = '/Users/hkoh006/Desktop/UITestLearning/data/serverdata'
+elif current_user == 'root':
+    datadir = '/home/hongda/Document/UITestLearning/data/serverdata/clickable'
+    clickabledir = '/home/hongda/Document/UITestLearning/data/serverdata'
 
-""" Pre-processing the original data.json to remove any non-english sets of data, as well as null texts dataset """
-# extract_and_combine_files()
+try:
+    """ Pre-processing the original data.json to remove any non-english sets of data, as well as null texts dataset """
+    if 'e' in sys.argv[1]:
+        extract_and_combine_files()
 
-""" splitting dataset to positive and negative data """
-# split_to_pd(FEATURE.NST)
-# split_to_pd(FEATURE.DNST)
-# split_to_pd(FEATURE.DNST_RELAXED)
-# get_info_on_text_pd()
-# get_info_on_btn_distribution()
+    """ splitting dataset to positive and negative data """
+    if 'n' in sys.argv[1]:
+        split_to_pd(FEATURE.NST)
+    elif 'd' in sys.argv[1]:
+        split_to_pd(FEATURE.DNST)
+    elif 'r' in sys.argv[1]:
+        split_to_pd(FEATURE.DNST_RELAXED)
+    # get_info_on_text_pd()
+    # get_info_on_btn_distribution()
 
-""" Preparing data for fasttext training and classification """
-# prep_data_for_fasttext()
-prep_data_for_wide()
+    """ Preparing data for fasttext training and classification """
+    if 'f' in sys.argv[1]:
+        prep_data_for_fasttext()
+    elif 'w' in sys.argv[1]:
+        prep_data_for_wide()
+except IndexError:
+    print('Please enter arguments:')
+    print('argv[1] == e: extract and combine files')
+    print('argv[1] == n: split to pd with NST')
+    print('argv[1] == d: split to pd with DNST')
+    print('argv[1] == r: split to pd with DNST relaxed')
+    print('argv[1] == f: preparing data for fasttext')
+    print('argv[1] == w: preparing data for wide model')

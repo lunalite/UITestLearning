@@ -75,8 +75,11 @@ Or some which there are no clickables(flash games) Or those that require login a
 
 ## Updates
 ### 1 Februrary 2018
-* Logistic regression trained. 
-
+* Logistic regression trained.
+* Added sys arg support for easier usage. 
+* Added testing of model for RNN and returning the accuracy onto a file 
+* Added implementation for RAND_BUTTON, BACK, SCROLL UP, SCROLL DOWN, FLING HORIZONTAL in the case of gen_embedding
+ 
 ### 30 January 2018
 * Added positional conversion.
 * Added RNN split as individual words using space as delimiter without taking into account punctuations

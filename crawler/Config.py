@@ -25,7 +25,7 @@ class Config:
     mongoPort = 27017
 
     # Set the name for widget to number representation
-    classwidgetdict = '../data/classWidget.txt'
+    classwidgetdict = '../data/serverdata/classWidget.txt'
 
     # Probability of flinging the screen if scrollable is found
     # not flinging, fling up, fling down
