@@ -8,6 +8,7 @@ from gensim.models import Word2Vec
 from tqdm import *
 
 with codecs.open('../data/serverdata/sequence_combination.txt', 'r', 'utf-8') as f:
+    # with codecs.open('../data/serverdata/test.txt', 'r', 'utf-8') as f:
     lines = [x.strip('\n') for x in f.readlines()]
 
 dataset = []
@@ -28,7 +29,6 @@ suffix = ''
 try:
     grams = int(sys.argv[1])
     if sys.argv[2] == '1':
-        print('y')
         suffix = 'iw'
         treat_as_individual_word = True
     elif sys.argv[2] == '11':
@@ -45,15 +45,17 @@ except IndexError:
 
 def append_to_temp(tempstr, _templist, _labeltemplist):
     _lsplit = tempstr.split('\t')
-    _templist.append(_lsplit[1])
-    _labeltemplist.append(_lsplit[2])
+    if len(_lsplit) > 3:
+        _templist.append(_lsplit[2])
+    else:
+        _templist.append(_lsplit[1])
+    _labeltemplist.append(_lsplit[-1])
     if len(_lsplit) < 3:
         print(_lsplit)
     return False, ''
 
 
 for line in tqdm(lines):
-
     if re.search('===START', line):
         if name_diff_line:
             name_diff_line, name_diff_temp = append_to_temp(name_diff_temp, templist, labeltemplist)
@@ -90,10 +92,12 @@ for line in tqdm(lines):
             bibendum. Sed volutpat urna quis nisi vulputate egestas. Etiam eu dui a enim lacinia dapibus. 
             Pellentesque habitant morbi tristique senectus et netus et malesuada fames ac turpis egestas. '''
             if name_diff_line:
-                if len(name_diff_temp.split('\t')) == 3:
+                if len(name_diff_temp.split('\t')) == 3 and (
+                        name_diff_temp.split('\t')[2] == 'negative' or name_diff_temp.split('\t')[2] == 'positive'):
                     name_diff_line, name_diff_temp = append_to_temp(name_diff_temp, templist, labeltemplist)
             elif multi_line:
-                if len(multi_line_temp.split('\t')) == 3:
+                if len(multi_line_temp.split('\t')) == 3 and (
+                        multi_line_temp.split('\t')[2] == 'negative' or multi_line_temp.split('\t')[2] == 'positive'):
                     multi_line, multi_line_temp = append_to_temp(multi_line_temp, templist, labeltemplist)
 
             if not re.search('^{.+}-{.*}-{.+}', line) and re.search('^{.+', line):
@@ -124,49 +128,42 @@ for line in tqdm(lines):
             templist.append('~!@#back#@!~')
         elif lsplit[0] == 'FLING HORIZONTAL':
             templist.append('~!@#flinghoriz#@!~')
-        templist.append(lsplit[1])
+        else:
+            templist.append(lsplit[1])
         labeltemplist.append(lsplit[2])
 
-i = 0
 if treat_as_individual_word:
-    while i < len(dataset):
+    for i in range(len(dataset)):
         tempdataset = []
-        if treat_all_null_as_invalid:
-            checkset = set(dataset[i])
-            if len(checkset) == 1:
-                pass
-                # print(checkset)
-            if len(checkset) == 1 and list(checkset)[0] == '':
-                print('YYYY')
-                i += 1
-                continue
-
         for x in range(len(dataset[i])):
             if dataset[i][x] == '':
                 tempdataset.append('~!@#null#@!~')
             else:
                 tempdataset.append(dataset[i][x].lower().split(' '))
         dataset[i] = tempdataset
-        i += 1
 else:
-    while i < len(dataset):
-        if treat_all_null_as_invalid:
-            checkset = set(dataset[i])
-            if len(checkset) == 1 and list(checkset)[0] == '':
-                continue
-
+    for i in range(len(dataset)):
         for x in range(len(dataset[i])):
             if dataset[i][x] == '':
                 dataset[i][x] = '~!@#null#@!~'
             else:
                 dataset[i][x] = dataset[i][x].lower()
-        i += 1
 
 newdata = []
 newlabel = []
 for i in range(len(dataset)):
     if len(dataset[i]) >= grams:
         for j in range(len(dataset[i]) - grams + 1):
+            if treat_all_null_as_invalid:
+                checkset = set()
+                for item in dataset[i][j:j + grams]:
+                    if type(item) == list:
+                        for itema in item:
+                            checkset.add(itema)
+                    else:
+                        checkset.add(item)
+                if len(checkset) == 1 and list(checkset)[0] == '~!@#null#@!~':
+                    continue
             newdata.append(dataset[i][j:j + grams])
             newlabel.append(labeldataset[i][j + grams - 1])
 print('Number of newdata: %d' % len(newdata))
@@ -220,4 +217,5 @@ for i in range(len(wordList)):
 np.save('../data/wordVector' + str(grams) + suffix, wordVector)
 np.save('../data/wordList' + str(grams) + suffix, np.array(wordList))
 
-print('\nCompleted generating word embedding for %d-gram with iw set to %s' % (grams, treat_as_individual_word))
+print('\nCompleted generating word embedding for %d-gram with iw set to %s and treating null invalid set to %s' % (
+grams, treat_as_individual_word, treat_all_null_as_invalid))

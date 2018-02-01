@@ -79,6 +79,7 @@ Or some which there are no clickables(flash games) Or those that require login a
 * Added sys arg support for easier usage. 
 * Added testing of model for RNN and returning the accuracy onto a file 
 * Added implementation for RAND_BUTTON, BACK, SCROLL UP, SCROLL DOWN, FLING HORIZONTAL in the case of gen_embedding
+* Added function for turning all null sequence to invalid
  
 ### 30 January 2018
 * Added positional conversion.

@@ -211,6 +211,10 @@ try:
     if sys.argv[2] == '1':
         treat_as_individual_word = True
         suffix = 'iw'
+    elif sys.argv[2] == '11':
+        suffix = 'iwin'
+        treat_as_individual_word = True
+        treat_all_null_as_invalid = True
 
     maxSeqLength = grams * 3
 
@@ -247,6 +251,8 @@ except IndexError:
     print('Please enter arguments:')
     print('argv[1] == n: n-gram.')
     print('argv[2] == 1/0: Treating individual word or not.')
+    print('argv[2] == 1/0: Treating individual word or not.')
+    print('argv[2] == 11/01: Treat all null sequence as invalid.')
     print('argv[3] == c: convert to ids')
     print('argv[3] == l: learn')
     print('argv[3] == t: test')
