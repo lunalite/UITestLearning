@@ -23,7 +23,7 @@ wordList = set()
 
 """Change value"""
 grams = 4
-treat_as_individual_word = True
+treat_as_individual_word = False
 """END Change value"""
 
 if treat_as_individual_word:

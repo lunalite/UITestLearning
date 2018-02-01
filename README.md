@@ -74,6 +74,9 @@ Or some which there are no clickables(flash games) Or those that require login a
 * CNN?
 
 ## Updates
+### 1 Februrary 2018
+* Logistic regression trained. 
+
 ### 30 January 2018
 * Added positional conversion.
 * Added RNN split as individual words using space as delimiter without taking into account punctuations

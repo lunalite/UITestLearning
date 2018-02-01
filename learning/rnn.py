@@ -1,5 +1,6 @@
 from gensim.models import Word2Vec
 from random import randint
+from tqdm import *
 
 import tensorflow as tf
 import numpy as np
@@ -9,7 +10,8 @@ import math
 
 """Change value"""
 grams = 4
-treat_as_individual_word = True
+treat_as_individual_word = False
+maxSeqLength = grams
 """END Change value"""
 
 if treat_as_individual_word:
@@ -47,10 +49,10 @@ def convert_to_ids():
     wordCount = []
     for i in sequencelist:
         wordCount.append(len(i.split('\t')))
-    maxLength = math.ceil(sum(wordCount) / len(wordCount))
+    maxLength = math.ceil(sum(wordCount) / len(wordCount)) if treat_as_individual_word else grams
     ids = np.zeros((number_of_data, maxLength), dtype='int32')
     fileCounter = 0
-    for i in sequencelist:
+    for i in tqdm(sequencelist):
         lsplit = i.split('\t')
         indexCounter = 0
         for section in lsplit:
@@ -70,11 +72,12 @@ def convert_to_ids():
 """ Start of RNN """
 
 """ Perimeters """
-batchSize = 24
+batchSize = 40
+# batchSize = 24
 lstmUnits = 64
 numClasses = 2
 iterations = 100000
-maxSeqLength = grams + 1
+# iterations = 500000
 numDimensions = 50
 """ End Perimeters """
 
@@ -167,6 +170,40 @@ def learn():
     writer.close()
 
 
+def test():
+    ids = np.load('../data/idsMatrix' + str(grams) + suffix + '.npy')
+
+    labels = tf.placeholder(tf.float32, [batchSize, numClasses])
+    input_data = tf.placeholder(tf.int32, [batchSize, maxSeqLength])
+
+    data = tf.Variable(tf.zeros([batchSize, maxSeqLength, numDimensions]), dtype=tf.float32)
+    data = tf.nn.embedding_lookup(wordVector, input_data)
+
+    lstmCell = tf.contrib.rnn.BasicLSTMCell(lstmUnits)
+    lstmCell = tf.contrib.rnn.DropoutWrapper(cell=lstmCell, output_keep_prob=0.75)
+    value, _ = tf.nn.dynamic_rnn(lstmCell, data, dtype=tf.float32)
+
+    weight = tf.Variable(tf.truncated_normal([lstmUnits, numClasses]))
+    bias = tf.Variable(tf.constant(0.1, shape=[numClasses]))
+    value = tf.transpose(value, [1, 0, 2])
+    last = tf.gather(value, int(value.get_shape()[0]) - 1)
+    prediction = (tf.matmul(last, weight) + bias)
+
+    correctPred = tf.equal(tf.argmax(prediction, 1), tf.argmax(labels, 1))
+    accuracy = tf.reduce_mean(tf.cast(correctPred, tf.float32))
+
+    sess = tf.InteractiveSession()
+    saver = tf.train.Saver()
+    saver.restore(sess, tf.train.latest_checkpoint('models'))
+
+    iterationsTest = 10
+    for i in range(iterationsTest):
+        nextBatch, nextBatchLabels = getTestBatch(ids)
+        print("Accuracy for this batch:", (sess.run(accuracy, {input_data: nextBatch, labels: nextBatchLabels})) * 100)
+
+
 number_of_data = populate_seqlab()
-# convert_to_ids()
-learn()
+convert_to_ids()
+# learn()
+# test()
+
