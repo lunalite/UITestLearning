@@ -1,11 +1,12 @@
 import codecs
 import re
+from itertools import chain
 
 import numpy as np
 from gensim.models import Word2Vec
 from tqdm import *
 
-with codecs.open('../data/sequence_combination.txt', 'r', 'utf-8') as f:
+with codecs.open('../data/serverdata/sequence_combination.txt', 'r', 'utf-8') as f:
     lines = [x.strip('\n') for x in f.readlines()]
 
 dataset = []
@@ -19,6 +20,16 @@ name_diff_temp = ''
 multi_line = False
 multi_line_temp = ''
 wordList = set()
+
+"""Change value"""
+grams = 4
+treat_as_individual_word = True
+"""END Change value"""
+
+if treat_as_individual_word:
+    suffix = 'iw'
+else:
+    suffix = ''
 
 
 def append_to_temp(tempstr, _templist, _labeltemplist):
@@ -94,12 +105,22 @@ for line in tqdm(lines):
         templist.append(lsplit[1])
         labeltemplist.append(lsplit[2])
 
-for i in range(len(dataset)):
-    dataset[i] = [x.lower() for x in dataset[i]]
-
-"""Change value"""
-grams = 4
-"""END Change value"""
+if treat_as_individual_word:
+    for i in range(len(dataset)):
+        tempdataset = []
+        for x in range(len(dataset[i])):
+            if dataset[i][x] == '':
+                tempdataset.append('~!@#null#@!~')
+            else:
+                tempdataset.append(dataset[i][x].lower().split(' '))
+        dataset[i] = tempdataset
+else:
+    for i in range(len(dataset)):
+        for x in range(len(dataset[i])):
+            if dataset[i][x] == '':
+                dataset[i][x] = '~!@#null#@!~'
+            else:
+                dataset[i][x] = dataset[i][x].lower()
 
 newdata = []
 newlabel = []
@@ -111,24 +132,49 @@ for i in range(len(dataset)):
 print(len(newdata))
 print(len(newlabel))
 
-with codecs.open('../data/dataseq-gram' + str(grams) + '.txt', 'w', 'utf-8') as f:
+with codecs.open('../data/dataseq-gram' + str(grams) + suffix + '.txt', 'w', 'utf-8') as f:
     for i in range(len(newdata)):
         f.write(newlabel[i] + ':::')
-        f.write('\t'.join(newdata[i]))
-        f.write('\n')
-        print(newdata[i])
-        for word in newdata[i]:
-            wordList.add(word)
+        if treat_as_individual_word:
+            tempsection = []
+            for section in newdata[i]:
+                if type(section) == list:
+                    for word in section:
+                        tempsection.append(word)
+                else:
+                    tempsection.append(section)
+            f.write('\t'.join(tempsection))
+            f.write('\n')
+            for word in tempsection:
+                wordList.add(word)
+        else:
+            f.write('\t'.join(newdata[i]))
+            f.write('\n')
+            for word in newdata[i]:
+                wordList.add(word)
+
+# print(wordList)
 
 # word embedding model
-model = Word2Vec(dataset, min_count=1, size=50)
+flattened_dataset=[]
+for sentence in dataset:
+    tempdata = []
+    for data in sentence:
+        if type(data) == list:
+            for x in data:
+                tempdata.append(x)
+        else:
+            tempdata.append(data)
+    flattened_dataset.append(tempdata)
+
+model = Word2Vec(flattened_dataset, min_count=1, size=50)
 words = list(model.wv.vocab)
-model.save('../data/model.bin')
-new_model = Word2Vec.load('../data/model.bin')
+model.save('../data/model' + str(grams) + suffix + '.bin')
+new_model = Word2Vec.load('../data/model' + str(grams) + suffix + '.bin')
 wordVector = np.zeros((len(wordList), 50), dtype='float32')
 wordList = list(wordList)
 for i in range(len(wordList)):
     wordVector[i][:] = model.wv[wordList[i]]
 
-np.save('../data/wordVector' + str(grams), wordVector)
-np.save('../data/wordList' + str(grams), np.array(wordList))
+np.save('../data/wordVector' + str(grams) + suffix, wordVector)
+np.save('../data/wordList' + str(grams) + suffix, np.array(wordList))

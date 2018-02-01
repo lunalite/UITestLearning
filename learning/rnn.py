@@ -5,17 +5,25 @@ import tensorflow as tf
 import numpy as np
 import codecs
 import datetime
+import math
 
-grams = 3
+"""Change value"""
+grams = 4
+treat_as_individual_word = True
+"""END Change value"""
 
-with codecs.open('../data/dataseq-gram' + str(grams) + '.txt', 'r', 'utf-8') as f:
+if treat_as_individual_word:
+    suffix = 'iw'
+else:
+    suffix = ''
+
+with codecs.open('../data/dataseq-gram' + str(grams) + suffix + '.txt', 'r', 'utf-8') as f:
     lines = [x.strip('\n') for x in f.readlines()]
 
-model = Word2Vec.load('../data/model.bin')
-print(model.wv[''])
-wordList = np.load('../data/wordList' + str(grams) + '.npy')
+model = Word2Vec.load('../data/model' + str(grams) + suffix + '.bin')
+wordList = np.load('../data/wordList' + str(grams) + suffix + '.npy')
 wordList = wordList.tolist()
-wordVector = np.load('../data/wordVector' + str(grams) + '.npy')
+wordVector = np.load('../data/wordVector' + str(grams) + suffix + '.npy')
 labellist = []
 sequencelist = []
 
@@ -36,18 +44,27 @@ def populate_seqlab():
 
 def convert_to_ids():
     """ Converting of text into ids """
-    ids = np.zeros((number_of_data, grams), dtype='int32')
+    wordCount = []
+    for i in sequencelist:
+        wordCount.append(len(i.split('\t')))
+    maxLength = math.ceil(sum(wordCount) / len(wordCount))
+    ids = np.zeros((number_of_data, maxLength), dtype='int32')
     fileCounter = 0
     for i in sequencelist:
         lsplit = i.split('\t')
         indexCounter = 0
         for section in lsplit:
-            ids[fileCounter][indexCounter] = wordList.index(section)
+            try:
+                ids[fileCounter][indexCounter] = wordList.index(section)
+            except Exception:
+                print(section)
             indexCounter += 1
+            if indexCounter >= maxLength:
+                break
         fileCounter += 1
 
     print(ids)
-    np.save('idsMatrix' + str(grams), ids)
+    np.save('../data/idsMatrix' + str(grams) + suffix, ids)
 
 
 """ Start of RNN """
@@ -57,7 +74,7 @@ batchSize = 24
 lstmUnits = 64
 numClasses = 2
 iterations = 100000
-maxSeqLength = grams
+maxSeqLength = grams + 1
 numDimensions = 50
 """ End Perimeters """
 
@@ -97,7 +114,7 @@ def getTestBatch(ids):
 
 
 def learn():
-    ids = np.load('../data/idsMatrix' + str(grams) + '.npy')
+    ids = np.load('../data/idsMatrix' + str(grams) + suffix + '.npy')
 
     tf.reset_default_graph()
 
@@ -151,5 +168,5 @@ def learn():
 
 
 number_of_data = populate_seqlab()
-# convert_to_ids(number_of_data)
+# convert_to_ids()
 learn()

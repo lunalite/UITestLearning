@@ -76,6 +76,7 @@ Or some which there are no clickables(flash games) Or those that require login a
 ## Updates
 ### 30 January 2018
 * Added positional conversion.
+* Added RNN split as individual words using space as delimiter without taking into account punctuations
 
 ### 29 January 2018
 * Reorganized the directory into respective packages.

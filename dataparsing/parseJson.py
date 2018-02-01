@@ -17,6 +17,7 @@ from crawler.Config import Config
 
 
 def pre_process(fileno, datafile):
+    print('Opening file ' + str(fileno) + ': ' + datafile)
     with codecs.open(datafile, "r", 'utf-8') as f:
         datainput = [x.strip() for x in tqdm(f)]
     text_list = []
@@ -38,15 +39,15 @@ def pre_process(fileno, datafile):
                         obj_list.append(json_obj)
         except Exception:
             print(i)
-    with codecs.open('../data/dataformatted' + str(fileno) + '.json', 'w', 'utf-8') as f:
+    with codecs.open('../data/serverdata/dataformatted' + str(fileno) + '.json', 'w', 'utf-8') as f:
         for i in obj_list:
             f.write('{}\n'.format(json.dumps(i)))
 
 
 def combine_dataformatted(datano):
     datainput = {}
-    for i in range(1, datano):
-        with codecs.open('../data/dataformatted' + str(i) + '.json', "r", 'utf-8') as f:
+    for i in range(1, datano + 1):
+        with codecs.open('../data/serverdata/dataformatted' + str(i) + '.json', "r", 'utf-8') as f:
             datainput[i] = [x.strip() for x in tqdm(f)]
     text_list = []
     obj_list = []
@@ -55,14 +56,14 @@ def combine_dataformatted(datano):
             json_obj = json.loads(item)
             obj_list.append(json_obj)
 
-    with codecs.open('../data/dataformattedF.json', 'w', 'utf-8') as f:
+    with codecs.open('../data/serverdata/dataformattedF.json', 'w', 'utf-8') as f:
         for i in obj_list:
             f.write('{}\n'.format(json.dumps(i)))
 
 
 def split_to_pd(feature):
     print('Spltting data...')
-    with open('../data/dataformattedF.json', 'r') as f:
+    with open('../data/serverdata/dataformattedF.json', 'r') as f:
         lines = [x.strip() for x in f.readlines()]
     obj_list = []
     next_ts_list = []
@@ -219,7 +220,7 @@ def get_info_on_btn_distribution():
         pscoredictavg[k] = sum(pscoredict[k]) / len(pscoredict[k])
 
     sorted_pscoredictavg = sorted(pscoredictavg.items(), key=operator.itemgetter(1), reverse=True)
-    with open('../datapscoreavg.txt', 'w') as f:
+    with open('../data/pscoreavg.txt', 'w') as f:
         f.write('avg_s\t\t|len_arr\t|text\n')
         f.write('==========================\n')
         for v in sorted_pscoredictavg:
@@ -263,15 +264,11 @@ def prep_data_for_fasttext():
             pass
 
 
-def prep_data_for_wide_deep():
-    """
-    39,State-gov,77516,Bachelors,13,Never-married,Adm-clerical,Not-in-family,White,Male,2174,0,40,United-States,<=50K
-    50,Self-emp-not-inc,83311,Bachelors,13,Married-civ-spouse,Exec-managerial,Husband,White,Male,0,0,13,United-States,<=50K
-    """
+def prep_data_for_wide():
     n_dataset_list = []
     p_dataset_list = []
     categorydict = {}
-    with open('../data/category.txt', 'r') as f:
+    with open('../data/serverdata/category.txt', 'r') as f:
         categoryinput = [x.strip() for x in tqdm(f)]
 
     for i in categoryinput:
@@ -281,7 +278,7 @@ def prep_data_for_wide_deep():
     with open('../data/ndata.txt', 'r') as f:
         ndata = [x.strip() for x in tqdm(f)]
 
-    with open('../data/img_dimension_extract.txt', 'r') as f:
+    with open('../data/serverdata/img_dimension_extract.txt', 'r') as f:
         imgdims = [x.strip() for x in f]
 
     imgdict = {}
@@ -290,6 +287,7 @@ def prep_data_for_wide_deep():
         isplit = i.split('\t')
         imgdict[isplit[0].split('/')[4]] = (isplit[1], isplit[2])
 
+    btn_classs = set()
     for i in ndata:
         obj_loaded = json.loads(i)
         packname = obj_loaded['parent_activity_state'].split('-')[0]
@@ -297,6 +295,7 @@ def prep_data_for_wide_deep():
         btn_text = obj_loaded['text']
         m = re.findall('{(.*?)}', obj_loaded['name'])
         btn_class = m[0]
+        btn_classs.add(btn_class)
         btn_description = m[1]
         btn_location = m[2]
         imgname = obj_loaded['parent_activity_state'] + '.png'
@@ -321,6 +320,7 @@ def prep_data_for_wide_deep():
         btn_text = obj_loaded['text']
         m = re.findall('{(.*?)}', obj_loaded['name'])
         btn_class = m[0]
+        btn_classs.add(btn_class)
         btn_description = m[1]
         imgname = obj_loaded['parent_activity_state'] + '.png'
         m = re.findall('\[(\d+),(\d+)\]', btn_location)
@@ -338,7 +338,7 @@ def prep_data_for_wide_deep():
 
     random.shuffle(p_dataset_list)
     random.shuffle(n_dataset_list)
-
+    print(btn_classs)
     with codecs.open('../data/wnd-train.txt', 'w', 'utf-8') as f:
         for i in range(training_amt):
             f.write(','.join(x.lower() for x in p_dataset_list[i]) + '\n')
@@ -357,10 +357,11 @@ def extract_and_combine_files():
         if re.match('^clickable\d+\.json$', i) is not None:
             no_of_data += 1
     print('Extracting and combining %d files...' % no_of_data)
-    for i in range(1, no_of_data):
-        print('Extracting file %d' % i)
+    for i in range(1, no_of_data + 1):
+        print('\nExtracting file %d' % i)
         datafile = datadir + str(i) + '.json'
         pre_process(i, datafile)
+    print('\nCombining files...')
     combine_dataformatted(no_of_data)
 
 
@@ -370,8 +371,8 @@ class FEATURE(Enum):
     DNST_RELAXED = 3  # Twice of next_state_transition if equal to current state or not
 
 
-datadir = '/Users/hkoh006/Desktop/UITestLearning/data/clickable'
-clickabledir = '/Users/hkoh006/Desktop/UITestLearning/data'
+datadir = '/Users/hkoh006/Desktop/UITestLearning/data/serverdata/clickable'
+clickabledir = '/Users/hkoh006/Desktop/UITestLearning/data/serverdata'
 
 """ Pre-processing the original data.json to remove any non-english sets of data, as well as null texts dataset """
 # extract_and_combine_files()
@@ -385,4 +386,4 @@ clickabledir = '/Users/hkoh006/Desktop/UITestLearning/data'
 
 """ Preparing data for fasttext training and classification """
 # prep_data_for_fasttext()
-prep_data_for_wide_deep()
+prep_data_for_wide()

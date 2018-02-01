@@ -12,3 +12,4 @@ dataparsing/*.json
 *.npy
 learning/tensorboard/
 learning/models/
+data/
