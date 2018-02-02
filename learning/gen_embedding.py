@@ -35,6 +35,10 @@ try:
         suffix = 'iwin'
         treat_as_individual_word = True
         treat_all_null_as_invalid = True
+    elif sys.argv[2] == '01':
+        suffix = 'in'
+        treat_all_null_as_invalid = True
+
 except IndexError:
     print('Please enter arguments:')
     print('argv[1] == n: n-gram.')
