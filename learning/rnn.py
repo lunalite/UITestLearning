@@ -125,7 +125,7 @@ def learn():
     correctPred = tf.equal(tf.argmax(prediction, 1), tf.argmax(labels, 1))
     accuracy = tf.reduce_mean(tf.cast(correctPred, tf.float32))
 
-    loss = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(logits=prediction, labels=labels))
+    loss = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits_v2(logits=prediction, labels=labels))
     optimizer = tf.train.AdamOptimizer().minimize(loss)
 
     sess = tf.InteractiveSession()
@@ -243,7 +243,6 @@ try:
     number_of_data = populate_seqlab()
     notestdata = number_of_data - int(9 / 10 * number_of_data)
 
-    print(int(notestdata))
     if 'c' in sys.argv[3]:
         convert_to_ids()
     if 'l' in sys.argv[3]:

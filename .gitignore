@@ -13,3 +13,5 @@ dataparsing/*.json
 learning/tensorboard/
 learning/models/
 data/
+data.xlsx
+~*
