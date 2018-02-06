@@ -1,15 +1,14 @@
-import codecs
 from os import listdir
 from os.path import isfile, join
-
+from tqdm import *
 import re
-
+import codecs
 import sys
 
 directory = sys.argv[1]
 sequence_list = []
 onlyfiles = [f for f in listdir(directory) if isfile(join(directory, f))]
-for file in onlyfiles:
+for file in tqdm(onlyfiles):
     if file.endswith('.txt'):
         with codecs.open(join(directory, file), 'r', 'utf-8') as f:
             lines = [x.strip() for x in f.readlines()]
@@ -26,7 +25,7 @@ for file in onlyfiles:
                     sequence_list.append('===CLOSE')
                     continue
                 if not re.search('\t', line):
-                    sequence_list[-1][-2] = sequence_list[-1][-2] + '\n' + line
+                    sequence_list[-1][-2] = sequence_list[-1][-2] + '\\n' + line
                     continue
                 lsplit = line.split('\t')
                 if len(lsplit) == 2:

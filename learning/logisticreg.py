@@ -27,11 +27,11 @@ parser.add_argument(
     '--batch_size', type=int, default=40, help='Number of examples per batch.')
 
 parser.add_argument(
-    '--train_data', type=str, default='../data/wnd-train.txt',
+    '--train_data', type=str, default='../data/w-train.txt',
     help='Path to the training data.')
 
 parser.add_argument(
-    '--test_data', type=str, default='../data/wnd-test.txt',
+    '--test_data', type=str, default='../data/w-test.txt',
     help='Path to the test data.')
 
 _NUM_EXAMPLES = {

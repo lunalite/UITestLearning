@@ -75,7 +75,10 @@ Or some which there are no clickables(flash games) Or those that require login a
 
 ## Updates
 ### 6 Februrary 2018
-* Added implementation to gather button state from sequences as well. 
+* Added implementation to gather button state from sequences as well.
+* Dataset 12
+* Changed implemenetion for newline in sequence extraction to \_NEWLINE\_ for easier parsing
+* Changed name for wnd-test.txt in the usage of wide model to just w-test.txt and w-train.txt, saving the naming for wnd-train.txt for wide and deep model instead.  
 
 ### 1 Februrary 2018
 * Logistic regression trained.
