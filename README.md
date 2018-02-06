@@ -74,6 +74,9 @@ Or some which there are no clickables(flash games) Or those that require login a
 * CNN?
 
 ## Updates
+### 6 Februrary 2018
+* Added implementation to gather button state from sequences as well. 
+
 ### 1 Februrary 2018
 * Logistic regression trained.
 * Added sys arg support for easier usage. 

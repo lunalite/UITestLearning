@@ -53,15 +53,15 @@ def build_model_columns():
             'libraries_and_demo', 'weather', 'books_and_reference', 'entertainment', 'education', 'game_puzzle',
             'game_trivia', 'medical', 'comics', 'game_sports'])
 
-    position = tf.feature_column.categorical_column_with_vocabulary_list(
-        'position', [
-            '-1', '1', '2', '3', '4', '5', '6', '7', '8', '9'])
-
     btnclass = tf.feature_column.categorical_column_with_vocabulary_list(
         'btnclass', [
             'EditText', 'RadioButton', 'CheckedTextView', 'CompoundButton', 'ImageView', 'TextInputLayout', 'Button',
             'MultiAutoCompleteTextView', 'ToggleButton', 'CheckBox', 'TextView', 'RelativeLayout', 'View',
             'DigitalClock', 'Switch'])
+
+    position = tf.feature_column.categorical_column_with_vocabulary_list(
+        'position', [
+            '-1', '1', '2', '3', '4', '5', '6', '7', '8', '9'])
 
     # Wide columns and deep columns.
     base_columns = [
