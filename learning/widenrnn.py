@@ -1,35 +1,79 @@
 import numpy as np
 import codecs
-import tensorflow as tf
+# import tensorflow as tf
+import sys
 
-category = {
-    'tools', 'game_simulation', 'game_word', 'personalization', 'media_and_video', 'shopping',
-    'game_role_playing', 'productivity', 'game_educational', 'game_action', 'social', 'news_and_magazines',
-    'game_arcade', 'game_casino', 'health_and_fitness', 'lifestyle', 'photography', 'game_strategy',
-    'communication', 'game_adventure', 'game_card', 'game_board', 'transportation', 'game_music', 'business',
-    'game_casual', 'sports', 'game_racing', 'finance', 'travel_and_local', 'music_and_audio',
-    'libraries_and_demo', 'weather', 'books_and_reference', 'entertainment', 'education', 'game_puzzle',
-    'game_trivia', 'medical', 'comics', 'game_sports'}
-btnclass = {
-    'EditText', 'RadioButton', 'CheckedTextView', 'CompoundButton', 'ImageView', 'TextInputLayout', 'Button',
-    'MultiAutoCompleteTextView', 'ToggleButton', 'CheckBox', 'TextView', 'RelativeLayout', 'View',
-    'DigitalClock', 'Switch'}
-position = {'-1', '1', '2', '3', '4', '5', '6', '7', '8', '9'}
+category = ['TOOLS', 'GAME_SIMULATION', 'GAME_WORD', 'PERSONALIZATION', 'MEDIA_AND_VIDEO', 'SHOPPING',
+            'GAME_ROLE_PLAYING', 'PRODUCTIVITY', 'GAME_EDUCATIONAL', 'GAME_ACTION', 'SOCIAL', 'NEWS_AND_MAGAZINES',
+            'GAME_ARCADE', 'GAME_CASINO', 'HEALTH_AND_FITNESS', 'LIFESTYLE', 'PHOTOGRAPHY', 'GAME_STRATEGY',
+            'COMMUNICATION', 'GAME_ADVENTURE', 'GAME_CARD', 'GAME_BOARD', 'TRANSPORTATION', 'GAME_MUSIC', 'BUSINESS',
+            'GAME_CASUAL', 'SPORTS', 'GAME_RACING', 'FINANCE', 'TRAVEL_AND_LOCAL', 'MUSIC_AND_AUDIO',
+            'LIBRARIES_AND_DEMO', 'WEATHER', 'BOOKS_AND_REFERENCE', 'ENTERTAINMENT', 'EDUCATION', 'GAME_PUZZLE',
+            'GAME_TRIVIA', 'MEDICAL', 'COMICS', 'GAME_SPORTS', '#']
+
+btnclass = ['TimePicker', 'e', 'WebView', 'HorizontalListView', 'ViewPager', 'ViewGroup', 'ImageButton', 'DrawerLayout',
+            'ak', 'ImageView', 'MultiAutoCompleteTextView', 'RadioGroup', 'da', 'TableLayout', 'TwoLineListItem',
+            'TextView', 'ai', 'Image', 'a$f', 'd', 'EditText', 'HorizontalScrollView', 'SeekBar', 'View', 'CheckBox',
+            'dd', 'ImageSwitcher', 'TableRow', 'ViewSwitcher', 'CheckedFrameLayout', 'Switch', 'HListView', 'ci',
+            'ScrollView', 'SearchView', 'ActionBar$a', 'ActionBar$b', 'CheckedTextView', 'ProgressBar', 'TwoWayView',
+            'SwitchCompat', 'TextInputLayout', 'cs', 'c', 'RecyclerView', 'ar', 'ViewFlipper', 'ap', 'GridLayout', 'aj',
+            'LinearLayout', 'ch', 'Button', 'a$d', 'RadioButton', 'a$c', 'ToggleButton', 'MenuItem', 'Gallery', 'ao',
+            'Spinner', 'an', 'VideoView', 'b', 'DigitalClock', 'ji$c', 'am', 'a$b', 'CompoundButton', 'ActionBar$Tab',
+            'ZoomButton', 'cz', 'RelativeLayout', 'al', 'aq', 'ListView', 'RatingBar', 'ActionBar$c', 'FrameLayout',
+            'ag', 'LinearLayoutCompat']
+
+position = ['-1', '1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12', '13', '14', '15']
 
 batch_size = 24
-
-with codecs.open('../data/wnd-train.txt', 'r') as f:
-    lines = [x.strip() for x in f.readlines()]
-
+treat_as_individual_word = False
+treat_all_null_as_invalid = False
+suffix = ''
 data = []
 labels = []
-np.zeros([batch_size, 3], dtype='int32')
+maxSeqLength = 3
+fileCounter = 0
+try:
+    grams = int(sys.argv[1])
+    if sys.argv[2] == '10':
+        suffix = 'iw'
+        treat_as_individual_word = True
+    elif sys.argv[2] == '00':
+        pass
+    elif sys.argv[2] == '11':
+        suffix = 'iwin'
+        treat_as_individual_word = True
+        treat_all_null_as_invalid = True
+    elif sys.argv[2] == '01':
+        suffix = 'in'
+        treat_all_null_as_invalid = True
+except IndexError:
+    print('Please enter arguments:')
+    print('argv[1] == n: n-gram.')
+    print('argv[2] == 10/00: Treating individual word or not.')
+    print('argv[2] == 11/01: Treat all null sequence as invalid.')
+    exit(1)
+
+with codecs.open('../data/datawide-gram' + str(grams) + suffix + '.txt', 'r') as f:
+    lines = [x.strip() for x in f.readlines()]
+
+number_of_data = len(lines)
+ids = np.zeros([number_of_data, maxSeqLength], dtype='int32')
 for line in lines:
-    lsplit = line.split(',')
-    print(lsplit)
+    lsplit = line.split(':::')
+    if len(lsplit) == 1:
+        pass
+    else:
+        ssplit = lsplit[1].split('\t')
+        assert len(ssplit) == 3
+        try:
+            ids[fileCounter][0] = category.index(ssplit[0])
+            ids[fileCounter][1] = btnclass.index(ssplit[1])
+            ids[fileCounter][2] = position.index(ssplit[2])
+            fileCounter += 1
+        except ValueError:
+            print(line)
 
-    break
-
+print(ids.shape)
 # Parameters
 # learning_rate = 0.01
 # training_epochs = 25

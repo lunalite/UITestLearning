@@ -25,7 +25,7 @@ for file in tqdm(onlyfiles):
                     sequence_list.append('===CLOSE')
                     continue
                 if not re.search('\t', line):
-                    sequence_list[-1][-2] = sequence_list[-1][-2] + '\\n' + line
+                    sequence_list[-1][-2] = sequence_list[-1][-2] + '_NEWLINE_' + line
                     continue
                 lsplit = line.split('\t')
                 if len(lsplit) == 2:

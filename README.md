@@ -1,25 +1,4 @@
-###
-split into individual word for RNN training
-4 gram 5 grma
-parameters like n-grams, and if each sequence should be taken as text or each word as a text
-set a max text length for the sequence 
-use 
-check if the speed is too fast or not
-
-#######
-Image size for positional attributes
-start from RNN, or sentiment analysis bit by bit
-start from wide model linear regression
-
-############
-categorical: Positional representation
-like back button most likely on the top left
-submit button at bottom right/bottom left
-We can transform them into numbers like 1,2,4,5,6,
-taking center of button as placement
-continuous: text
-continuous: sequence
-categorical: btnclass
+Some positive/negative are different for buttons and for sequence
 
 
 
@@ -74,13 +53,18 @@ Or some which there are no clickables(flash games) Or those that require login a
 * CNN?
 
 ## Updates
-### 6 Februrary 2018
+### 7 February 2018
+* Improved generation of data set for wide model to match with deep model.
+* Started on doing wide logistic regression model using lower level method.  
+* Changed positioning to 3:5 or 5:3 depending on whether it is 480:800 or 800:480. Also, if image size is any different, consider the old method of 3:3.
+
+### 6 February 2018
 * Added implementation to gather button state from sequences as well.
 * Dataset 12
 * Changed implemenetion for newline in sequence extraction to \_NEWLINE\_ for easier parsing
 * Changed name for wnd-test.txt in the usage of wide model to just w-test.txt and w-train.txt, saving the naming for wnd-train.txt for wide and deep model instead.  
 
-### 1 Februrary 2018
+### 1 February 2018
 * Logistic regression trained.
 * Added sys arg support for easier usage. 
 * Added testing of model for RNN and returning the accuracy onto a file 

@@ -28,9 +28,11 @@ suffix = ''
 
 try:
     grams = int(sys.argv[1])
-    if sys.argv[2] == '1':
+    if sys.argv[2] == '10':
         suffix = 'iw'
         treat_as_individual_word = True
+    elif sys.argv[2] == '00':
+        pass
     elif sys.argv[2] == '11':
         suffix = 'iwin'
         treat_as_individual_word = True

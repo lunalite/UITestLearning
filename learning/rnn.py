@@ -27,9 +27,6 @@ def populate_seqlab():
 def convert_to_ids():
     """ Converting of text into ids """
     print('\nConverting wordList to ids...')
-    wordCount = []
-    for i in sequencelist:
-        wordCount.append(len(i.split('\t')))
     ids = np.zeros((number_of_data, maxSeqLength), dtype='int32')
     fileCounter = 0
     for i in tqdm(sequencelist):
@@ -195,7 +192,8 @@ def test():
     print('Final accuracy: %f ' % final_acc)
 
     with open('./testresult.txt', 'a') as f:
-        f.write('%d-grams with iw = %s: %f\n' % (grams, treat_as_individual_word, final_acc))
+        f.write('%d-grams with iw = %s and in = %s: %f\n' % (
+            grams, treat_as_individual_word, treat_all_null_as_invalid, final_acc))
 
 
 try:
@@ -208,9 +206,11 @@ try:
     suffix = ''
 
     grams = int(sys.argv[1])
-    if sys.argv[2] == '1':
+    if sys.argv[2] == '10':
         treat_as_individual_word = True
         suffix = 'iw'
+    elif sys.argv[2] == '00':
+        pass
     elif sys.argv[2] == '11':
         suffix = 'iwin'
         treat_as_individual_word = True
@@ -252,8 +252,7 @@ try:
 except IndexError:
     print('Please enter arguments:')
     print('argv[1] == n: n-gram.')
-    print('argv[2] == 1/0: Treating individual word or not.')
-    print('argv[2] == 1/0: Treating individual word or not.')
+    print('argv[2] == 10/00: Treating individual word or not.')
     print('argv[2] == 11/01: Treat all null sequence as invalid.')
     print('argv[3] == c: convert to ids')
     print('argv[3] == l: learn')

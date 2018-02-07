@@ -311,10 +311,8 @@ def prep_data_for_wide():
         obj_loaded = json.loads(i)
         packname = obj_loaded['parent_activity_state'].split('-')[0]
         category = categorydict[packname]
-        btn_text = obj_loaded['text']
         m = re.findall('{(.*?)}', obj_loaded['name'])
         btn_class = m[0]
-        btn_description = m[1]
         btn_location = m[2]
         imgname = obj_loaded['parent_activity_state'] + '.png'
         m = re.findall('\[(-?\d+),(-?\d+)\]', btn_location)
@@ -336,10 +334,9 @@ def prep_data_for_wide():
         obj_loaded = json.loads(i)
         packname = obj_loaded['parent_activity_state'].split('-')[0]
         category = categorydict[packname]
-        btn_text = obj_loaded['text']
         m = re.findall('{(.*?)}', obj_loaded['name'])
         btn_class = m[0]
-        btn_description = m[1]
+        btn_location = m[2]
         imgname = obj_loaded['parent_activity_state'] + '.png'
         m = re.findall('\[(\d+),(\d+)\]', btn_location)
         y = [sum(x) / len(x) for x in zip((int(z) for z in (m[0])), (int(zz) for zz in m[1]))]
@@ -372,100 +369,6 @@ def prep_data_for_wide():
 
     print('Written a total of %s amount of data into %s' % ((len(n_dataset_list) - training_amt) * 2, wndtraintxt))
 
-
-def prep_data_for_widendeep():
-    print('\nPreparing data for wide model...')
-    n_dataset_list = []
-    p_dataset_list = []
-    categorydict = {}
-    catfile = '../data/serverdata/category.txt'
-    imgdimextfile = '../data/serverdata/img_dimension_extract.txt'
-    ndatafile = '../data/ndata.txt'
-    pdatafile = '../data/pdata.txt'
-    seqdatafile = '../data/sequence_combination_wnd.txt'
-
-    print('\nParsing %s file.' % catfile)
-    with open(catfile, 'r') as f:
-        categoryinput = [x.strip() for x in tqdm(f)]
-
-    for i in categoryinput:
-        isp = i.split('\t')
-        categorydict[isp[0]] = isp[1]
-
-    print('\nParsing %s file.' % imgdimextfile)
-    with open(imgdimextfile, 'r') as f:
-        imgdims = [x.strip() for x in tqdm(f)]
-
-    imgdict = {}
-
-    for i in imgdims:
-        isplit = i.split('\t')
-        imgdict[isplit[0].split('/')[4]] = (isplit[1], isplit[2])
-
-    print('\nParsing %s file.' % ndatafile)
-    with open(ndatafile, 'r') as f:
-        ndata = [x.strip() for x in tqdm(f)]
-
-    for i in ndata:
-        obj_loaded = json.loads(i)
-        packname = obj_loaded['parent_activity_state'].split('-')[0]
-        category = categorydict[packname]
-        m = re.findall('{(.*?)}', obj_loaded['name'])
-        btn_class = m[0]
-        btn_location = m[2]
-        imgname = obj_loaded['parent_activity_state'] + '.png'
-        m = re.findall('\[(-?\d+),(-?\d+)\]', btn_location)
-        y = [sum(x) / len(x) for x in zip((int(z) for z in (m[0])), (int(zz) for zz in m[1]))]
-        positional_num = []
-        try:
-            for i in range(len(y)):
-                positional_num.append(math.ceil(y[i] / int(imgdict[imgname][i]) * 3))
-            btn_positional_representation = str(positional_num[0] + 3 * (positional_num[1] - 1))
-        except Exception:
-            btn_positional_representation = '-1'
-        n_dataset_list.append((category, btn_class, btn_positional_representation, 'negative'))
-
-    print('\nParsing %s file.' % pdatafile)
-    with open(pdatafile, 'r') as f:
-        pdata = [x.strip() for x in tqdm(f)]
-
-    for i in pdata:
-        obj_loaded = json.loads(i)
-        packname = obj_loaded['parent_activity_state'].split('-')[0]
-        category = categorydict[packname]
-        m = re.findall('{(.*?)}', obj_loaded['name'])
-        btn_class = m[0]
-        imgname = obj_loaded['parent_activity_state'] + '.png'
-        m = re.findall('\[(\d+),(\d+)\]', btn_location)
-        y = [sum(x) / len(x) for x in zip((int(z) for z in (m[0])), (int(zz) for zz in m[1]))]
-        positional_num = []
-        try:
-            for i in range(len(y)):
-                positional_num.append(math.ceil(y[i] / int(imgdict[imgname][i]) * 3))
-            btn_positional_representation = str(positional_num[0] + 3 * (positional_num[1] - 1))
-        except Exception:
-            btn_positional_representation = '-1'
-        p_dataset_list.append((category, btn_class, btn_positional_representation, 'positive'))
-
-    training_amt = int(len(ndata) * 9 / 10)
-    random.shuffle(p_dataset_list)
-    random.shuffle(n_dataset_list)
-
-    wndtraintxt = '../data/wnd-train.txt'
-    wndtesttxt = '../data/wnd-test.txt'
-    with codecs.open(wndtraintxt, 'w', 'utf-8') as f:
-        for i in range(training_amt):
-            f.write(','.join(x.lower() for x in p_dataset_list[i]) + '\n')
-            f.write(','.join(x.lower() for x in n_dataset_list[i]) + '\n')
-
-    print('Written a total of %s amount of data into %s' % (training_amt * 2, wndtraintxt))
-
-    with codecs.open(wndtesttxt, 'w', 'utf-8') as f:
-        for i in range(training_amt, len(n_dataset_list)):
-            f.write(','.join(x.lower() for x in p_dataset_list[i]) + '\n')
-            f.write(','.join(x.lower() for x in n_dataset_list[i]) + '\n')
-
-    print('Written a total of %s amount of data into %s' % ((len(n_dataset_list) - training_amt) * 2, wndtraintxt))
 
 
 def extract_and_combine_files():
