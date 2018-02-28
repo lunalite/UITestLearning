@@ -53,6 +53,9 @@ Or some which there are no clickables(flash games) Or those that require login a
 * CNN?
 
 ## Updates
+### 28 February 2018
+* Solved the issue of wide and RNN model. Now tweaking to find the best possible accuracy.
+
 ### 7 February 2018
 * Improved generation of data set for wide model to match with deep model.
 * Started on doing wide logistic regression model using lower level method.  

@@ -68,16 +68,6 @@ def getTestBatch(ids, _i):
     labels = []
     arr = np.zeros([batchSize, maxSeqLength])
     i = 0
-    # while i < batchSize:
-    #     num = randint(int(9 / 10 * number_of_data), number_of_data)
-    #     if labellist[num] == 'positive':
-    #         labels.append([1, 0])
-    #     elif labellist[num] == 'negative':
-    #         labels.append([0, 1])
-    #     else:
-    #         continue
-    #     arr[i] = ids[num - 1: num]
-    #     i += 1
     num = int(9 / 10 * number_of_data) + _i * batchSize
     try:
         while i < batchSize:
@@ -203,6 +193,7 @@ try:
     import tensorflow as tf
 
     treat_as_individual_word = False
+    treat_all_null_as_invalid = True
     suffix = ''
 
     grams = int(sys.argv[1])

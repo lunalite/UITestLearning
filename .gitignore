@@ -16,3 +16,4 @@ data/
 data.xlsx
 ~*
 __pycache__/
+venv/
