@@ -53,6 +53,9 @@ Or some which there are no clickables(flash games) Or those that require login a
 * CNN?
 
 ## Updates
+### 1 March 2018
+* 
+
 ### 28 February 2018
 * Solved the issue of wide and RNN model. Now tweaking to find the best possible accuracy.
 

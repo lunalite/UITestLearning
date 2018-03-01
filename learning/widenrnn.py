@@ -33,11 +33,8 @@ treat_all_null_as_invalid = False
 suffix = ''
 data = []
 maxSeqLength = 3
-no_train_data_batch = 0
-no_test_data_batch = 0
+
 idslabel = []
-train_idslabel = []
-test_idslabel = []
 batch_labels = []
 compressed_test_ids = []
 compressed_test_label = []
@@ -67,69 +64,68 @@ wordList = np.load('../data/wordList' + str(grams) + suffix + '.npy')
 wordList = wordList.tolist()
 wordVector = np.load('../data/wordVector' + str(grams) + suffix + '.npy')
 
+"""Populating model"""
 
-def populate_model():
-    global batch_labels, idslabel, compressed_test_ids, compressed_test_label, test_idslabel, train_idslabel
-    with codecs.open('../data/datawide-gram' + str(grams) + suffix + '.txt', 'r') as f:
-        lines = [x.strip() for x in f.readlines()]
+with codecs.open('../data/datawide-gram' + str(grams) + suffix + '.txt', 'r') as f:
+    lines = [x.strip() for x in f.readlines()]
 
-    batch_ids = np.zeros((batch_size, maxSeqLength), dtype='int32')
-    fileCounter = 0
+batch_ids = np.zeros((batch_size, maxSeqLength), dtype='int32')
+fileCounter = 0
 
-    for line in lines:
-        lsplit = line.split(':::')
-        if len(lsplit) == 1:
-            pass
+for line in lines:
+    lsplit = line.split(':::')
+    if len(lsplit) == 1:
+        pass
+    else:
+        ssplit = lsplit[1].split('\t')
+        assert len(ssplit) == 3
+        try:
+            batch_ids[fileCounter][0] = category.index(ssplit[0])
+            batch_ids[fileCounter][1] = btnclass.index(ssplit[1])
+            batch_ids[fileCounter][2] = position.index(ssplit[2])
+            fileCounter += 1
+        except ValueError:
+            continue
+        if lsplit[0] == 'positive':
+            batch_labels.append([1, 0])
+        elif lsplit[0] == 'negative':
+            batch_labels.append([0, 1])
         else:
-            ssplit = lsplit[1].split('\t')
-            assert len(ssplit) == 3
-            try:
-                batch_ids[fileCounter][0] = category.index(ssplit[0])
-                batch_ids[fileCounter][1] = btnclass.index(ssplit[1])
-                batch_ids[fileCounter][2] = position.index(ssplit[2])
-                fileCounter += 1
-            except ValueError:
-                continue
-            if lsplit[0] == 'positive':
-                batch_labels.append([1, 0])
-            elif lsplit[0] == 'negative':
-                batch_labels.append([0, 1])
-            else:
-                print('Error: Not positive, negative label.')
-                exit(1)
-        if len(batch_labels) >= batch_size:
-            # if len(batch_labels) != fileCounter:
-            #     break
-            idslabel.append((batch_ids, batch_labels))
-            fileCounter = 0
-            batch_labels = []
-            batch_ids = np.zeros((batch_size, maxSeqLength), dtype='int32')
+            print('Error: Not positive, negative label.')
+            exit(1)
+    if len(batch_labels) >= batch_size:
+        # if len(batch_labels) != fileCounter:
+        #     break
+        idslabel.append((batch_ids, batch_labels))
+        fileCounter = 0
+        batch_labels = []
+        batch_ids = np.zeros((batch_size, maxSeqLength), dtype='int32')
 
-    no_train_data_batch = int(len(idslabel) * 9 / 10)
-    no_test_data_batch = len(idslabel) - no_train_data_batch
-    random.shuffle(idslabel)
-    train_idslabel = idslabel[:no_train_data_batch]
-    test_idslabel = idslabel[no_train_data_batch:]
-    # compressed_test_ids = np.zeros((batch_size * len(test_idslabel), maxSeqLength), dtype='int32')
+no_train_data_batch = int(len(idslabel) * 9 / 10)
+no_test_data_batch = len(idslabel) - no_train_data_batch
+random.shuffle(idslabel)
+train_idslabel = idslabel[:no_train_data_batch]
+test_idslabel = idslabel[no_train_data_batch:]
+# compressed_test_ids = np.zeros((batch_size * len(test_idslabel), maxSeqLength), dtype='int32')
 
-    print('Number of training data batch: %d.' % no_train_data_batch)
-    print('Number of test data batch: %d.' % no_test_data_batch)
+print('Number of training data batch: %d.' % no_train_data_batch)
+print('Number of test data batch: %d.' % no_test_data_batch)
 
-    # fileCounter = 0
-    # for j in test_idslabel:
-    #     indexCounter = 0
-    #     for k in j[0]:
-    #         compressed_test_ids[fileCounter * 24 + indexCounter] = k
-    #         indexCounter += 1
-    #     compressed_test_label[fileCounter * 24: fileCounter * 24 + 24] = j[1]
-    #     fileCounter += 1
+"""End populating model"""
 
+# fileCounter = 0
+# for j in test_idslabel:
+#     indexCounter = 0
+#     for k in j[0]:
+#         compressed_test_ids[fileCounter * 24 + indexCounter] = k
+#         indexCounter += 1
+#     compressed_test_label[fileCounter * 24: fileCounter * 24 + 24] = j[1]
+#     fileCounter += 1
 
-populate_model()
 
 # # Parameters
 learning_rate = 0.5
-training_epochs = 10
+training_epochs = 1
 display_step = 1
 
 tf.reset_default_graph()
@@ -162,24 +158,22 @@ maxDSeqLength = grams * 3
 with codecs.open('../data/dataseq-gram' + str(grams) + suffix + '.txt', 'r', 'utf-8') as f:
     lines = [x.strip('\n') for x in f.readlines()]
 
+"""Populating sequence and label"""
+print('\nPopulating sequence and label...')
 
-def populate_seqlab():
-    print('\nPopulating sequence and label...')
+for i in tqdm(range(len(lines))):
+    lsplit = lines[i].split(':::')
+    if len(lsplit) == 2:
+        labellist.append(lsplit[0])
+        sequencelist.append(lsplit[1])
+    else:
+        sequencelist[-1] += '\n' + lines[i]
 
-    for i in tqdm(range(len(lines))):
-        lsplit = lines[i].split(':::')
-        if len(lsplit) == 2:
-            labellist.append(lsplit[0])
-            sequencelist.append(lsplit[1])
-        else:
-            sequencelist[-1] += '\n' + lines[i]
+print('Length of labels: %s' % len(labellist))
+print('Length of sequence: %s' % len(sequencelist))
 
-    print('Length of labels: %s' % len(labellist))
-    print('Length of sequence: %s' % len(sequencelist))
-    return len(labellist)
-
-
-number_of_data = populate_seqlab()
+number_of_data = len(labellist)
+"""End populating"""
 
 
 def getTrainBatch(ids, _i):  # returns 24,9 arr and 24,2 label
@@ -243,12 +237,17 @@ value = tf.transpose(value, [1, 0, 2])
 last = tf.gather(value, int(value.get_shape()[0]) - 1)
 deep_pred = tf.nn.relu(tf.matmul(last, weight) + bias)
 
-# correctPred = tf.equal(tf.argmax(prediction, 1), tf.argmax(labels, 1))
+# correctPred = tf.equal(tf.argmax(deep_pred, 1), tf.argmax(labels, 1))
 # accuracy = tf.reduce_mean(tf.cast(correctPred, tf.float32))
+
+# loss = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits_v2(logits=deep_pred, labels=labels))
+# optimizer = tf.train.AdamOptimizer().minimize(loss)
+
 
 """
 ============================================================
 """
+
 weighted_pred = wide_pred + deep_pred
 
 w1 = tf.Variable(tf.random_normal([10, 2]))
@@ -259,6 +258,31 @@ new_prediction = tf.nn.softmax(tf.matmul(weighted_pred, w1) + b1)
 cost = tf.reduce_mean(-tf.reduce_sum(y * tf.log(new_prediction)))
 optimizer = tf.train.GradientDescentOptimizer(learning_rate).minimize(cost)
 
+"""
+tf.reset_default_graph()
+
+labels = tf.placeholder(tf.float32, [None, numClasses])
+input_data = tf.placeholder(tf.int32, [None, maxDSeqLength])
+
+data = tf.Variable(tf.zeros([batch_size, maxDSeqLength, numDimensions]), dtype=tf.float32)
+data = tf.nn.embedding_lookup(wordVector, input_data)
+
+lstmCell = tf.contrib.rnn.BasicLSTMCell(lstmUnits)
+lstmCell = tf.contrib.rnn.DropoutWrapper(cell=lstmCell, output_keep_prob=0.75)
+value, _ = tf.nn.dynamic_rnn(lstmCell, data, dtype=tf.float32)
+
+weight = tf.Variable(tf.truncated_normal([lstmUnits, numClasses]))
+bias = tf.Variable(tf.constant(0.1, shape=[numClasses]))
+value = tf.transpose(value, [1, 0, 2])
+last = tf.gather(value, int(value.get_shape()[0]) - 1)
+prediction = (tf.matmul(last, weight) + bias)
+
+correctPred = tf.equal(tf.argmax(prediction, 1), tf.argmax(labels, 1))
+accuracy = tf.reduce_mean(tf.cast(correctPred, tf.float32))
+
+loss = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits_v2(logits=prediction, labels=labels))
+optimizer = tf.train.AdamOptimizer().minimize(loss)
+"""
 # Initialize the variables (i.e. assign their default value)
 init = tf.global_variables_initializer()
 
@@ -270,19 +294,23 @@ with tf.Session() as sess:
     # Training cycle
     for epoch in range(training_epochs):
         avg_cost = 0.
-
         # Loop over all batches
-        for i in range(no_train_data_batch):
+        for i in tqdm(range(no_train_data_batch)):
             # Run optimization op (backprop) and cost op (to get loss value)
+            inTBatch, lab = getTrainBatch(ids, i)
+            _x, _y = train_idslabel[i]
+            assert _x is not None
+            assert inTBatch is not None
+            assert lab is not None
+            assert _y is not None
+            sess.run(optimizer, feed_dict={x: _x, input_data: inTBatch, y: lab})  # input_data: inTBatch, y: _y})
             # _, c = sess.run(optimizer, feed_dict={x: train_idslabel[i][0], input_data: getTrainBatch(ids, i)[0],
-            #                                       y: train_idslabel[i][1]})
-            _, c = sess.run(optimizer, feed_dict={x: train_idslabel[i][0], input_data: getTrainBatch(ids, i)[0],
-                                                  y: getTrainBatch(ids, i)[1]})
+            #                                       y: getTrainBatch(ids, i)[1]})
             # Compute average loss
-            avg_cost += c / no_train_data_batch
+            # avg_cost += c / no_train_data_batch
             # Display logs per epoch step
-            if (epoch + 1) % display_step == 0:
-                print("Epoch:", '%04d' % (epoch + 1), "cost=", "{:.9f}".format(avg_cost))
+            # if (epoch + 1) % display_step == 0:
+            #     print("Epoch:", '%04d' % (epoch + 1), "cost=", "{:.9f}".format(avg_cost))
 
     print("Optimization Finished!")
 
@@ -296,8 +324,10 @@ with tf.Session() as sess:
 
     training_result = []
     for i in tqdm(range(len(test_idslabel))):
-        result = sess.run(accuracy, feed_dict={x: test_idslabel[i][0], input_data: getTestBatch(ids, i)[0],
-                                               y: getTestBatch(ids, i)[1]})
+        testBatch, tLabel = getTestBatch(ids, i)[0]
+        _x, _y = test_idslabel
+        result = sess.run(accuracy, feed_dict={x: _x, input_data: testBatch, y: _y})
+        # result = sess.run(accuracy, feed_dict={input_data: getTestBatch(ids, i)[0], labels: getTestBatch(ids, i)[1]})
         # y: test_idslabel[i][1]})
         training_result.append(result)
 
