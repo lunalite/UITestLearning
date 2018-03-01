@@ -44,7 +44,7 @@ try:
 except IndexError:
     print('Please enter arguments:')
     print('argv[1] == n: n-gram.')
-    print('argv[2] == 1/0: Treating individual word or not.')
+    print('argv[2] == 01/00: Treating individual word or not.')
     print('argv[2] == 11/01: Treat all null sequence as invalid.')
     exit(1)
 

@@ -54,7 +54,8 @@ Or some which there are no clickables(flash games) Or those that require login a
 
 ## Updates
 ### 1 March 2018
-* 
+* Fixed issue with gen_embedding.py
+* Fixed issue on the training batch
 
 ### 28 February 2018
 * Solved the issue of wide and RNN model. Now tweaking to find the best possible accuracy.
