@@ -91,8 +91,7 @@ for line in lines:
         elif lsplit[0] == 'negative':
             batch_labels.append([0, 1])
         else:
-            print('Error: Not positive, negative label.')
-            exit(1)
+            batch_labels.append([-1, -1])
     if len(batch_labels) >= batch_size:
         # if len(batch_labels) != fileCounter:
         #     break
@@ -113,17 +112,6 @@ print('Number of test data batch: %d.' % no_test_data_batch)
 
 """End populating model"""
 
-# fileCounter = 0
-# for j in test_idslabel:
-#     indexCounter = 0
-#     for k in j[0]:
-#         compressed_test_ids[fileCounter * 24 + indexCounter] = k
-#         indexCounter += 1
-#     compressed_test_label[fileCounter * 24: fileCounter * 24 + 24] = j[1]
-#     fileCounter += 1
-
-
-# # Parameters
 learning_rate = 0.5
 training_epochs = 1
 display_step = 1
@@ -141,8 +129,6 @@ b = tf.Variable(tf.zeros([10]))
 # Construct model
 wide_pred = tf.nn.relu(tf.matmul(x, W) + b)  # Softmax (24,3) x (3,2) = (24x2) + (1x2) = (24x2)
 
-# Minimize error using cross entropy
-# cost = tf.reduce_mean(-tf.reduce_sum(y * tf.log(pred), reduction_indices=1))
 
 """
 ============================================================
@@ -287,7 +273,7 @@ optimizer = tf.train.AdamOptimizer().minimize(loss)
 init = tf.global_variables_initializer()
 
 # Start training
-with tf.Session() as sess:
+with tf.Session(config=tf.ConfigProto(log_device_placement=True)) as sess:
     # Run the initializer
     sess.run(init)
 
@@ -324,8 +310,8 @@ with tf.Session() as sess:
 
     training_result = []
     for i in tqdm(range(len(test_idslabel))):
-        testBatch, tLabel = getTestBatch(ids, i)[0]
-        _x, _y = test_idslabel
+        testBatch, tLabel = getTestBatch(ids, i)
+        _x, _y = test_idslabel[i]
         result = sess.run(accuracy, feed_dict={x: _x, input_data: testBatch, y: _y})
         # result = sess.run(accuracy, feed_dict={input_data: getTestBatch(ids, i)[0], labels: getTestBatch(ids, i)[1]})
         # y: test_idslabel[i][1]})
@@ -333,6 +319,9 @@ with tf.Session() as sess:
 
     final_acc = sum(training_result) / len(training_result)
     print('Final accuracy: %f ' % final_acc)
+
+    with open('./tstresult.txt', 'a') as f:
+        f.write('final_accuracy: %s for %d-gram, iw: %s and in: %s \n'% (final_acc, grams, treat_as_individual_word, treat_all_null_as_invalid))
 
     # for j in len(test_idslabel):
     #     print("Accuracy:",
