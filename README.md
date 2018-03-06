@@ -53,6 +53,13 @@ Or some which there are no clickables(flash games) Or those that require login a
 * CNN?
 
 ## Updates
+### 6 March 2018
+* Changes to the way idslabel are being formulated to improve accuracy.
+* Added function to save and load np so as to reduce debugging time 
+
+### 5 March 2018
+* Minor updates
+
 ### 1 March 2018
 * Fixed issue with gen_embedding.py
 * Fixed issue on the training batch

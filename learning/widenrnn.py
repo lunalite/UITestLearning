@@ -1,10 +1,35 @@
+import codecs
 import random
+import sys
 
 import numpy as np
-import codecs
 import tensorflow as tf
-import sys
 from tqdm import *
+
+grams = 1
+suffix = ''
+treat_as_individual_word = False
+treat_all_null_as_invalid = False
+try:
+    grams = int(sys.argv[1])
+    if sys.argv[2] == '00':
+        pass
+    elif sys.argv[2] == '01':
+        suffix = 'in'
+        treat_all_null_as_invalid = True
+    elif sys.argv[2] == '10':
+        suffix = 'iw'
+        treat_as_individual_word = True
+    elif sys.argv[2] == '11':
+        suffix = 'iwin'
+        treat_as_individual_word = True
+        treat_all_null_as_invalid = True
+except IndexError:
+    print('Please enter arguments:')
+    print('argv[1] == n: n-gram.')
+    print('argv[2] == 10/00: Treating individual word or not.')
+    print('argv[2] == 11/01: Treat all null sequence as invalid.')
+    exit(1)
 
 category = ['TOOLS', 'GAME_SIMULATION', 'GAME_WORD', 'PERSONALIZATION', 'MEDIA_AND_VIDEO', 'SHOPPING',
             'GAME_ROLE_PLAYING', 'PRODUCTIVITY', 'GAME_EDUCATIONAL', 'GAME_ACTION', 'SOCIAL', 'NEWS_AND_MAGAZINES',
@@ -23,94 +48,134 @@ btnclass = ['TimePicker', 'e', 'WebView', 'HorizontalListView', 'ViewPager', 'Vi
             'LinearLayout', 'ch', 'Button', 'a$d', 'RadioButton', 'a$c', 'ToggleButton', 'MenuItem', 'Gallery', 'ao',
             'Spinner', 'an', 'VideoView', 'b', 'DigitalClock', 'ji$c', 'am', 'a$b', 'CompoundButton', 'ActionBar$Tab',
             'ZoomButton', 'cz', 'RelativeLayout', 'al', 'aq', 'ListView', 'RatingBar', 'ActionBar$c', 'FrameLayout',
-            'ag', 'LinearLayoutCompat']
+            'ag', 'LinearLayoutCompat', 'ViewAnimator', 'bp', 'RecycleDataViewGroup', 'Chronometer', 'uq', 'ay']
 
 position = ['-1', '1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12', '13', '14', '15']
 
-batch_size = 24
-treat_as_individual_word = False
-treat_all_null_as_invalid = False
-suffix = ''
 data = []
+widslabel = []
+didslabel = []
+dlabellist = []
+
+lstmUnits = 64
+numClasses = 2
+numDimensions = 50
+batch_size = 24
+
+maxDSeqLength = grams * 3 if 'iw' in suffix else grams
 maxSeqLength = 3
 
-idslabel = []
-batch_labels = []
-compressed_test_ids = []
-compressed_test_label = []
-
-try:
-    grams = int(sys.argv[1])
-    if sys.argv[2] == '10':
-        suffix = 'iw'
-        treat_as_individual_word = True
-    elif sys.argv[2] == '00':
-        pass
-    elif sys.argv[2] == '11':
-        suffix = 'iwin'
-        treat_as_individual_word = True
-        treat_all_null_as_invalid = True
-    elif sys.argv[2] == '01':
-        suffix = 'in'
-        treat_all_null_as_invalid = True
-except IndexError:
-    print('Please enter arguments:')
-    print('argv[1] == n: n-gram.')
-    print('argv[2] == 10/00: Treating individual word or not.')
-    print('argv[2] == 11/01: Treat all null sequence as invalid.')
-    exit(1)
-idsMatrixFile = '../data/idsMatrix' + str(grams) + suffix + '.npy'
+# idsMatrixFile = '../data/idsMatrix' + str(grams) + suffix + '.npy'
+# ids = np.load(idsMatrixFile)
 wordList = np.load('../data/wordList' + str(grams) + suffix + '.npy')
 wordList = wordList.tolist()
 wordVector = np.load('../data/wordVector' + str(grams) + suffix + '.npy')
 
 """Populating model"""
 
-with codecs.open('../data/datawide-gram' + str(grams) + suffix + '.txt', 'r') as f:
-    lines = [x.strip() for x in f.readlines()]
+print('\nPopulating sequence and label...')
 
-batch_ids = np.zeros((batch_size, maxSeqLength), dtype='int32')
+with codecs.open('../data/datawide-gram' + str(grams) + suffix + '.txt', 'r', 'utf-8') as f:
+    wlines = [x.strip() for x in f.readlines()]
+with codecs.open('../data/dataseq-gram' + str(grams) + suffix + '.txt', 'r', 'utf-8') as f:
+    dlines = [x.strip('\n') for x in f.readlines()]
+
+wbatch_ids = np.zeros((batch_size, maxSeqLength), dtype='int32')
+dnp_arr = np.zeros([batch_size, maxDSeqLength])
 fileCounter = 0
 
-for line in lines:
-    lsplit = line.split(':::')
-    if len(lsplit) == 1:
-        pass
+assert len(wlines) == len(dlines)
+
+for no in tqdm(range(len(wlines))):
+    # If wlsplit is None, means action in sequence ends with not a button (can be a random button, or close)
+    wlsplit = wlines[no].split(':::', 1)
+    dlsplit = dlines[no].split(':::', 1)
+
+    if no + 24 > len(wlines):
+        break
+
+    if len(wlsplit) == 1:
+        continue
     else:
-        ssplit = lsplit[1].split('\t')
+        ssplit = wlsplit[1].split('\t')
         assert len(ssplit) == 3
         try:
-            batch_ids[fileCounter][0] = category.index(ssplit[0])
-            batch_ids[fileCounter][1] = btnclass.index(ssplit[1])
-            batch_ids[fileCounter][2] = position.index(ssplit[2])
-            fileCounter += 1
-        except ValueError:
-            continue
-        if lsplit[0] == 'positive':
-            batch_labels.append([1, 0])
-        elif lsplit[0] == 'negative':
-            batch_labels.append([0, 1])
-        else:
-            batch_labels.append([-1, -1])
-    if len(batch_labels) >= batch_size:
-        # if len(batch_labels) != fileCounter:
-        #     break
-        idslabel.append((batch_ids, batch_labels))
-        fileCounter = 0
-        batch_labels = []
-        batch_ids = np.zeros((batch_size, maxSeqLength), dtype='int32')
+            if len(dlsplit) == 2:
+                if dlsplit[0] == 'positive':
+                    dlabellist.append([1, 0])
+                elif dlsplit[0] == 'negative':
+                    dlabellist.append([0, 1])
+                else:
+                    continue
+            else:
+                print(dlsplit)
+                exit(1)
 
-no_train_data_batch = int(len(idslabel) * 9 / 10)
-no_test_data_batch = len(idslabel) - no_train_data_batch
-random.shuffle(idslabel)
-train_idslabel = idslabel[:no_train_data_batch]
-test_idslabel = idslabel[no_train_data_batch:]
+            wbatch_ids[fileCounter][0] = category.index(ssplit[0])
+            wbatch_ids[fileCounter][1] = btnclass.index(ssplit[1])
+            wbatch_ids[fileCounter][2] = position.index(ssplit[2])
+
+            displit = dlsplit[1].split('\t')
+            dindexCounter = 0
+            for section in displit:
+                dnp_arr[fileCounter][dindexCounter] = wordList.index(section)
+                dindexCounter += 1
+                if dindexCounter >= maxDSeqLength:
+                    break
+            fileCounter += 1
+        except ValueError as e:
+            print(e)
+            exit(1)
+
+        # if wlsplit[0] == 'positive':
+        #     wlabellist.append([1, 0])
+        # elif wlsplit[0] == 'negative':
+        #     wlabellist.append([0, 1])
+        # else:
+        #     wlabellist.append([0, 0])
+        # else:
+        #     print('error')
+        #     exit(1)
+
+    if fileCounter >= batch_size:
+        widslabel.append(wbatch_ids)
+        didslabel.append(dnp_arr)
+        fileCounter = 0
+        # wlabellist = []
+        wbatch_ids = np.zeros((batch_size, maxSeqLength), dtype='int32')
+        dnp_arr = np.zeros([batch_size, maxDSeqLength])
+        try:
+            assert len(dlabellist) == len(didslabel) * 24 == len(widslabel) * 24
+        except Exception:
+            print(len(dlabellist))
+            print(len(didslabel) * 24)
+            print(len(widslabel) * 24)
+            exit(1)
+
+np.save('../data/widslabel', widslabel)
+np.save('../data/dlabellist', dlabellist)
+np.save('../data/didslabel', didslabel)
+
+no_train_data_batch = int(len(widslabel) * 9 / 10)
+no_test_data_batch = len(widslabel) - no_train_data_batch
+random.shuffle(widslabel)
+train_idslabel = widslabel[:no_train_data_batch]
+test_idslabel = widslabel[no_train_data_batch:]
 # compressed_test_ids = np.zeros((batch_size * len(test_idslabel), maxSeqLength), dtype='int32')
 
 print('Number of training data batch: %d.' % no_train_data_batch)
 print('Number of test data batch: %d.' % no_test_data_batch)
+print('Length of deep labels: %s' % len(dlabellist))
+print('Length of deep ids: %s' % len(didslabel))
 
+number_of_data = len(dlabellist)
+
+widslabel = np.load('../data/widslabel.npy')
+dlabellist = np.load('../data/dlabellist.npy')
+didslabel = np.load('../data/didslabel.npy')
+assert len(widslabel) * 24 == len(dlabellist) == len(didslabel) * 24
 """End populating model"""
+exit(1)
 
 learning_rate = 0.5
 training_epochs = 1
@@ -129,83 +194,9 @@ b = tf.Variable(tf.zeros([10]))
 # Construct model
 wide_pred = tf.nn.relu(tf.matmul(x, W) + b)  # Softmax (24,3) x (3,2) = (24x2) + (1x2) = (24x2)
 
-
 """
 ============================================================
 """
-lstmUnits = 64
-numClasses = 2
-numDimensions = 50
-labellist = []
-sequencelist = []
-ids = np.load(idsMatrixFile)
-maxDSeqLength = grams * 3
-
-with codecs.open('../data/dataseq-gram' + str(grams) + suffix + '.txt', 'r', 'utf-8') as f:
-    lines = [x.strip('\n') for x in f.readlines()]
-
-"""Populating sequence and label"""
-print('\nPopulating sequence and label...')
-
-for i in tqdm(range(len(lines))):
-    lsplit = lines[i].split(':::')
-    if len(lsplit) == 2:
-        labellist.append(lsplit[0])
-        sequencelist.append(lsplit[1])
-    else:
-        sequencelist[-1] += '\n' + lines[i]
-
-print('Length of labels: %s' % len(labellist))
-print('Length of sequence: %s' % len(sequencelist))
-
-number_of_data = len(labellist)
-"""End populating"""
-
-
-def getTrainBatch(ids, _i):  # returns 24,9 arr and 24,2 label
-    _labels = []
-    np_arr = np.zeros([batch_size, maxDSeqLength])
-    i = 0
-    num = _i * batch_size
-    max_num = int(9 / 10 * number_of_data)
-    assert num < int(9 / 10 * number_of_data)
-    while i < batch_size:
-        # num = random.randint(1, int(9 / 10 * number_of_data))
-        if num >= max_num:
-            break
-        if labellist[num] == 'positive':
-            _labels.append([1, 0])
-        elif labellist[num] == 'negative':
-            _labels.append([0, 1])
-        else:
-            num += 1
-            continue
-        np_arr[i] = ids[num:num + 1]
-        i += 1
-    return np_arr, _labels
-
-
-def getTestBatch(ids, _i):
-    _labels = []
-    arr = np.zeros([batch_size, maxDSeqLength])
-    i = 0
-    num = int(9 / 10 * number_of_data) + _i * batch_size
-    try:
-        while i < batch_size:
-            if labellist[num] == 'positive':
-                _labels.append([1, 0])
-            elif labellist[num] == 'negative':
-                _labels.append([0, 1])
-            else:
-                num += 1
-                continue
-            arr[i] = ids[num: num + 1]
-            i += 1
-            num += 1
-        return arr, _labels
-    except IndexError:
-        return None, None
-
 
 labels = tf.placeholder(tf.float32, [None, numClasses])
 input_data = tf.placeholder(tf.int32, [None, maxDSeqLength])
@@ -223,13 +214,6 @@ value = tf.transpose(value, [1, 0, 2])
 last = tf.gather(value, int(value.get_shape()[0]) - 1)
 deep_pred = tf.nn.relu(tf.matmul(last, weight) + bias)
 
-# correctPred = tf.equal(tf.argmax(deep_pred, 1), tf.argmax(labels, 1))
-# accuracy = tf.reduce_mean(tf.cast(correctPred, tf.float32))
-
-# loss = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits_v2(logits=deep_pred, labels=labels))
-# optimizer = tf.train.AdamOptimizer().minimize(loss)
-
-
 """
 ============================================================
 """
@@ -240,40 +224,14 @@ w1 = tf.Variable(tf.random_normal([10, 2]))
 b1 = tf.Variable(tf.zeros([2]))
 new_prediction = tf.nn.softmax(tf.matmul(weighted_pred, w1) + b1)
 
-# cost = tf.reduce_mean(-tf.reduce_sum(y * tf.log(weighted_pred)))
 cost = tf.reduce_mean(-tf.reduce_sum(y * tf.log(new_prediction)))
 optimizer = tf.train.GradientDescentOptimizer(learning_rate).minimize(cost)
 
-"""
-tf.reset_default_graph()
-
-labels = tf.placeholder(tf.float32, [None, numClasses])
-input_data = tf.placeholder(tf.int32, [None, maxDSeqLength])
-
-data = tf.Variable(tf.zeros([batch_size, maxDSeqLength, numDimensions]), dtype=tf.float32)
-data = tf.nn.embedding_lookup(wordVector, input_data)
-
-lstmCell = tf.contrib.rnn.BasicLSTMCell(lstmUnits)
-lstmCell = tf.contrib.rnn.DropoutWrapper(cell=lstmCell, output_keep_prob=0.75)
-value, _ = tf.nn.dynamic_rnn(lstmCell, data, dtype=tf.float32)
-
-weight = tf.Variable(tf.truncated_normal([lstmUnits, numClasses]))
-bias = tf.Variable(tf.constant(0.1, shape=[numClasses]))
-value = tf.transpose(value, [1, 0, 2])
-last = tf.gather(value, int(value.get_shape()[0]) - 1)
-prediction = (tf.matmul(last, weight) + bias)
-
-correctPred = tf.equal(tf.argmax(prediction, 1), tf.argmax(labels, 1))
-accuracy = tf.reduce_mean(tf.cast(correctPred, tf.float32))
-
-loss = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits_v2(logits=prediction, labels=labels))
-optimizer = tf.train.AdamOptimizer().minimize(loss)
-"""
 # Initialize the variables (i.e. assign their default value)
 init = tf.global_variables_initializer()
 
 # Start training
-with tf.Session(config=tf.ConfigProto(log_device_placement=True)) as sess:
+with tf.Session() as sess:
     # Run the initializer
     sess.run(init)
 
@@ -290,39 +248,24 @@ with tf.Session(config=tf.ConfigProto(log_device_placement=True)) as sess:
             assert lab is not None
             assert _y is not None
             sess.run(optimizer, feed_dict={x: _x, input_data: inTBatch, y: lab})  # input_data: inTBatch, y: _y})
-            # _, c = sess.run(optimizer, feed_dict={x: train_idslabel[i][0], input_data: getTrainBatch(ids, i)[0],
-            #                                       y: getTrainBatch(ids, i)[1]})
-            # Compute average loss
-            # avg_cost += c / no_train_data_batch
-            # Display logs per epoch step
-            # if (epoch + 1) % display_step == 0:
-            #     print("Epoch:", '%04d' % (epoch + 1), "cost=", "{:.9f}".format(avg_cost))
 
     print("Optimization Finished!")
 
     # # Test model
-    # correct_prediction = tf.equal(tf.argmax(weighted_pred, 1), tf.argmax(y, 1))
     correct_prediction = tf.equal(tf.argmax(new_prediction, 1), tf.argmax(y, 1))
     # # Calculate accuracy
     accuracy = tf.reduce_mean(tf.cast(correct_prediction, tf.float32))
-    #
-    # zip(compressed_test_ids, getTestBatch(ids))
 
     training_result = []
     for i in tqdm(range(len(test_idslabel))):
         testBatch, tLabel = getTestBatch(ids, i)
         _x, _y = test_idslabel[i]
         result = sess.run(accuracy, feed_dict={x: _x, input_data: testBatch, y: _y})
-        # result = sess.run(accuracy, feed_dict={input_data: getTestBatch(ids, i)[0], labels: getTestBatch(ids, i)[1]})
-        # y: test_idslabel[i][1]})
         training_result.append(result)
 
     final_acc = sum(training_result) / len(training_result)
     print('Final accuracy: %f ' % final_acc)
 
     with open('./tstresult.txt', 'a') as f:
-        f.write('final_accuracy: %s for %d-gram, iw: %s and in: %s \n'% (final_acc, grams, treat_as_individual_word, treat_all_null_as_invalid))
-
-    # for j in len(test_idslabel):
-    #     print("Accuracy:",
-    #           accuracy.eval({x: test_idslabel[j][0], input_data: getTestBatch(ids, j)[0], y: test_idslabel[j][1]}))
+        f.write('final_accuracy: %s for %d-gram, iw: %s and in: %s \n' % (
+            final_acc, grams, treat_as_individual_word, treat_all_null_as_invalid))
