@@ -53,6 +53,8 @@ Or some which there are no clickables(flash games) Or those that require login a
 * CNN?
 
 ## Updates
+### 7 March 2018
+* Added NA for btnclasses that aren't within the field. 
 ### 6 March 2018
 * Changes to the way idslabel are being formulated to improve accuracy.
 * Added function to save and load np so as to reduce debugging time 
