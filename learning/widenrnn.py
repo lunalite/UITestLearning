@@ -54,15 +54,13 @@ btnclass = ['ViewPager', 'ViewAnimator', 'RelativeLayout', 'ActionBar$Tab', 'Hor
 position = ['-1', '1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12', '13', '14', '15']
 
 lstmUnits = 64
-numClasses = 2
+# numClasses = 2
 numDimensions = 50
 batch_size = 24
 
 maxDSeqLength = grams * 3 if 'iw' in suffix else grams
 maxSeqLength = 3
 
-wordList = np.load('../data/wordList' + str(grams) + suffix + '.npy')
-wordList = wordList.tolist()
 wordVector = np.load('../data/wordVector' + str(grams) + suffix + '.npy')
 
 """Populating model"""
@@ -81,7 +79,8 @@ except FileNotFoundError:
 if len(wids) == 0:
     ''' Populate the model and save it into .npy file for faster learning in the future. '''
     data = []
-
+    wordList = np.load('../data/wordList' + str(grams) + suffix + '.npy')
+    wordList = wordList.tolist()
     with codecs.open('../data/datawide-gram' + str(grams) + suffix + '.txt', 'r', 'utf-8') as f:
         wlines = [x.strip() for x in f.readlines()]
     with codecs.open('../data/dataseq-gram' + str(grams) + suffix + '.txt', 'r', 'utf-8') as f:
@@ -174,11 +173,11 @@ no_train_data_batch = int(len(wids) * 9 / 10)
 no_test_data_batch = len(wids) - no_train_data_batch
 # TODO Shuffle data
 train_wids = wids[:no_train_data_batch]
-test_wids = wids[no_train_data_batch:no_test_data_batch]
-train_label = dlabellist[:no_train_data_batch * 24]
+test_wids = wids[no_train_data_batch:]
+train_labels = dlabellist[:no_train_data_batch * 24]
 train_dids = dids[:no_train_data_batch]
-test_dids = dids[no_train_data_batch:no_test_data_batch]
-test_label = dlabellist[no_train_data_batch * 24:no_test_data_batch * 24]
+test_dids = dids[no_train_data_batch:]
+test_labels = dlabellist[no_train_data_batch * 24:]
 
 print('Number of training data batch: %d.' % no_train_data_batch)
 print('Number of test data batch: %d.' % no_test_data_batch)
@@ -186,11 +185,11 @@ print('Length of deep labels: %s' % len(dlabellist))
 print('Length of deep ids: %s' % len(dids))
 print('Length of wide ids: %s' % len(wids))
 
-number_of_data = len(dlabellist)
-
 learning_rate = 0.5
 training_epochs = 1
 display_step = 1
+
+# train_label = train_labels[(0 - 1) * 24: 0* 24]
 
 tf.reset_default_graph()
 
@@ -201,7 +200,7 @@ b = tf.Variable(tf.zeros([10]))
 wide_pred = tf.nn.relu(tf.matmul(wide_input, W) + b)  # Softmax (24,3) x (3,2) = (24x2) + (1x2) = (24x2)
 
 ''' Deep model placeholder'''
-deep_label = tf.placeholder(tf.float32, [None, numClasses])
+deep_label = tf.placeholder(tf.float32, [None, 2])
 deep_input = tf.placeholder(tf.int32, [None, maxDSeqLength])
 
 data = tf.Variable(tf.zeros([batch_size, maxDSeqLength, numDimensions]), dtype=tf.float32)  # (24x[grams*3]x150)
@@ -241,7 +240,7 @@ with tf.Session() as sess:
         # Loop over all batches
         for i in tqdm(range(no_train_data_batch)):
             # Run optimization op (backprop) and cost op (to get loss value)
-            train_label = train_label[(i - 1) * 24: i * 24]
+            train_label = train_labels[(i) * 24: (i + 1) * 24]
             train_wide_input = train_wids[i]
             train_deep_input = train_dids[i]
             sess.run(optimizer,
@@ -250,13 +249,13 @@ with tf.Session() as sess:
     print("Optimization Finished!")
 
     # # Test model
-    correct_prediction = tf.equal(tf.argmax(new_prediction, 1), tf.argmax(y, 1))
+    correct_prediction = tf.equal(tf.argmax(new_prediction, 1), tf.argmax(deep_label, 1))
     # # Calculate accuracy
     accuracy = tf.reduce_mean(tf.cast(correct_prediction, tf.float32))
 
     training_result = []
     for i in tqdm(range(no_test_data_batch)):
-        test_label = test_label[(i - 1) * 24: i * 24]
+        test_label = test_labels[i * 24: (i + 1) * 24]
         test_wide_input = test_wids[i]
         test_deep_input = test_dids[i]
         result = sess.run(accuracy,
