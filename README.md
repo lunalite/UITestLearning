@@ -56,6 +56,8 @@ Or some which there are no clickables(flash games) Or those that require login a
 ### 7 March 2018
 * Added NA for btnclasses that aren't within the field.
 * Fixed learning for wide n deep model.
+* Edited max seq length to be grams if not using iw
+* Fixing little bugs for wide n deep model to run proper. 
  
 ### 6 March 2018
 * Changes to the way idslabel are being formulated to improve accuracy.

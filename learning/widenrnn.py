@@ -61,8 +61,6 @@ batch_size = 24
 maxDSeqLength = grams * 3 if 'iw' in suffix else grams
 maxSeqLength = 3
 
-# idsMatrixFile = '../data/idsMatrix' + str(grams) + suffix + '.npy'
-# ids = np.load(idsMatrixFile)
 wordList = np.load('../data/wordList' + str(grams) + suffix + '.npy')
 wordList = wordList.tolist()
 wordVector = np.load('../data/wordVector' + str(grams) + suffix + '.npy')
@@ -73,8 +71,8 @@ print('\nPopulating sequence and label...')
 try:
     wids = np.load('../data/widslabel' + str(grams) + suffix + '.npy')
     dlabellist = np.load('../data/dlabellist' + str(grams) + suffix + '.npy')
-    dids = np.load('../data/didslabel.npy' + str(grams) + suffix + '')
-    assert len(wids) * 24 == len(dlabellist) == len(dids) * 24
+    dids = np.load('../data/didslabel' + str(grams) + suffix + '.npy')
+    # assert len(wids) * 24 == len(dlabellist) == len(dids) * 24
 except FileNotFoundError:
     wids = []
     dids = []
@@ -112,6 +110,8 @@ if len(wids) == 0:
                     elif dlsplit[0] == 'negative':
                         dlabellist.append([0, 1])
                     else:
+                        if no + 24 > len(wlines):
+                            break
                         continue
                 else:
                     print(dlsplit)
@@ -224,7 +224,7 @@ w1 = tf.Variable(tf.random_normal([10, 2]))
 b1 = tf.Variable(tf.zeros([2]))
 new_prediction = tf.nn.softmax(tf.matmul(weighted_pred, w1) + b1)
 
-cost = tf.reduce_mean(-tf.reduce_sum(y * tf.log(new_prediction)))
+cost = tf.reduce_mean(-tf.reduce_sum(deep_label * tf.log(new_prediction)))
 optimizer = tf.train.GradientDescentOptimizer(learning_rate).minimize(cost)
 
 # Initialize the variables (i.e. assign their default value)

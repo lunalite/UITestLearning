@@ -210,7 +210,7 @@ try:
         suffix = 'in'
         treat_all_null_as_invalid = True
 
-    maxSeqLength = grams * 3
+    maxSeqLength = grams * 3 if 'iw' in suffix else grams
 
     with codecs.open('../data/dataseq-gram' + str(grams) + suffix + '.txt', 'r', 'utf-8') as f:
         lines = [x.strip('\n') for x in f.readlines()]
