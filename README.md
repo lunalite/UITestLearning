@@ -54,7 +54,9 @@ Or some which there are no clickables(flash games) Or those that require login a
 
 ## Updates
 ### 7 March 2018
-* Added NA for btnclasses that aren't within the field. 
+* Added NA for btnclasses that aren't within the field.
+* Fixed learning for wide n deep model.
+ 
 ### 6 March 2018
 * Changes to the way idslabel are being formulated to improve accuracy.
 * Added function to save and load np so as to reduce debugging time 

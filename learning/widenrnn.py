@@ -71,19 +71,19 @@ wordVector = np.load('../data/wordVector' + str(grams) + suffix + '.npy')
 
 print('\nPopulating sequence and label...')
 try:
-    widslabel = np.load('../data/widslabel.npy')
-    dlabellist = np.load('../data/dlabellist.npy')
-    didslabel = np.load('../data/didslabel.npy')
-    assert len(widslabel) * 24 == len(dlabellist) == len(didslabel) * 24
+    wids = np.load('../data/widslabel' + str(grams) + suffix + '.npy')
+    dlabellist = np.load('../data/dlabellist' + str(grams) + suffix + '.npy')
+    dids = np.load('../data/didslabel.npy' + str(grams) + suffix + '')
+    assert len(wids) * 24 == len(dlabellist) == len(dids) * 24
 except FileNotFoundError:
-    widslabel = []
-    didslabel = []
+    wids = []
+    dids = []
     dlabellist = []
 
-if len(widslabel) == 0:
+if len(wids) == 0:
     ''' Populate the model and save it into .npy file for faster learning in the future. '''
     data = []
-    
+
     with codecs.open('../data/datawide-gram' + str(grams) + suffix + '.txt', 'r', 'utf-8') as f:
         wlines = [x.strip() for x in f.readlines()]
     with codecs.open('../data/dataseq-gram' + str(grams) + suffix + '.txt', 'r', 'utf-8') as f:
@@ -99,9 +99,6 @@ if len(widslabel) == 0:
         # If wlsplit is None, means action in sequence ends with not a button (can be a random button, or close)
         wlsplit = wlines[no].split(':::', 1)
         dlsplit = dlines[no].split(':::', 1)
-
-        if no + 24 > len(wlines):
-            break
 
         if len(wlsplit) == 1:
             continue
@@ -150,40 +147,46 @@ if len(widslabel) == 0:
             #     exit(1)
 
         if fileCounter >= batch_size:
-            widslabel.append(wbatch_ids)
-            didslabel.append(dnp_arr)
+            wids.append(wbatch_ids)
+            dids.append(dnp_arr)
             fileCounter = 0
             # wlabellist = []
             wbatch_ids = np.zeros((batch_size, maxSeqLength), dtype='int32')
             dnp_arr = np.zeros([batch_size, maxDSeqLength])
             try:
-                assert len(dlabellist) == len(didslabel) * 24 == len(widslabel) * 24
+                assert len(dlabellist) == len(dids) * 24 == len(wids) * 24
             except Exception:
                 print(len(dlabellist))
-                print(len(didslabel) * 24)
-                print(len(widslabel) * 24)
+                print(len(dids) * 24)
+                print(len(wids) * 24)
                 exit(1)
 
-    np.save('../data/widslabel', widslabel)
-    np.save('../data/dlabellist', dlabellist)
-    np.save('../data/didslabel', didslabel)
+            if no + 24 > len(wlines):
+                break
 
-    no_train_data_batch = int(len(widslabel) * 9 / 10)
-    no_test_data_batch = len(widslabel) - no_train_data_batch
-    random.shuffle(widslabel)
-    train_idslabel = widslabel[:no_train_data_batch]
-    test_idslabel = widslabel[no_train_data_batch:]
-    # compressed_test_ids = np.zeros((batch_size * len(test_idslabel), maxSeqLength), dtype='int32')
-
-    print('Number of training data batch: %d.' % no_train_data_batch)
-    print('Number of test data batch: %d.' % no_test_data_batch)
-    print('Length of deep labels: %s' % len(dlabellist))
-    print('Length of deep ids: %s' % len(didslabel))
-
-    number_of_data = len(dlabellist)
+    np.save('../data/widslabel' + str(grams) + suffix, wids)
+    np.save('../data/dlabellist' + str(grams) + suffix, dlabellist)
+    np.save('../data/didslabel' + str(grams) + suffix, dids)
 
 """End populating model"""
-exit(1)
+
+no_train_data_batch = int(len(wids) * 9 / 10)
+no_test_data_batch = len(wids) - no_train_data_batch
+# TODO Shuffle data
+train_wids = wids[:no_train_data_batch]
+test_wids = wids[no_train_data_batch:no_test_data_batch]
+train_label = dlabellist[:no_train_data_batch * 24]
+train_dids = dids[:no_train_data_batch]
+test_dids = dids[no_train_data_batch:no_test_data_batch]
+test_label = dlabellist[no_train_data_batch * 24:no_test_data_batch * 24]
+
+print('Number of training data batch: %d.' % no_train_data_batch)
+print('Number of test data batch: %d.' % no_test_data_batch)
+print('Length of deep labels: %s' % len(dlabellist))
+print('Length of deep ids: %s' % len(dids))
+print('Length of wide ids: %s' % len(wids))
+
+number_of_data = len(dlabellist)
 
 learning_rate = 0.5
 training_epochs = 1
@@ -191,26 +194,18 @@ display_step = 1
 
 tf.reset_default_graph()
 
-# tf Graph Input
-x = tf.placeholder(tf.float32, [None, 3])
-y = tf.placeholder(tf.float32, [None, 2])
-
-# Set model weights
+''' Wide model placeholder '''
+wide_input = tf.placeholder(tf.float32, [None, 3])
 W = tf.Variable(tf.zeros([3, 10]))
 b = tf.Variable(tf.zeros([10]))
+wide_pred = tf.nn.relu(tf.matmul(wide_input, W) + b)  # Softmax (24,3) x (3,2) = (24x2) + (1x2) = (24x2)
 
-# Construct model
-wide_pred = tf.nn.relu(tf.matmul(x, W) + b)  # Softmax (24,3) x (3,2) = (24x2) + (1x2) = (24x2)
-
-"""
-============================================================
-"""
-
-labels = tf.placeholder(tf.float32, [None, numClasses])
-input_data = tf.placeholder(tf.int32, [None, maxDSeqLength])
+''' Deep model placeholder'''
+deep_label = tf.placeholder(tf.float32, [None, numClasses])
+deep_input = tf.placeholder(tf.int32, [None, maxDSeqLength])
 
 data = tf.Variable(tf.zeros([batch_size, maxDSeqLength, numDimensions]), dtype=tf.float32)  # (24x[grams*3]x150)
-data = tf.nn.embedding_lookup(wordVector, input_data)
+data = tf.nn.embedding_lookup(wordVector, deep_input)
 
 lstmCell = tf.contrib.rnn.BasicLSTMCell(lstmUnits)
 lstmCell = tf.contrib.rnn.DropoutWrapper(cell=lstmCell, output_keep_prob=0.75)
@@ -222,10 +217,7 @@ value = tf.transpose(value, [1, 0, 2])
 last = tf.gather(value, int(value.get_shape()[0]) - 1)
 deep_pred = tf.nn.relu(tf.matmul(last, weight) + bias)
 
-"""
-============================================================
-"""
-
+''' Wide and Deep model placeholder'''
 weighted_pred = wide_pred + deep_pred
 
 w1 = tf.Variable(tf.random_normal([10, 2]))
@@ -249,13 +241,11 @@ with tf.Session() as sess:
         # Loop over all batches
         for i in tqdm(range(no_train_data_batch)):
             # Run optimization op (backprop) and cost op (to get loss value)
-            inTBatch, lab = getTrainBatch(ids, i)
-            _x, _y = train_idslabel[i]
-            assert _x is not None
-            assert inTBatch is not None
-            assert lab is not None
-            assert _y is not None
-            sess.run(optimizer, feed_dict={x: _x, input_data: inTBatch, y: lab})  # input_data: inTBatch, y: _y})
+            train_label = train_label[(i - 1) * 24: i * 24]
+            train_wide_input = train_wids[i]
+            train_deep_input = train_dids[i]
+            sess.run(optimizer,
+                     feed_dict={wide_input: train_wide_input, deep_input: train_deep_input, deep_label: train_label})
 
     print("Optimization Finished!")
 
@@ -265,10 +255,12 @@ with tf.Session() as sess:
     accuracy = tf.reduce_mean(tf.cast(correct_prediction, tf.float32))
 
     training_result = []
-    for i in tqdm(range(len(test_idslabel))):
-        testBatch, tLabel = getTestBatch(ids, i)
-        _x, _y = test_idslabel[i]
-        result = sess.run(accuracy, feed_dict={x: _x, input_data: testBatch, y: _y})
+    for i in tqdm(range(no_test_data_batch)):
+        test_label = test_label[(i - 1) * 24: i * 24]
+        test_wide_input = test_wids[i]
+        test_deep_input = test_dids[i]
+        result = sess.run(accuracy,
+                          feed_dict={wide_input: test_wide_input, deep_input: test_deep_input, deep_label: test_label})
         training_result.append(result)
 
     final_acc = sum(training_result) / len(training_result)
