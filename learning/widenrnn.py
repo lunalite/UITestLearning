@@ -70,19 +70,20 @@ wordVector = np.load('../data/wordVector' + str(grams) + suffix + '.npy')
 """Populating model"""
 
 print('\nPopulating sequence and label...')
-
-widslabel = np.load('../data/widslabel.npy')
-dlabellist = np.load('../data/dlabellist.npy')
-didslabel = np.load('../data/didslabel.npy')
-assert len(widslabel) * 24 == len(dlabellist) == len(didslabel) * 24
-
-if len(widslabel) == 0:
-    ''' Populate the model and save it into .npy file for faster learning in the future. '''
-    data = []
+try:
+    widslabel = np.load('../data/widslabel.npy')
+    dlabellist = np.load('../data/dlabellist.npy')
+    didslabel = np.load('../data/didslabel.npy')
+    assert len(widslabel) * 24 == len(dlabellist) == len(didslabel) * 24
+except FileNotFoundError:
     widslabel = []
     didslabel = []
     dlabellist = []
 
+if len(widslabel) == 0:
+    ''' Populate the model and save it into .npy file for faster learning in the future. '''
+    data = []
+    
     with codecs.open('../data/datawide-gram' + str(grams) + suffix + '.txt', 'r', 'utf-8') as f:
         wlines = [x.strip() for x in f.readlines()]
     with codecs.open('../data/dataseq-gram' + str(grams) + suffix + '.txt', 'r', 'utf-8') as f:
