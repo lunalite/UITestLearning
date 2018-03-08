@@ -213,6 +213,7 @@ if learning_method == 'w':
 
 if learning_method == 'd':
     ''' Deep model '''
+    learning_rate = None
     training_epochs = 1
     deep_label = tf.placeholder(tf.float32, [None, 2])
     deep_input = tf.placeholder(tf.int32, [None, maxDSeqLength])
@@ -235,6 +236,7 @@ if learning_method == 'd':
 
 if learning_method == 'wnd':
     ''' Wide and Deep model '''
+    learning_rate = None
     training_epochs = 1
     intermediate_size = 2
 
