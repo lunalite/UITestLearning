@@ -1,16 +1,4 @@
-Some positive/negative are different for buttons and for sequence
-
-
-
-1. give buttons leading to other application with a unique transition state
-3. store text into attribute
-
-4. check distribution at different ranges so different text gives different scores. Is there such an example or not?
- why it will give such high score? Or why text will give low score.
-5. normalization of the number scores based on the APKs. Use highest score for the clickable in the APK and normalize them to 0-1.
- making the apks comparable across.
-6. A clicks go B, clicks go A. Find the text of the button over at B s.t. it will move back to A.
-7. find the buttons that will cause the state to return to its original state, but without having any text within it. 
+#Why
 
 # UI Testing - Reinforcement Learning
 
@@ -53,6 +41,11 @@ Or some which there are no clickables(flash games) Or those that require login a
 * CNN?
 
 ## Updates
+### 8 March 2018
+* Randomized selection of train data and increased training epochs.
+* Added wide and deep implementation to widenrnn.py to find out reason for low accuracy rate
+* Fixed issue with low accuracy rate (due to double softmax)
+
 ### 7 March 2018
 * Added NA for btnclasses that aren't within the field.
 * Fixed learning for wide n deep model.
