@@ -31,8 +31,8 @@ Or some which there are no clickables(flash games) Or those that require login a
 ## Examples of such APKs
 * at.alladin.rmbt.android_20214.apk - no clickable buttons
 
--- Will be using system-images;android-25;google_apis;armeabi-v7a
--- and system-images;android-26;google_apis;x86
+    -- Will be using system-images;android-25;google_apis;armeabi-v7a
+    -- and system-images;android-26;google_apis;x86
 
 ### Possible models to use
 * RNN
@@ -41,6 +41,9 @@ Or some which there are no clickables(flash games) Or those that require login a
 * CNN?
 
 ## Updates
+### 9 March 2018
+* Edited gen_tt.sh to run concurrently
+
 ### 8 March 2018
 * Randomized selection of train data and increased training epochs.
 * Added wide and deep implementation to widenrnn.py to find out reason for low accuracy rate
@@ -51,7 +54,7 @@ Or some which there are no clickables(flash games) Or those that require login a
 * Fixed learning for wide n deep model.
 * Edited max seq length to be grams if not using iw
 * Fixing little bugs for wide n deep model to run proper. 
- 
+
 ### 6 March 2018
 * Changes to the way idslabel are being formulated to improve accuracy.
 * Added function to save and load np so as to reduce debugging time 
@@ -83,7 +86,7 @@ Or some which there are no clickables(flash games) Or those that require login a
 * Added testing of model for RNN and returning the accuracy onto a file 
 * Added implementation for RAND_BUTTON, BACK, SCROLL UP, SCROLL DOWN, FLING HORIZONTAL in the case of gen_embedding
 * Added function for turning all null sequence to invalid
- 
+
 ### 30 January 2018
 * Added positional conversion.
 * Added RNN split as individual words using space as delimiter without taking into account punctuations
@@ -176,11 +179,11 @@ Or some which there are no clickables(flash games) Or those that require login a
 
 ### 26 October 2017
 * Discovered several issues related to why UIautomator stops. They are:
-1) crashes
-2) d(clickable=‘true’) UIautomator instrumentation fails to return a list
-3) no clickable buttons to proceed
-4) login page (random string so can’t enter)
-5) Page loading, but the UIAutomator doesn't wait. causing Key/index error
+    1) crashes
+    2) d(clickable=‘true’) UIautomator instrumentation fails to return a list
+    3) no clickable buttons to proceed
+    4) login page (random string so can’t enter)
+    5) Page loading, but the UIAutomator doesn't wait. causing Key/index error
 * Changed catching of initial error and added logging to information txt
 * Changed catching of monkey error and added logigng
 
@@ -205,26 +208,26 @@ Or some which there are no clickables(flash games) Or those that require login a
 
 ### 11 October 2017
 * Reason for screenshot being half taken at resolution 480x320 is because the skin is not chosen properly. Prior to this, the command used for creating the avd is: `android create avd -n avd1 -b x86 -k "system-images;android-26;google_apis;x86"` but this defaults to an avd that is skinless, causing error to arise.
-```
-Available Android Virtual Devices:
+    ```
+    Available Android Virtual Devices:
     Name: Nexus_5X_API_26
-  Device: Nexus 5X (Google)
+    Device: Nexus 5X (Google)
     Path: /Users/hkoh006/.android/avd/Nexus_5X_API_26.avd
-  Target: Google Play (Google Inc.)
-          Based on: Android API 26 Tag/ABI: google_apis_playstore/x86
+    Target: Google Play (Google Inc.)
+    Based on: Android API 26 Tag/ABI: google_apis_playstore/x86
     Skin: nexus_5x
-  Sdcard: 100M
----------
+    Sdcard: 100M
+    ---------
     Name: testAVD
     Path: /Users/hkoh006/.android/avd/testAVD.avd
-  Target: Google APIs
-          Based on: Android API 26 Tag/ABI: google_apis/x86
-  Sdcard: 100M
+    Target: Google APIs
+    Based on: Android API 26 Tag/ABI: google_apis/x86
+    Sdcard: 100M
 
-```
+    ```
 
 * The top AVD is created from Android Studio's AVD Manager and the subsequent one is created using the command.
-Thus, we have to add a skin to the testAVD by running the `emulator -avd testAVD -skin 1080x1920` command since `-skin` flag for the `android create avd` is not found/deprecated.
+    Thus, we have to add a skin to the testAVD by running the `emulator -avd testAVD -skin 1080x1920` command since `-skin` flag for the `android create avd` is not found/deprecated.
 
 
 ### 10 October 2017
@@ -380,7 +383,7 @@ Thus, we have to add a skin to the testAVD by running the `emulator -avd testAVD
 * Attempt using SCanDroid to obtain the _Static Activity Transition Graph_ so that accurate activity coverage could be measured
 * Implement activity and method coverage
 
-<!---
+    <!---
 ### Prerequisites
 
 What things you need to install the software and how to install them
