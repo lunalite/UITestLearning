@@ -151,11 +151,12 @@ Examples of such APKs
 
 
 ## Updates
-*** 11 March 2018
+### 11 March 2018
 * Updated README.md to make it look neater.
 * Removed irrelevant files.
 * Added run_wnd.sh to facilitate running of training_model
 * Added argparse for widenrnn.py
+* Fixed issue with setting suffix
 
 ### 9 March 2018
 * Edited gen_tt.sh to run concurrently

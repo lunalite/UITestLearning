@@ -15,8 +15,8 @@ parser.add_argument("-e", "--epoch", type=int, help="Number of training epochs."
 args = parser.parse_args()
 
 grams = args.grams
-treat_as_individual_word = bool(args.iwin[0])
-treat_all_null_as_invalid = bool(args.iwin[1])
+treat_as_individual_word = bool(int(args.iwin[0]))
+treat_all_null_as_invalid = bool(int(args.iwin[1]))
 learning_method = args.lmethod
 suffix = ''
 suffix += 'iw' if treat_as_individual_word else ''
@@ -183,7 +183,7 @@ if learning_method == 'w':
     wide_pred = (tf.matmul(wide_input, W) + b)
 
     cost = tf.nn.softmax_cross_entropy_with_logits_v2(logits=wide_pred, labels=deep_label)
-    optimizer = tf.train.GradientDescentOptimizer(learning_rate).minimize(cost)
+    optimizer = tf.train.AdamOptimizer().minimize(cost)
 
 if learning_method == 'd':
     ''' Deep model '''
@@ -304,4 +304,4 @@ with tf.Session() as sess:
             'final_accuracy: %s for %d-gram, iw: %s and in: %s with no_train_data: %s, no_test_data: %s, '
             'learning_rate: %s, batch_size: %s, epochs: %d using %s model \n' % (
                 final_acc, grams, treat_as_individual_word, treat_all_null_as_invalid, no_train_data_batch,
-                no_test_data_batch, learning_rate, batch_size, learning_method, training_epochs))
+                no_test_data_batch, learning_rate, batch_size, training_epochs, learning_method))
