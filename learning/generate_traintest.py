@@ -26,8 +26,8 @@ suffix = ''
 
 catfile = '../data/serverdata/category.txt'
 imgdimextfile = '../data/serverdata/img_dimension_extract.txt'
-wndtraintxt = '../data/wnd-train.txt'
-wndtesttxt = '../data/wnd-test.txt'
+seq_combi_wnd = '../data/serverdata/sequence_combination_wnd.txt'
+
 categorydict = {}
 imgdict = {}
 
@@ -54,7 +54,7 @@ except IndexError:
     exit(1)
 
 print('Parsing sequences...')
-with codecs.open('../data/serverdata/sequence_combination_wnd.txt', 'r', 'utf-8') as f:
+with codecs.open(seq_combi_wnd, 'r', 'utf-8') as f:
     wndcombis = [x.strip() for x in tqdm(f)]
 
 print('Parsing %s file.' % catfile)

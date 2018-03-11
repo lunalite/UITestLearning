@@ -200,7 +200,7 @@ print('Undergoing %s model training.' % learning_method)
 if learning_method == 'w':
     ''' Wide model '''
     learning_rate = 0.1
-    training_epochs = 1
+    training_epochs = 5
     wide_input = tf.placeholder(tf.float32, [None, 3])
     deep_label = tf.placeholder(tf.float32, [None, 2])
     W = tf.Variable(tf.zeros([3, 2]))

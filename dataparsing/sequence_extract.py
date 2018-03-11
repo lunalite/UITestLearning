@@ -40,13 +40,13 @@ for file in tqdm(onlyfiles):
                 sequence_list.append('===START')
                 start = True
 
-with codecs.open('./sequence_combination.txt', 'w', 'utf-8') as f:
-    for i in sequence_list:
-        if type(i) is list:
-            f.write('\t'.join(i[1:]))
-        else:
-            f.write(i)
-        f.write('\n')
+# with codecs.open('./sequence_combination.txt', 'w', 'utf-8') as f:
+#     for i in sequence_list:
+#         if type(i) is list:
+#             f.write('\t'.join(i[1:]))
+#         else:
+#             f.write(i)
+#         f.write('\n')
 
 with codecs.open('./sequence_combination_wnd.txt', 'w', 'utf-8') as f:
     for i in sequence_list:

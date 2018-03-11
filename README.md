@@ -101,9 +101,9 @@ Prior to running any learning models, it is vital for the data collected to be p
 4. Extracting sequences
     ```bash
     find . -name 'seqq*.txt' -exec cp {} folder \; 
-    python3 sequence_extract.py folder
+    python3 sequence_extract.py folder && cp sequence*.txt ../data/serverdata
     ```
-    Copy and extract all the sequence text files into a single folder then use `dataparsing/sequence_extract.py` to extract these sequences into two files, `sequence-combination-wnd.txt` and `sequence-combination.txt`. These sequences will be used for RNN model and wide and deep model.
+    Copy and extract all the sequence text files into a single folder then use `dataparsing/sequence_extract.py` to extract these sequences into two files, `sequence-combination-wnd.txt` and `sequence-combination.txt`. These sequences will be used for RNN model and wide and deep model, and should be stored in the `data/serverdata` folder.
     
 5. Parsing data from database
     ```bash
@@ -120,8 +120,27 @@ Prior to running any learning models, it is vital for the data collected to be p
 
 There are several options which the user could use in running deep learning:
 1. [fastText](https://github.com/facebookresearch/fastText) from Facebook
-    We have implemented `parseJson.py` which allows for the data to be parsed into the format required for running text classification or sentiment analysis using the fastText implementation.  
-
+    We have implemented `parseJson.py` which allows for the data to be parsed into the format required for running text classification or sentiment analysis using the fastText implementation.
+      
+    ```bash
+    python3.6 parseJson.py f
+    ```
+    
+    The required data will be in the `data` folder, containing the files `fastTextTrain.txt` and `fastTextTest.txt`. To run the sentiment analysis:
+    
+    ```bash
+    fasttext supervised -input ./fastTextTrain.txt -output model -lr 0.05 -dim 10 -epoch 10 -minCount 1 && fasttext test model.bin ./fastTextTest.txt 1
+    ```
+    
+2. Recurrent Neural Network (RNN), LSTM using Tensorflow
+    The next implementation uses LSTM from Tensorflow. To train the model, we will have to first parse the sequence data.
+    
+    ```bash
+    sh gen_tt.sh 1 9
+    ``` 
+    
+    This will run generate_traintest.py in parallel for n-grams stemming from 1-gram to 9-gram.
+    
 ## Limitations
 
 The crawler is unable to test certain APKs like those of other languages which contain characters that are non-ASCII, or those like the application 'Power Me Off' since it might shut down the entire emulator.
@@ -134,6 +153,9 @@ Examples of such APKs
 ## Updates
 *** 11 March 2018
 * Updated README.md to make it look neater.
+* Removed irrelevant files.
+* Added run_wnd.sh to facilitate running of training_model
+* Changed epoch to 5
 
 ### 9 March 2018
 * Edited gen_tt.sh to run concurrently

@@ -19,10 +19,12 @@ maxf1 = 0
 max_i = ()
 for i in p:
     subprocess.Popen(
-        ['../../fastText/fasttext', 'supervised', '-input', './train.txt', '-output', 'model', '-lr', str(i[0]),
+        ['fasttext', 'supervised', '-input', '../data/fastTextTrain.txt', '-output', 'model', '-lr', str(i[0]),
          '-dim', str(i[1]), '-epoch', str(i[2]), '-minCount', str(min_count)])
-    output = subprocess.check_output(['../../fastText/fasttext', 'test', 'model.bin', './test.txt', '1'])
-    o = output.decode('utf-8')
+    time.sleep(1)
+    omsg = subprocess.Popen(['fasttext', 'test', './model.bin', '../data/fastTextTest.txt'],
+                            stdout=subprocess.PIPE)
+    o = omsg.communicate()[0].decode('utf-8')
     no = re.findall('\d*\.?\d+', o, re.MULTILINE)
     precision = float(no[2])
     recall = float(no[4])
@@ -31,20 +33,3 @@ for i in p:
     max_i = i
     print(maxf1)
     print(max_i)
-    time.sleep(1)
-    # break
-
-"""
-NST
-0.714
-(0.05, 10, 10)
-
-DNST
-0.788
-(0.05, 10, 10)
-
-DNST_RELAXED
-0.762
-(0.05, 10, 10)
-
-"""
