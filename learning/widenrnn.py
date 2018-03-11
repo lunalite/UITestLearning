@@ -1,50 +1,26 @@
+import argparse
 import codecs
 import random
-import sys
-
 import numpy as np
 import tensorflow as tf
 from tqdm import *
 
-grams = 1
+parser = argparse.ArgumentParser()
+parser.add_argument("grams", type=int, help="n-grams")
+parser.add_argument("iwin", choices=["00", "01", "10", "11"],
+                    help="Set Individual Word (IW) and Invalid Null (IN).")
+parser.add_argument("lmethod", choices=["w", "d", "wnd"], help="Select the learning method ")
+parser.add_argument("-b", "--batch_size", type=int, default=24, help="Batch size for the training model.")
+parser.add_argument("-e", "--epoch", type=int, help="Number of training epochs.")
+args = parser.parse_args()
+
+grams = args.grams
+treat_as_individual_word = bool(args.iwin[0])
+treat_all_null_as_invalid = bool(args.iwin[1])
+learning_method = args.lmethod
 suffix = ''
-treat_as_individual_word = False
-treat_all_null_as_invalid = False
-learning_method = ''
-try:
-    grams = int(sys.argv[1])
-    if sys.argv[2] == '00':
-        pass
-    elif sys.argv[2] == '01':
-        suffix = 'in'
-        treat_all_null_as_invalid = True
-    elif sys.argv[2] == '10':
-        suffix = 'iw'
-        treat_as_individual_word = True
-    elif sys.argv[2] == '11':
-        suffix = 'iwin'
-        treat_as_individual_word = True
-        treat_all_null_as_invalid = True
-    else:
-        raise ValueError
-    if sys.argv[3] in ['w', 'd', 'wnd']:
-        learning_method = sys.argv[3]
-    else:
-        raise ValueError
-except IndexError:
-    print('Please enter arguments:')
-    print('argv[1] == n: n-gram.')
-    print('argv[2] == 10/00: Treating individual word or not.')
-    print('argv[2] == 11/01: Treat all null sequence as invalid.')
-    print('argv[3] == w/d/wnd: wide/deep/widendeep training method')
-    exit(1)
-except ValueError:
-    print('Please enter a right value argument')
-    print('argv[1] == n: n-gram.')
-    print('argv[2] == 10/00: Treating individual word or not.')
-    print('argv[2] == 11/01: Treat all null sequence as invalid.')
-    print('argv[3] == w/d/wnd: wide/deep/widendeep training method')
-    exit(1)
+suffix += 'iw' if treat_as_individual_word else ''
+suffix += 'in' if treat_all_null_as_invalid else ''
 
 category = ['TOOLS', 'GAME_SIMULATION', 'GAME_WORD', 'PERSONALIZATION', 'MEDIA_AND_VIDEO', 'SHOPPING',
             'GAME_ROLE_PLAYING', 'PRODUCTIVITY', 'GAME_EDUCATIONAL', 'GAME_ACTION', 'SOCIAL', 'NEWS_AND_MAGAZINES',
@@ -53,7 +29,6 @@ category = ['TOOLS', 'GAME_SIMULATION', 'GAME_WORD', 'PERSONALIZATION', 'MEDIA_A
             'GAME_CASUAL', 'SPORTS', 'GAME_RACING', 'FINANCE', 'TRAVEL_AND_LOCAL', 'MUSIC_AND_AUDIO',
             'LIBRARIES_AND_DEMO', 'WEATHER', 'BOOKS_AND_REFERENCE', 'ENTERTAINMENT', 'EDUCATION', 'GAME_PUZZLE',
             'GAME_TRIVIA', 'MEDICAL', 'COMICS', 'GAME_SPORTS', '#']
-
 btnclass = ['ViewPager', 'ViewAnimator', 'RelativeLayout', 'ActionBar$Tab', 'HorizontalListView', 'TableLayout',
             'WebView', 'dd', 'da', 'HorizontalScrollView', 'd', 'SeekBar', 'CheckedFrameLayout', 'ImageButton',
             'RecycleDataViewGroup', 'MenuItem', 'TextView', 'CheckBox', 'EditText', 'SearchView', 'FrameLayout',
@@ -65,15 +40,14 @@ btnclass = ['ViewPager', 'ViewAnimator', 'RelativeLayout', 'ActionBar$Tab', 'Hor
             'al', 'ao', 'an', 'aq', 'ap', 'as', 'ar', 'RadioGroup', 'ay', 'ImageSwitcher', 'ToggleButton', 'VideoView',
             'Gallery', 'LinearLayoutCompat', 'Button', 'RadioButton', 'Chronometer', 'DrawerLayout', 'LinearLayout',
             'CheckedTextView', 'View', 'e', 'RatingBar', 'NA']
-
 position = ['-1', '1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12', '13', '14', '15']
 
 lstmUnits = 64
 numDimensions = 50
-batch_size = 24
+batch_size = args.batch_size
 
-maxDSeqLength = grams * 3 if 'iw' in suffix else grams
-maxSeqLength = 3
+dSeqLength = grams * 3 if 'iw' in suffix else grams
+wSeqLength = 3
 
 wordVector = np.load('../data/wordVector' + str(grams) + suffix + '.npy')
 
@@ -101,8 +75,8 @@ if len(wids) == 0:
     with codecs.open('../data/dataseq-gram' + str(grams) + suffix + '.txt', 'r', 'utf-8') as f:
         dlines = [x.strip('\n') for x in f.readlines()]
 
-    wbatch_ids = np.zeros((batch_size, maxSeqLength), dtype='int32')
-    dnp_arr = np.zeros([batch_size, maxDSeqLength])
+    wbatch_ids = np.zeros((batch_size, wSeqLength), dtype='int32')
+    dnp_arr = np.zeros([batch_size, dSeqLength])
     fileCounter = 0
 
     assert len(wlines) == len(dlines)
@@ -143,7 +117,7 @@ if len(wids) == 0:
                 for section in displit:
                     dnp_arr[fileCounter][dindexCounter] = wordList.index(section)
                     dindexCounter += 1
-                    if dindexCounter >= maxDSeqLength:
+                    if dindexCounter >= dSeqLength:
                         break
                 fileCounter += 1
             except ValueError as e:
@@ -154,11 +128,12 @@ if len(wids) == 0:
             wids.append(wbatch_ids)
             dids.append(dnp_arr)
             fileCounter = 0
-            wbatch_ids = np.zeros((batch_size, maxSeqLength), dtype='int32')
-            dnp_arr = np.zeros([batch_size, maxDSeqLength])
+            wbatch_ids = np.zeros((batch_size, wSeqLength), dtype='int32')
+            dnp_arr = np.zeros([batch_size, dSeqLength])
             try:
                 assert len(dlabellist) == len(dids) * 24 == len(wids) * 24
-            except Exception:
+            except Exception as e:
+                print(e)
                 print(len(dlabellist))
                 print(len(dids) * 24)
                 print(len(wids) * 24)
@@ -200,25 +175,24 @@ print('Undergoing %s model training.' % learning_method)
 if learning_method == 'w':
     ''' Wide model '''
     learning_rate = 0.1
-    training_epochs = 5
+    training_epochs = 5 if args.epoch is None else args.epoch
     wide_input = tf.placeholder(tf.float32, [None, 3])
     deep_label = tf.placeholder(tf.float32, [None, 2])
     W = tf.Variable(tf.zeros([3, 2]))
     b = tf.Variable(tf.zeros([2]))
     wide_pred = (tf.matmul(wide_input, W) + b)
 
-    # cost = tf.reduce_mean(-tf.reduce_sum(deep_label * tf.log(wide_pred), reduction_indices=1))
     cost = tf.nn.softmax_cross_entropy_with_logits_v2(logits=wide_pred, labels=deep_label)
     optimizer = tf.train.GradientDescentOptimizer(learning_rate).minimize(cost)
 
 if learning_method == 'd':
     ''' Deep model '''
     learning_rate = None
-    training_epochs = 1
+    training_epochs = 1 if args.epoch is None else args.epoch
     deep_label = tf.placeholder(tf.float32, [None, 2])
-    deep_input = tf.placeholder(tf.int32, [None, maxDSeqLength])
+    deep_input = tf.placeholder(tf.int32, [None, dSeqLength])
 
-    data = tf.Variable(tf.zeros([batch_size, maxDSeqLength, numDimensions]), dtype=tf.float32)  # (24x[grams*3]x150)
+    data = tf.Variable(tf.zeros([batch_size, dSeqLength, numDimensions]), dtype=tf.float32)  # (24x[grams*3]x150)
     data = tf.nn.embedding_lookup(wordVector, deep_input)
 
     lstmCell = tf.contrib.rnn.BasicLSTMCell(lstmUnits)
@@ -237,7 +211,7 @@ if learning_method == 'd':
 if learning_method == 'wnd':
     ''' Wide and Deep model '''
     learning_rate = None
-    training_epochs = 1
+    training_epochs = 1 if args.epoch is None else args.epoch
     intermediate_size = 2
 
     wide_input = tf.placeholder(tf.float32, [None, 3])
@@ -246,9 +220,9 @@ if learning_method == 'wnd':
     wide_pred = tf.nn.relu(tf.matmul(wide_input, W) + b)
 
     deep_label = tf.placeholder(tf.float32, [None, 2])
-    deep_input = tf.placeholder(tf.int32, [None, maxDSeqLength])
+    deep_input = tf.placeholder(tf.int32, [None, dSeqLength])
 
-    data = tf.Variable(tf.zeros([batch_size, maxDSeqLength, numDimensions]), dtype=tf.float32)
+    data = tf.Variable(tf.zeros([batch_size, dSeqLength, numDimensions]), dtype=tf.float32)
     data = tf.nn.embedding_lookup(wordVector, deep_input)
 
     lstmCell = tf.contrib.rnn.BasicLSTMCell(lstmUnits)
@@ -273,38 +247,17 @@ if learning_method == 'wnd':
     loss = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits_v2(logits=new_prediction, labels=deep_label))
     optimizer = tf.train.AdamOptimizer().minimize(loss)
 
-# Initialize the variables (i.e. assign their default value)
 init = tf.global_variables_initializer()
 
-# Start training
 with tf.Session() as sess:
-    # Run the initializer
     sess.run(init)
+    training_result = []
 
-    # Training cycle
-    for epoch in range(training_epochs):
-        # Loop over all batches
-        if learning_method == 'w':
-            avg_cost = 0.
+    if learning_method == 'w':
+        for epoch in range(training_epochs):
             for i in tqdm(range(no_train_data_batch)):
                 train_wide_input, train_deep_input, train_label = random.choice(combination_train)
                 sess.run(optimizer, feed_dict={wide_input: train_wide_input, deep_label: train_label})
-        elif learning_method == 'd':
-            for i in tqdm(range(no_train_data_batch)):
-                train_wide_input, train_deep_input, train_label = random.choice(combination_train)
-                sess.run(optimizer, feed_dict={deep_input: train_deep_input, deep_label: train_label})
-        elif learning_method == 'wnd':
-            for i in tqdm(range(no_train_data_batch)):
-                train_wide_input, train_deep_input, train_label = random.choice(combination_train)
-                sess.run(optimizer, feed_dict={wide_input: train_wide_input, deep_input: train_deep_input,
-                                               deep_label: train_label})
-
-    print("Optimization Finished!")
-
-    training_result = []
-
-    # Test model
-    if learning_method == 'w':
         correct_prediction = tf.equal(tf.argmax(wide_pred, 1), tf.argmax(deep_label, 1))
         accuracy = tf.reduce_mean(tf.cast(correct_prediction, tf.float32))
         for i in tqdm(range(no_test_data_batch)):
@@ -314,6 +267,10 @@ with tf.Session() as sess:
             training_result.append(result)
 
     elif learning_method == 'd':
+        for epoch in range(training_epochs):
+            for i in tqdm(range(no_train_data_batch)):
+                train_wide_input, train_deep_input, train_label = random.choice(combination_train)
+                sess.run(optimizer, feed_dict={deep_input: train_deep_input, deep_label: train_label})
         correct_prediction = tf.equal(tf.argmax(deep_pred, 1), tf.argmax(deep_label, 1))
         accuracy = tf.reduce_mean(tf.cast(correct_prediction, tf.float32))
         for i in tqdm(range(no_test_data_batch)):
@@ -323,6 +280,11 @@ with tf.Session() as sess:
             training_result.append(result)
 
     elif learning_method == 'wnd':
+        for epoch in range(training_epochs):
+            for i in tqdm(range(no_train_data_batch)):
+                train_wide_input, train_deep_input, train_label = random.choice(combination_train)
+                sess.run(optimizer, feed_dict={wide_input: train_wide_input, deep_input: train_deep_input,
+                                               deep_label: train_label})
         correct_prediction = tf.equal(tf.argmax(test_new_prediction, 1), tf.argmax(deep_label, 1))
         accuracy = tf.reduce_mean(tf.cast(correct_prediction, tf.float32))
         for i in tqdm(range(no_test_data_batch)):
@@ -340,6 +302,6 @@ with tf.Session() as sess:
     with open('./tstresult.txt', 'a') as f:
         f.write(
             'final_accuracy: %s for %d-gram, iw: %s and in: %s with no_train_data: %s, no_test_data: %s, '
-            'learning_rate: %s, batch_size: %s using %s model \n' % (
+            'learning_rate: %s, batch_size: %s, epochs: %d using %s model \n' % (
                 final_acc, grams, treat_as_individual_word, treat_all_null_as_invalid, no_train_data_batch,
-                no_test_data_batch, learning_rate, batch_size, learning_method))
+                no_test_data_batch, learning_rate, batch_size, learning_method, training_epochs))

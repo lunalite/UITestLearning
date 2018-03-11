@@ -155,7 +155,7 @@ Examples of such APKs
 * Updated README.md to make it look neater.
 * Removed irrelevant files.
 * Added run_wnd.sh to facilitate running of training_model
-* Changed epoch to 5
+* Added argparse for widenrnn.py
 
 ### 9 March 2018
 * Edited gen_tt.sh to run concurrently
