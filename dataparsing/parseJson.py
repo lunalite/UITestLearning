@@ -2,21 +2,17 @@ import codecs
 import collections
 import getpass
 import json
+import math
 import operator
 import random
 import re
 import string
+import sys
 from enum import Enum
 from os import listdir
 from os.path import isfile, join
 
-import math
-
-import sys
-from PIL import Image
 from tqdm import *
-
-from crawler.Config import Config
 
 
 def pre_process(fileno, datafile):
@@ -68,25 +64,13 @@ def split_to_pd(feature):
     print('Spltting data using %s.' % feature)
     with open('../data/serverdata/dataformattedF.json', 'r') as f:
         lines = [x.strip() for x in f.readlines()]
-    obj_list = []
-    next_ts_list = []
     pdata = []
     ndata = []
     activitydict = {}
     transitiondict = {}
 
-    # """ For finding previous and next transition states in the case of double NST """
-    # for line in lines:
-    #     obj_loaded = json.loads(line)
-    #     # if obj_loaded['parent_activity_state'] == 'pha.viz.a0002.alephbetkatakana-552e78c3fba262d55722d2c7cd37d5c8':
-    #     # if obj_loaded['next_transition_state'] == 'pha.viz.a0002.alephbetkatakana-86c421435a854b15b264d5d34e226b68':
-    #     if obj_loaded['text'] == '3':
-    #         if obj_loaded['parent_activity_state'] != obj_loaded['next_transition_state']:
-    #             print(obj_loaded)
-    #
-
     """ Pre-processing work """
-    if feature == FEATURE.DNST or FEATURE.DNST_RELAXED:
+    if feature == FEATURE.DST or FEATURE.DST_RELAXED:
         for line in tqdm(lines):
             obj_loaded = json.loads(line)
             # We must exclude cases where NST is none and NST is OUTOFAPK
@@ -99,17 +83,14 @@ def split_to_pd(feature):
 
         # Excluding cases where there are multiple possibilities of previous states
         for k, v in activitydict.items():
-            if feature == FEATURE.DNST_RELAXED:
+            if feature == FEATURE.DST_RELAXED:
                 transitiondict[k] = set(activitydict[k])
-            elif feature == FEATURE.DNST:
+            elif feature == FEATURE.DST:
                 if len(v) == 1:
                     transitiondict[k] = activitydict[k].pop()
                 else:
                     pass
 
-    # for k,v in transitiondict.items():
-    #     print(k,v)
-    #     break
     """ Actual implementation """
     for line in lines:
         obj_loaded = json.loads(line)
@@ -125,20 +106,20 @@ def split_to_pd(feature):
                 else:
                     pdata.append(obj_loaded)
 
-            elif feature == FEATURE.DNST or FEATURE.DNST_RELAXED:
-                # FEATURE.DNST includes checking of previous to the next state
+            elif feature == FEATURE.DST or FEATURE.DST_RELAXED:
+                # FEATURE.DST includes checking of previous to the next state
                 if obj_loaded['parent_activity_state'] == obj_loaded['next_transition_state']:
                     ndata.append(obj_loaded)
                 elif obj_loaded['parent_activity_state'] in transitiondict:
                     # transitiondict[obj_loaded['parent_activity_state']] will give the previous state
                     # Checks if previous state is equivalent to the next state
-                    if feature == FEATURE.DNST:
+                    if feature == FEATURE.DST:
                         if transitiondict[obj_loaded['parent_activity_state']] == obj_loaded['next_transition_state']:
                             ndata.append(obj_loaded)
                         else:
                             pdata.append(obj_loaded)
-                    elif feature == FEATURE.DNST_RELAXED:
-                        # RELAXED version of DNST checks if any of the previous state is equivalent to the next state
+                    elif feature == FEATURE.DST_RELAXED:
+                        # RELAXED version of DST checks if any of the previous state is equivalent to the next state
                         if obj_loaded['next_transition_state'] in transitiondict[obj_loaded['parent_activity_state']]:
                             ndata.append(obj_loaded)
                         else:
@@ -370,7 +351,6 @@ def prep_data_for_wide():
     print('Written a total of %s amount of data into %s' % ((len(n_dataset_list) - training_amt) * 2, wndtraintxt))
 
 
-
 def extract_and_combine_files():
     onlyfiles = [f for f in listdir(clickabledir) if isfile(join(clickabledir, f))]
     no_of_data = 0
@@ -388,8 +368,8 @@ def extract_and_combine_files():
 
 class FEATURE(Enum):
     NST = 1  # next_state_transition equal to current state or not
-    DNST = 2  # Twice of next_state_transition if equal to current state or not
-    DNST_RELAXED = 3  # Twice of next_state_transition if equal to current state or not
+    DST = 2  # Twice of next_state_transition if equal to current state or not
+    DST_RELAXED = 3  # Twice of next_state_transition if equal to current state or not
 
 
 current_user = getpass.getuser()
@@ -409,9 +389,9 @@ try:
     if 'n' in sys.argv[1]:
         split_to_pd(FEATURE.NST)
     elif 'd' in sys.argv[1]:
-        split_to_pd(FEATURE.DNST)
+        split_to_pd(FEATURE.DST)
     elif 'r' in sys.argv[1]:
-        split_to_pd(FEATURE.DNST_RELAXED)
+        split_to_pd(FEATURE.DST_RELAXED)
     # get_info_on_text_pd()
     # get_info_on_btn_distribution()
 
@@ -424,7 +404,7 @@ except IndexError:
     print('Please enter arguments:')
     print('argv[1] == e: extract and combine files')
     print('argv[1] == n: split to pd with NST')
-    print('argv[1] == d: split to pd with DNST')
-    print('argv[1] == r: split to pd with DNST relaxed')
+    print('argv[1] == d: split to pd with DST')
+    print('argv[1] == r: split to pd with DST relaxed')
     print('argv[1] == f: preparing data for fasttext')
     print('argv[1] == w: preparing data for wide model')

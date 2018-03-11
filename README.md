@@ -1,46 +1,140 @@
-#Why
-
-# UI Testing - Reinforcement Learning
-
-Project is on-going
+# UI Testing - Deep Learning
 
 ## Getting Started
 
 These instructions will get you a copy of the project up and running on your local machine for development and testing purposes. See deployment for notes on how to deploy the project on a live system.
-(TODO)
 
-## Deployment
+## Prerequisites
 
-In order to deploy the data collection server, the following are required:
-1. Python 3 (Current version Python 3.6.2)
+The following are required for the entire project to be deployed:
+* Android SDK (the following shows `sdkmanager --list`)
 
-Do note that `sudo` permissions might be needed for running all of the following due to the usage of kvm for the emulator in the case that no screen is provided, so install the following within the `sudo` environment.
+|Path                                               |Version    |
+|---------------------------------------------------|-----------|
+|build-tools;26.0.1                                 |26.0.1     |
+|emulator                                           |27.1.12    |
+|extras;intel;Hardware_Accelerated_Execution_Manager|6.2.1      |
+|patcher;v4                                         |1          | 
+|platform-tools                                     |27.0.1     |
+|system-images;android-26;google_apis;x86           |8          | 
+|tools                                              |26.1.1     |
+* Python 3.6 (currently Python 3.6.4 is used)
+* OS must be able to run virtual machines.
 
-After installing python 3, do a `pip3 install -r requirements.txt` to obtain all python modules required for running the crawler.
-Do note that depending on your system, it might be a `pip3.6` or `pip` instead of `pip3`.
+## Deployment of crawler
 
-Also depending on the permissions provided, it might be needed for the command `pip3 install --user -r requirements.txt` to be used instead.
+1. Install android SDK
+    You can get android SDK by installing [Android Studio](https://developer.android.com/studio/index.html) or by doing it the [manual way](https://github.com/codepath/android_guides/wiki/Installing-Android-SDK-Tools). 
+    
+    The manual way of installation is as follow:
+        
+    ```bash
+    wget https://dl.google.com/android/repository/sdk-tools-darwin-3859397.zip -P /tmp/;
+    unzip /tmp/sdk-tools-darwin-3859397.zip -d ~/android-sdk;
+    cd ~/android-sdk/tools/bin;
+    yes | ./sdkmanager --licenses;
+    ./sdkmanager --update;
+    ./sdkmanager "build-tools;26.0.1";
+    ```
 
-It is up to the user whether he wants to create a `virtualenv` for the project or not.
+2. Setup the environment for adb, emulator
+    Add the environment variable ANDROID_HOME by finding out where the android sdk home is located.
 
-Do remember to add into environment `PATH` the folders within android sdk such as `$ANDROID_HOME/platform-tools`, `$ANDROID_HOME/tools` and `$ANDROID_HOME/tools/bin`.
+    ```bash
+    export ANDROID_HOME=~/android-sdk
+    ```
+    
+3. run pip install requirements 
+    ```bash
+    pip install -r requirements.txt
+    ```
+4. Create emulators
+    Find the sdkmanager within `$ANDROID_HOME/tools/bin`
+    ```bash
+    $ANDROID_HOME/tools/bin/sdkmanager "system-images;android-26;google_apis;x86"
+    ```
+    This is done to install the relevant package image which is used to set up the Android emulator. Do note that you can use your own preferred image in this case. To list the available images, just run
+     
+    ```bash
+    $ANDROID_HOME/tools/bin/sdkmanager --list
+    ```
+    
+    The next step is to create an Android Virtual Device (AVD) for the emulator using the preset image.  
+    ```bash
+    echo no | $ANDROID_HOME/tools/bin/avdmanager create avd -n avd0 -b x86 -k "system-images;android-26;google_apis;x86" --abi google_apis/x86 
+    ```
+    In our case, we name it `avd0`. Do take note of the name as we will be using it later on.
+    
+    Try running the emulator to see if it works.
+    ```bash
+    $ANDROID_HOME/emulator/emulator -avd avd0
+    ```
+    
+    If the following error occurs: `PANIC: Broken AVD system path. Check your ANDROID_SDK_ROOT value`, check that in your android-sdk folder, there contains the following directories: `emulator`, `platforms`, `platform-tools`, `system-images`. If any of the following doesn't exist, just make an empty directory. More information can be found [here](https://stackoverflow.com/questions/39645178/panic-broken-avd-system-path-check-your-android-sdk-root-value). 
 
-Unable to test certain APKs like those of other languages, or those like 'Power Me Off' since it might shut down the entire emulator.
-Or some which there are no clickables(flash games) Or those that require login and internet like Absolute EMR and AccuManager.
+5. Running the Python program
+    Do note that `sudo` permissions might be needed for running all of the following due to the usage of kvm for the emulator in the case that no screen is provided, so install the following within the `sudo` environment.
+    ```bash
+    cd crawler && export PYTHONPATH=..; python3 main.py emulator-5554 ../../apk/apk-0 ../../apk2/ avd0 
+    ```
+## Extracting useful data for learning
+Prior to running any learning models, it is vital for the data collected to be parsed into its respective format so that learning can be done. There are several areas where we could parse data from to obtain important information that will be used later during the learning of model.
 
-## Examples of such APKs
+1. Extracting data from database
+    ```bash
+    sh dataparsing/extract_db.sh #(number of db) && mv clickable*.json ../data/serverdata
+    ``` 
+    Due to the nature of work, the data collected which is stored into the database will get exponentially slower over time as the database collection gets filled up. Thus, we have decided to change the database collection every now and then to improve the efficiency of collection. Running the `extract_db.sh` shell file will export and dump the required `clickablen.json` files into the current folder. These files are required to be located in the data/serverdata folder for further parsing.
+
+2. Extracting features from `PlayStore_Full_2016_01_NoDescription_CSV.csv`
+    ```bash
+    python3 feature_extract.py 
+    ```
+    This will extract all important features from the .csv file containing the application category into a `category.txt` file within the `data/serverdata` folder. the .csv file must be located within the `data/serverdata` folder as well. This will be used for running classification using a logistic regression or a wide and deep model.
+    
+3. Extracting image dimension of the screenshots
+    ```bash
+    python3 img_dimension_extract.py && cp img_dimension_extract.txt ../data/serverdata
+    ```
+    This extracts all image dimension from the screenshot taken during the testing. The image dimension will be further used in determining the position of the clickable elements and will be used in either the logistic regrssion or wide and deep model.
+ 
+4. Extracting sequences
+    ```bash
+    find . -name 'seqq*.txt' -exec cp {} folder \; 
+    python3 sequence_extract.py folder
+    ```
+    Copy and extract all the sequence text files into a single folder then use `dataparsing/sequence_extract.py` to extract these sequences into two files, `sequence-combination-wnd.txt` and `sequence-combination.txt`. These sequences will be used for RNN model and wide and deep model.
+    
+5. Parsing data from database
+    ```bash
+    export PYTHONPATH=..; python3 parseJson ed
+    ```
+    All database files will be collected and parsed through using the 'e' argument. It will then be split into positive and negative data based on the user's requirement.
+    'n': normal sequence tree where 
+    'd': double sequence tree
+    'r': relaxed version of double sequence tree  
+    The eventual result will be stored into `pdata.txt` and `ndata.txt` which would be used for fastText implementation. 
+    
+
+## Running the learning model
+
+There are several options which the user could use in running deep learning:
+1. [fastText](https://github.com/facebookresearch/fastText) from Facebook
+    We have implemented `parseJson.py` which allows for the data to be parsed into the format required for running text classification or sentiment analysis using the fastText implementation.  
+
+## Limitations
+
+The crawler is unable to test certain APKs like those of other languages which contain characters that are non-ASCII, or those like the application 'Power Me Off' since it might shut down the entire emulator.
+There are also cases of flash games which do not contain any element with the variable `clickable:True`, and applications requiring login and registration before one could proceed crawling the application.
+
+Examples of such APKs
 * at.alladin.rmbt.android_20214.apk - no clickable buttons
 
-    -- Will be using system-images;android-25;google_apis;armeabi-v7a
-    -- and system-images;android-26;google_apis;x86
-
-### Possible models to use
-* RNN
-* fasttext (highest f1 rates ~0.72)
-* wide and deep (unable to do so)
-* CNN?
 
 ## Updates
+*** 11 March 2018
+* Updated README.md to make it look neater.
+
 ### 9 March 2018
 * Edited gen_tt.sh to run concurrently
 
@@ -116,7 +210,7 @@ Or some which there are no clickables(flash games) Or those that require login a
 * Check if screenshot/dump is present, if present, dont re-dump again
 
 ### 12 January 2018
-* Added in a RELAXED version for DNST
+* Added in a RELAXED version for DST
 * Added in categoristic addition of feature
 * Added script for finding max F1 in fasttext classification
 

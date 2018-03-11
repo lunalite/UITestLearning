@@ -12,6 +12,7 @@ widedataset = []
 templist = []
 labeltemplist = []
 widetemplist = []
+
 count = 0
 start = False
 name_diff_line = False
@@ -22,15 +23,12 @@ wordList = set()
 treat_as_individual_word = False
 treat_all_null_as_invalid = False
 suffix = ''
-n_dataset_list = []
-p_dataset_list = []
-categorydict = {}
+
 catfile = '../data/serverdata/category.txt'
 imgdimextfile = '../data/serverdata/img_dimension_extract.txt'
-ndatafile = '../data/ndata.txt'
-pdatafile = '../data/pdata.txt'
 wndtraintxt = '../data/wnd-train.txt'
 wndtesttxt = '../data/wnd-test.txt'
+categorydict = {}
 imgdict = {}
 
 try:
