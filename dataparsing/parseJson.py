@@ -292,14 +292,14 @@ def prep_data_for_wide():
         obj_loaded = json.loads(i)
         packname = obj_loaded['parent_activity_state'].split('-')[0]
         category = categorydict[packname]
-        m = re.findall('{(.*?)}', obj_loaded['name'])
-        btn_class = m[0]
-        btn_location = m[2]
-        imgname = obj_loaded['parent_activity_state'] + '.png'
-        m = re.findall('\[(-?\d+),(-?\d+)\]', btn_location)
-        y = [sum(x) / len(x) for x in zip((int(z) for z in (m[0])), (int(zz) for zz in m[1]))]
-        positional_num = []
         try:
+            m = re.findall('{(.*?)}', obj_loaded['name'])
+            btn_class = m[0]
+            btn_location = m[2]
+            imgname = obj_loaded['parent_activity_state'] + '.png'
+            m = re.findall('\[(-?\d+),(-?\d+)\]', btn_location)
+            y = [sum(x) / len(x) for x in zip((int(z) for z in (m[0])), (int(zz) for zz in m[1]))]
+            positional_num = []
             for i in range(len(y)):
                 positional_num.append(math.ceil(y[i] / int(imgdict[imgname][i]) * 3))
             btn_positional_representation = str(positional_num[0] + 3 * (positional_num[1] - 1))
@@ -315,14 +315,14 @@ def prep_data_for_wide():
         obj_loaded = json.loads(i)
         packname = obj_loaded['parent_activity_state'].split('-')[0]
         category = categorydict[packname]
-        m = re.findall('{(.*?)}', obj_loaded['name'])
-        btn_class = m[0]
-        btn_location = m[2]
-        imgname = obj_loaded['parent_activity_state'] + '.png'
-        m = re.findall('\[(\d+),(\d+)\]', btn_location)
-        y = [sum(x) / len(x) for x in zip((int(z) for z in (m[0])), (int(zz) for zz in m[1]))]
-        positional_num = []
         try:
+            m = re.findall('{(.*?)}', obj_loaded['name'])
+            btn_class = m[0]
+            btn_location = m[2]
+            imgname = obj_loaded['parent_activity_state'] + '.png'
+            m = re.findall('\[(\d+),(\d+)\]', btn_location)
+            y = [sum(x) / len(x) for x in zip((int(z) for z in (m[0])), (int(zz) for zz in m[1]))]
+            positional_num = []
             for i in range(len(y)):
                 positional_num.append(math.ceil(y[i] / int(imgdict[imgname][i]) * 3))
             btn_positional_representation = str(positional_num[0] + 3 * (positional_num[1] - 1))

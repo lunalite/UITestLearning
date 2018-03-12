@@ -151,6 +151,9 @@ Examples of such APKs
 
 
 ## Updates
+### 12 March 2018
+* Fixed issue with wide learning method. 
+
 ### 11 March 2018
 * Updated README.md to make it look neater.
 * Removed irrelevant files.

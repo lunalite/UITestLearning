@@ -33,3 +33,4 @@ for i in p:
     max_i = i
     print(maxf1)
     print(max_i)
+    time.sleep(1)
