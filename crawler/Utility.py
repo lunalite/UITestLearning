@@ -249,7 +249,7 @@ def dump_log(d, packname, state):
             d.dump(xml_directory + state + '-FULL.xml', compressed=False)
 
 
-def start_emulator(avdnum, emuname):
+def start_emulator(avdnum, emuname, window_sel):
     android_home = Config.android_home
     while True:
         msg = subprocess.Popen(
@@ -261,11 +261,11 @@ def start_emulator(avdnum, emuname):
             subprocess.Popen([android_home + 'platform-tools/adb', '-s', emuname, 'shell', 'rm', '-r', '/mnt/sdcard/*'])
             return 1
         elif len(re.findall('not found', bootmsg[1].decode('utf-8'))) >= 1:
-            if Config.current_user == 'hkoh006':
+            if window_sel:
                 subprocess.Popen(
                     [android_home + 'emulator/emulator', '-avd', avdnum, '-wipe-data', '-skin', '480x800', '-port',
                      emuname[-4:]], stderr=subprocess.DEVNULL)
-            elif Config.current_user == 'root':
+            elif not window_sel:
                 subprocess.Popen(
                     [android_home + 'emulator/emulator', '-avd', avdnum, '-wipe-data', '-skin', '480x800', '-no-audio',
                      '-no-window', '-port', emuname[-4:]], stderr=subprocess.DEVNULL)

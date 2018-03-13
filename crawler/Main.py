@@ -1,5 +1,7 @@
+import argparse
 import codecs
 import logging
+import os
 import random
 import re
 import signal
@@ -7,32 +9,40 @@ import socket
 import string
 import subprocess
 import time
-import os
-import sys
+from datetime import datetime
+from enum import Enum
 
 import uiautomator
-
-from crawler.Mongo import Mongo
 from uiautomator import Device
-from datetime import datetime
+
+from crawler import Utility
+from crawler.Clickable import Clickable
 from crawler.Config import Config
+from crawler.Data import Data
+from crawler.DataActivity import DataActivity
+from crawler.Mongo import Mongo
+
+parser = argparse.ArgumentParser()
+parser.add_argument('device_name', metavar='D',
+                    help='The name of the Android device. By default, it will be emulator-5554 for a single instance, '
+                         'and 5554 + 2i for subsequent instances.')
+parser.add_argument('apklist', help='The list of apk packages.')
+parser.add_argument('apk_dir', help='The directory where all apks are stored.')
+parser.add_argument('avdname', help='Name of the AVD.')
+parser.add_argument("--window", "-w", action="store_true",
+                    help='If true, opens up the emulator window. Otherwise, a windowless emulator.')
+args = parser.parse_args()
 
 log_location = Config.log_location
 if not os.path.exists(log_location):
     os.makedirs(log_location)
-logging.basicConfig(filename=log_location + 'main-' + sys.argv[1] + '.log', level=logging.DEBUG)
+logging.basicConfig(filename=log_location + 'main-' + args.device_name + '.log', level=logging.DEBUG)
 logger = logging.getLogger(__name__)
 logging.getLogger().addHandler(logging.StreamHandler())
 logging.info('================Begin logging==================')
 
 now = time.strftime("%c")
 logger.info(now)
-
-from crawler import Utility
-from crawler.Clickable import Clickable
-from crawler.Data import Data
-from crawler.DataActivity import DataActivity
-from enum import Enum
 
 mongo = Mongo()
 
@@ -495,11 +505,11 @@ def main(app_name, pack_name):
                     f.write('{}\t{}\t{}\n'.format(i[0], i[1], i[2]))
 
 
-def official():
+def official(_apkdir):
     global no_clickable_btns_counter
 
-    dir = Config.apkdir
-    android_home = Config.android_home
+    dir = _apkdir
+
     with open(apklist, 'r') as f:
         apks_to_test = [line.rstrip() for line in f]
     timestr = time.strftime("%Y%m%d%H%M%S")
@@ -643,7 +653,7 @@ def official():
             logger.info('Restarting emulator...')
             Utility.stop_emulator(device_name)
             time.sleep(10)
-            Utility.start_emulator(avdname, device_name)
+            Utility.start_emulator(avdname, device_name, window_sel=args.window)
 
             logger.info('==========================================')
             new_time = datetime.now()
@@ -660,13 +670,14 @@ try:
     avdname e.g, avd0
     e.g. python3 Main.py emulator-5554 ../apk/apk-0 avd0
     """
-    device_name = sys.argv[1]
-    apklist = sys.argv[2]
-    avdname = sys.argv[3]
+    device_name = args.device_name
+    apklist = args.apklist
+    apkdir = args.apk_dir
+    avdname = args.avdname
     d = Device(device_name)
 
-    Utility.start_emulator(avdname, device_name)
-    official()
+    Utility.start_emulator(avdname, device_name, window_sel=args.window)
+    official(_apkdir=apkdir)
 
 except Exception as e:
     logging.exception("message")

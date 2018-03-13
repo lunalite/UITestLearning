@@ -7,20 +7,26 @@ from tqdm import *
 
 parser = argparse.ArgumentParser()
 parser.add_argument("grams", type=int, help="n-grams")
-parser.add_argument("iwin", choices=["00", "01", "10", "11"],
+parser.add_argument("iwin", choices=["00", "01", "10", "11"], metavar="iwin",
                     help="Set Individual Word (IW) and Invalid Null (IN).")
-parser.add_argument("lmethod", choices=["w", "d", "wnd"], help="Select the learning method ")
+parser.add_argument("lmethod", choices=["w", "d", "wnd"], metavar="learning_method", help="Select the learning method ")
 parser.add_argument("-b", "--batch_size", type=int, default=24, help="Batch size for the training model.")
 parser.add_argument("-e", "--epoch", type=int, help="Number of training epochs.")
 args = parser.parse_args()
 
 grams = args.grams
-treat_as_individual_word = bool(int(args.iwin[0]))
-treat_all_null_as_invalid = bool(int(args.iwin[1]))
-learning_method = args.lmethod
-suffix = ''
-suffix += 'iw' if treat_as_individual_word else ''
-suffix += 'in' if treat_all_null_as_invalid else ''
+if args.lmethod == 'w':
+    treat_as_individual_word = False
+    treat_all_null_as_invalid = False
+    learning_method = args.lmethod
+    suffix = ''
+else:
+    treat_as_individual_word = bool(int(args.iwin[0]))
+    treat_all_null_as_invalid = bool(int(args.iwin[1]))
+    learning_method = args.lmethod
+    suffix = ''
+    suffix += 'iw' if treat_as_individual_word else ''
+    suffix += 'in' if treat_all_null_as_invalid else ''
 
 category = ['TOOLS', 'GAME_SIMULATION', 'GAME_WORD', 'PERSONALIZATION', 'MEDIA_AND_VIDEO', 'SHOPPING',
             'GAME_ROLE_PLAYING', 'PRODUCTIVITY', 'GAME_EDUCATIONAL', 'GAME_ACTION', 'SOCIAL', 'NEWS_AND_MAGAZINES',
@@ -123,11 +129,10 @@ if len(wids) == 0:
                         break
                 if wlsplit[0] == 'positive':
                     wlabellist.append([1,0])
-                elif wlsplit[1] == 'negative':
+                elif wlsplit[0] == 'negative':
                     wlabellist.append([0,1])
                 else:
-                    print('error')
-                    exit(1)
+                    wlabellist.append([1,1])
                 fileCounter += 1
             except ValueError as e:
                 print(e)
@@ -279,7 +284,7 @@ with tf.Session() as sess:
         for i in tqdm(range(no_test_data_batch)):
             test_label = test_labels[i * 24: (i + 1) * 24]
             test_wide_input = test_wids[i]
-            result = sess.run(accuracy, feed_dict={wide_input: test_wide_input, deep_label: test_label})
+            result = sess.run(accuracy, feed_dict={wide_input: test_wide_input, wide_label: test_label})
             training_result.append(result)
 
     elif learning_method == 'd':

@@ -151,6 +151,12 @@ Examples of such APKs
 
 
 ## Updates
+### 13 March 2018
+* Fixed issue with argparse for wide learning method
+* Added metavar for several argparse methods
+* Added argparse for parseJson.py
+* Added window_option for crawler 
+
 ### 12 March 2018
 * Fixed issue with wide learning method. 
 

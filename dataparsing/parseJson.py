@@ -1,3 +1,4 @@
+import argparse
 import codecs
 import collections
 import getpass
@@ -380,31 +381,30 @@ elif current_user == 'root':
     datadir = '/home/hongda/Document/UITestLearning/data/serverdata/clickable'
     clickabledir = '/home/hongda/Document/UITestLearning/data/serverdata'
 
-try:
-    """ Pre-processing the original data.json to remove any non-english sets of data, as well as null texts dataset """
-    if 'e' in sys.argv[1]:
-        extract_and_combine_files()
+parser = argparse.ArgumentParser()
+parser.add_argument("method", metavar="method",
+                    choices=["e", "n", "d", "r", "f", "w", "en", "ed", "er", "enw", "enf", "edf", "edw", "erf", "erw",
+                             "nf", "nw", "df", "dw", "rf", "rw"],
+                    help="Method of parsing: [e: extract and combine files, n: Split data according to NST, d: Split "
+                         "data according to DST, r: Split data according to DST_R, f: Preparing the split data for "
+                         "fasttext, w: Preparing the split data for wide model.]")
+args = parser.parse_args()
 
+if 'e' in args.method:
     """ splitting dataset to positive and negative data """
-    if 'n' in sys.argv[1]:
-        split_to_pd(FEATURE.NST)
-    elif 'd' in sys.argv[1]:
-        split_to_pd(FEATURE.DST)
-    elif 'r' in sys.argv[1]:
-        split_to_pd(FEATURE.DST_RELAXED)
+    extract_and_combine_files()
+elif 'n' in args.method:
+
+    split_to_pd(FEATURE.NST)
+elif 'd' in args.method:
+    split_to_pd(FEATURE.DST)
+elif 'r' in args.method:
+    split_to_pd(FEATURE.DST_RELAXED)
     # get_info_on_text_pd()
     # get_info_on_btn_distribution()
 
     """ Preparing data for fasttext training and classification """
-    if 'f' in sys.argv[1]:
-        prep_data_for_fasttext()
-    elif 'w' in sys.argv[1]:
-        prep_data_for_wide()
-except IndexError:
-    print('Please enter arguments:')
-    print('argv[1] == e: extract and combine files')
-    print('argv[1] == n: split to pd with NST')
-    print('argv[1] == d: split to pd with DST')
-    print('argv[1] == r: split to pd with DST relaxed')
-    print('argv[1] == f: preparing data for fasttext')
-    print('argv[1] == w: preparing data for wide model')
+if 'f' in sys.argv[1]:
+    prep_data_for_fasttext()
+elif 'w' in sys.argv[1]:
+    prep_data_for_wide()
