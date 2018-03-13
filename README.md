@@ -155,7 +155,8 @@ Examples of such APKs
 * Fixed issue with argparse for wide learning method
 * Added metavar for several argparse methods
 * Added argparse for parseJson.py
-* Added window_option for crawler 
+* Added window_option for crawler
+* Ensure deep and wideanddeep model requires IW IN to be set. 
 
 ### 12 March 2018
 * Fixed issue with wide learning method. 

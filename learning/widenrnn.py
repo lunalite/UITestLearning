@@ -6,13 +6,17 @@ import tensorflow as tf
 from tqdm import *
 
 parser = argparse.ArgumentParser()
-parser.add_argument("grams", type=int, help="n-grams")
-parser.add_argument("iwin", choices=["00", "01", "10", "11"], metavar="iwin",
-                    help="Set Individual Word (IW) and Invalid Null (IN).")
 parser.add_argument("lmethod", choices=["w", "d", "wnd"], metavar="learning_method", help="Select the learning method ")
+parser.add_argument("grams", type=int, help="n-grams")
+parser.add_argument("iwin", choices=["00", "01", "10", "11"], metavar="iwin", nargs="?",
+                    help="Set Individual Word (IW) and Invalid Null (IN).")
 parser.add_argument("-b", "--batch_size", type=int, default=24, help="Batch size for the training model.")
 parser.add_argument("-e", "--epoch", type=int, help="Number of training epochs.")
 args = parser.parse_args()
+
+if 'd' in args.lmethod and args.iwin is None:
+    parser.error("learning_method: d, wnd requires iwin to be set.")
+
 
 grams = args.grams
 if args.lmethod == 'w':
