@@ -18,7 +18,7 @@ if 'd' in args.lmethod and args.iwin is None:
     parser.error("learning_method: d, wnd requires iwin to be set.")
 
 if args.lmethod == 'w':
-    grams = 0
+    grams = 1
     treat_as_individual_word = False
     treat_all_null_as_invalid = False
     learning_method = args.lmethod
