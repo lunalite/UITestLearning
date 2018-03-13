@@ -7,7 +7,7 @@ from tqdm import *
 
 parser = argparse.ArgumentParser()
 parser.add_argument("lmethod", choices=["w", "d", "wnd"], metavar="learning_method", help="Select the learning method ")
-parser.add_argument("grams", type=int, help="n-grams")
+parser.add_argument("grams", type=int, nargs="?", help="n-grams")
 parser.add_argument("iwin", choices=["00", "01", "10", "11"], metavar="iwin", nargs="?",
                     help="Set Individual Word (IW) and Invalid Null (IN).")
 parser.add_argument("-b", "--batch_size", type=int, default=24, help="Batch size for the training model.")
@@ -17,14 +17,14 @@ args = parser.parse_args()
 if 'd' in args.lmethod and args.iwin is None:
     parser.error("learning_method: d, wnd requires iwin to be set.")
 
-
-grams = args.grams
 if args.lmethod == 'w':
+    grams = 0
     treat_as_individual_word = False
     treat_all_null_as_invalid = False
     learning_method = args.lmethod
     suffix = ''
 else:
+    grams = args.grams
     treat_as_individual_word = bool(int(args.iwin[0]))
     treat_all_null_as_invalid = bool(int(args.iwin[1]))
     learning_method = args.lmethod
