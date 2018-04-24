@@ -264,11 +264,11 @@ def start_emulator(avdnum, emuname, window_sel):
             if window_sel:
                 subprocess.Popen(
                     [android_home + 'emulator/emulator', '-avd', avdnum, '-wipe-data', '-skin', '480x800', '-port',
-                     emuname[-4:]], stderr=subprocess.DEVNULL)
+                     emuname[-4:], '-no-snapstorage'], stderr=subprocess.DEVNULL)
             elif not window_sel:
                 subprocess.Popen(
                     [android_home + 'emulator/emulator', '-avd', avdnum, '-wipe-data', '-skin', '480x800', '-no-audio',
-                     '-no-window', '-port', emuname[-4:]], stderr=subprocess.DEVNULL)
+                     '-no-window', '-port', emuname[-4:], '-no-snapstorage'], stderr=subprocess.DEVNULL)
             time.sleep(10)
         else:
             logger.info('Waiting for emulator to start...')
