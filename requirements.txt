@@ -16,7 +16,7 @@ idna==2.6
 jmespath==0.9.3
 Markdown==2.6.11
 numpy==1.14.1
-protobuf==3.5.2
+protobuf==3.15.0
 python-dateutil==2.6.1
 requests==2.18.4
 s3transfer==0.1.13
